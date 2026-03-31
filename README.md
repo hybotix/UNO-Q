@@ -2,6 +2,10 @@
 
 A collection of scripts and example apps for developing on the Arduino UNO Q without using Arduino App Lab.
 
+## Compatibility
+
+This workflow has been developed and tested on the Arduino UNO Q. It is expected to be largely compatible with the Arduino VENTUNO Q, which shares the same Debian OS, arduino-app-cli, Arduino CLI, and bridge architecture. The FQBN may differ for the VENTUNO Q. Contributions and testing from VENTUNO Q users are welcome.
+
 ## Philosophy
 
 The Arduino UNO Q is a powerful dual-processor board combining a Qualcomm QRB2210 MPU running Debian Linux with an STM32U585 MCU for real-time control. However, Arduino's App Lab development environment is immature and lacks basic features like proper library management.
