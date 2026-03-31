@@ -1,0 +1,3 @@
+name: SCD30 Sensor
+icon: 🌡️
+description: Reads CO2, temperature and humidity from the SCD30 sensor via QWIIC.
