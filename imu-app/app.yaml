@@ -1,0 +1,3 @@
+name: LSM6DSOX IMU
+icon: 🤖
+description: Reads acceleration, gyroscope, and temperature data from the LSM6DSOX IMU via QWIIC.

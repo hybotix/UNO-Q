@@ -43,7 +43,8 @@ Create symlinks in `~/bin`:
 mkdir -p ~/bin
 ln -s ~/Repos/GitHub/hybotix/UNO-Q/build-v0.0.1.py ~/bin/build
 ln -s ~/Repos/GitHub/hybotix/UNO-Q/restart-v0.0.1.py ~/bin/restart
-chmod +x ~/bin/build ~/bin/restart
+ln -s ~/Repos/GitHub/hybotix/UNO-Q/stop-v0.0.1.py ~/bin/stop
+chmod +x ~/bin/build ~/bin/restart ~/bin/stop
 ```
 
 ## Scripts
@@ -74,6 +75,20 @@ Example:
 
 ```bash
 restart ~/Arduino/scd30-app/
+```
+
+### stop
+
+Stops a running arduino-app-cli app.
+
+```bash
+stop <app_path>
+```
+
+Example:
+
+```bash
+stop ~/Arduino/scd30-app/
 ```
 
 ## Adding Arduino Libraries
@@ -212,5 +227,37 @@ Expected output:
 CO2: 470.63 ppm
 Temp: 26.57 C
 Humidity: 48.79 %
+```
+
+### imu-app
+
+Reads accelerometer, gyroscope, and temperature data from an Adafruit LSM6DSOX IMU connected via QWIIC. Useful as the foundation for odometry and orientation tracking on a robot like the SMARS.
+
+```
+imu-app/
+├── app.yaml
+├── sketch/
+│   ├── sketch.ino
+│   └── sketch.yaml
+└── python/
+    └── main.py
+```
+
+To run:
+
+```bash
+restart ~/Arduino/imu-app/
+```
+
+Expected output:
+
+```
+Accel X: -0.18 m/s^2
+Accel Y: -8.75 m/s^2
+Accel Z: 5.04 m/s^2
+Gyro X: 0.01 rad/s
+Gyro Y: -0.00 rad/s
+Gyro Z: -0.02 rad/s
+Temp: 24.77 C
 ```
 
