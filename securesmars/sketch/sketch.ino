@@ -33,6 +33,7 @@
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LED_Matrix.h>
+#include <ArduinoGraphics.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 
@@ -247,6 +248,15 @@ void setup() {
     while (!scd30.begin(0x61, &Wire1)) {
         delay(100);
     }
+
+    // Wait for first valid SCD30 reading before starting matrix scroll
+    while (!scd30.dataReady()) {
+        delay(100);
+    }
+    scd30.read();
+    lastCO2 = scd30.CO2;
+    lastTempC = scd30.temperature;
+    lastHumidity = scd30.relative_humidity;
 
     // Initialize BNO055 on QWIIC bus (Wire1), use external crystal
     while (!bno.begin()) {
