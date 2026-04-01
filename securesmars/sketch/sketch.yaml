@@ -11,6 +11,7 @@ profiles:
       - dependency: MsgPack (0.4.2)
       - Adafruit SCD30 (1.0.11)
       - Adafruit BNO055 (1.6.3)
+      - Adafruit Motor Shield V2 Library (1.1.2)
       - Adafruit BusIO (1.17.4)
       - Adafruit Unified Sensor (1.1.15)
 default_profile: default
