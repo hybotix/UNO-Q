@@ -33,9 +33,27 @@ def publish_bno(data):
         "gyro_x": float(values[3]),
         "gyro_y": float(values[4]),
         "gyro_z": float(values[5]),
-        "accel_x": float(values[6]),
-        "accel_y": float(values[7]),
-        "accel_z": float(values[8])
+        "linear_accel_x": float(values[6]),
+        "linear_accel_y": float(values[7]),
+        "linear_accel_z": float(values[8]),
+        "gravity_x": float(values[9]),
+        "gravity_y": float(values[10]),
+        "gravity_z": float(values[11]),
+        "mag_x": float(values[12]),
+        "mag_y": float(values[13]),
+        "mag_z": float(values[14]),
+        "accel_x": float(values[15]),
+        "accel_y": float(values[16]),
+        "accel_z": float(values[17]),
+        "quat_w": float(values[18]),
+        "quat_x": float(values[19]),
+        "quat_y": float(values[20]),
+        "quat_z": float(values[21]),
+        "cal_sys": int(values[22]),
+        "cal_gyro": int(values[23]),
+        "cal_accel": int(values[24]),
+        "cal_mag": int(values[25]),
+        "temperature": float(values[26])
     })
     client.publish("smars/bno", payload)
     print("BNO: " + payload)
