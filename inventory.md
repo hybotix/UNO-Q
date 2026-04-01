@@ -8,8 +8,10 @@ Last updated: March 31, 2026
 |-------|-----|-------|
 | Arduino UNO Q (4GB) | 1 | Primary SMARS development board |
 | Arduino UNO R4 WiFi | 1 | |
-| Arduino Nano 33 BLE Sense Rev2 | 1 | |
+| Arduino Nano 33 BLE Sense Rev2 | 2 | |
 | Arduino Nano RP2040 Connect | 1 | |
+| Arduino Nano ESP32 | 1 | |
+| Adafruit KB2040 | 1 | RP2040 based keyboard controller |
 | Arduino Portenta C33 | 1 | |
 | Arduino Portenta H7 | 1 | STM32H747XI dual Cortex-M7/M4 |
 | Arduino Portenta X8 | 1 | |
@@ -23,15 +25,21 @@ Last updated: March 31, 2026
 | Sensor | Qty | Notes |
 |--------|-----|-------|
 | Adafruit SCD30 (CO2/temp/humidity) | 1 | Working — scd30-app example in this repo |
-| Adafruit BNO055 (9-DoF absolute orientation) | 1 | Planned for SMARS |
+| Adafruit BNO055 (9-DoF absolute orientation) | 1 | Planned for SecureSMARS |
 | Adafruit LSM6DSOX (6-DoF IMU accel/gyro) | 2 | Working — imu-app example in this repo |
+| Adafruit SHT45 (high accuracy temp/humidity) | 2 | QWIIC compatible |
+| Adafruit VEML7700 (ambient light) | 1 | QWIIC compatible |
+| Adafruit PDM Microphone | 1 | Digital microphone |
+| SparkFun VL53L5CX (8x8 ToF depth map) | 1 | DOA — RMA submitted, replacement pending |
 
 ## Breakout Boards
 
 | Board | Qty | Notes |
 |-------|-----|-------|
-| Adafruit Infineon Trust M (ADA4351) | 2 | Crypto authentication — ECC, RSA, TRNG, STEMMA QT — planned for SecureBot end-to-end encrypted MQTT |
+| Adafruit Infineon Trust M (ADA4351) | 2 | Crypto authentication — ECC, RSA, TRNG, STEMMA QT — planned for SecureSMARS end-to-end encrypted MQTT |
 | Adafruit HSTX Breakout Board | 1 | Companion to Feather RP2350 |
+| Adafruit EYeSPI Display Breakout | 2 | SPI display interface |
+| SparkFun QWIIC I2C Mux | 1 | TCA9548A — 8 channel I2C mux, end of SecureSMARS QWIIC chain |
 
 ## Shields / HATs
 
