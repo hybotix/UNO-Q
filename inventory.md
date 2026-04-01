@@ -30,7 +30,7 @@ Last updated: March 31, 2026
 
 | Board | Qty | Notes |
 |-------|-----|-------|
-| Adafruit Infineon Trust M (ADA4351) | 2 | Crypto authentication — ECC, RSA, TRNG, STEMMA QT |
+| Adafruit Infineon Trust M (ADA4351) | 2 | Crypto authentication — ECC, RSA, TRNG, STEMMA QT — planned for SecureBot end-to-end encrypted MQTT |
 | Adafruit HSTX Breakout Board | 1 | Companion to Feather RP2350 |
 
 ## Shields / HATs
