@@ -1,6 +1,6 @@
 /**
  * SecureSMARS Sketch
- * Hybrid RobotiX - Dale Weber (N7PKT)
+ * Hybrid RobotiX
  *
  * Provides the following functionality via Arduino RouterBridge:
  *   - SCD30: CO2, temperature, humidity via QWIIC (Wire1)
