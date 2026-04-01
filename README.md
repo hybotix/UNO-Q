@@ -118,9 +118,10 @@ Create symlinks in `~/bin`:
 ```bash
 mkdir -p ~/bin
 ln -s ~/Repos/GitHub/hybotix/UNO-Q/build-v0.0.1.py ~/bin/build
+ln -s ~/Repos/GitHub/hybotix/UNO-Q/start-v0.0.1.py ~/bin/start
 ln -s ~/Repos/GitHub/hybotix/UNO-Q/restart-v0.0.1.py ~/bin/restart
 ln -s ~/Repos/GitHub/hybotix/UNO-Q/stop-v0.0.1.py ~/bin/stop
-chmod +x ~/bin/build ~/bin/restart ~/bin/stop
+chmod +x ~/bin/build ~/bin/start ~/bin/restart ~/bin/stop
 ```
 
 ## Scripts
@@ -137,6 +138,20 @@ Example:
 
 ```bash
 build ~/Arduino/adafruit_scd30_test/
+```
+
+### start
+
+Starts an arduino-app-cli app.
+
+```bash
+start <app_path>
+```
+
+Example:
+
+```bash
+start ~/Arduino/securesmars/
 ```
 
 ### restart
