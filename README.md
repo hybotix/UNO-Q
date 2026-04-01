@@ -2,6 +2,78 @@
 
 A collection of scripts and example apps for developing on the Arduino UNO Q without using Arduino App Lab.
 
+## SecureSMARS
+
+SecureSMARS is a fully autonomous, environmentally aware, hardware-encrypted secure robot built on the Arduino UNO Q platform. It is the flagship project of Hybrid RobotiX.
+
+### Vision
+
+SecureSMARS is a SMARS-based tracked robot with hardware-level end-to-end encrypted communications via the Infineon OPTIGA Trust M crypto authentication chip. No other maker robot implements this level of security. All telemetry is encrypted and authenticated at the hardware level — sensor data, motor commands, and navigation data are all secured end to end.
+
+### Architecture
+
+```
+SecureSMARS (Arduino UNO Q)          Raspberry Pi 4B 8GB (MQTT Broker)
+┌─────────────────────────────┐      ┌──────────────────────────────┐
+│ STM32U585 MCU               │      │ Mosquitto MQTT (TLS)         │
+│  - Motor control (4x N20)   │      │ Trust M breakout             │
+│  - Encoder feedback         │◄────►│  - Verifies incoming data    │
+│  - Sensor polling (QWIIC)   │      │  - Decrypts telemetry        │
+│                             │      │  - Signs commands            │
+│ QRB2210 MPU (Linux)         │      └──────────────────────────────┘
+│  - Autonomous navigation    │
+│  - MQTT pub/sub (encrypted) │
+│  - Trust M breakout         │
+│    - Signs telemetry        │
+│    - Verifies commands      │
+│    - Private key never      │
+│      leaves chip            │
+└─────────────────────────────┘
+```
+
+### Hardware
+
+**Compute:**
+- Arduino UNO Q (4GB) — dual processor (QRB2210 MPU + STM32U585 MCU)
+- Raspberry Pi 4B 8GB — dedicated MQTT broker
+
+**Motor System:**
+- Adafruit Motor Shield V2
+- 4x N20 150:1 geared motors with encoders
+- 4x N20 compatible wheels
+
+**Security:**
+- 2x Adafruit Infineon Trust M (ADA4351) — one on SecureSMARS, one on Pi 4B broker
+- ECC NIST P256/P384, SHA-256, TRNG, RSA 1024/2048
+- Private keys stored securely in hardware — never exposed
+
+**Sensors (QWIIC chain):**
+- Adafruit BNO055 — 9-DoF absolute orientation, onboard sensor fusion
+- Adafruit SCD30 — true CO2, temperature, humidity
+- Adafruit ENS161 — TVOC, eCO2, AQI (planned)
+- Adafruit BME688 — temperature, humidity, pressure, VOC (planned)
+- SparkFun VL53L5CX — 8x8 ToF depth map for obstacle avoidance (RMA pending)
+- VL53L1X — long range ToF distance sensing (planned)
+
+### Security Model
+
+- **Hardware crypto** — Trust M on both ends, private keys never leave the chip
+- **Encrypted MQTT** — TLS on the Mosquitto broker, Trust M handles certificates
+- **Authenticated commands** — SecureSMARS only accepts signed commands from verified sources
+- **Encrypted telemetry** — all sensor data encrypted end to end
+- **Verified identity** — ECC-based mutual authentication between robot and broker
+
+### Status
+
+- [ ] Motor Shield V2 arriving Thursday April 2nd
+- [ ] N20 motors and wheels — pending funds (~$70)
+- [ ] BNO055 in hand — ready to develop
+- [ ] SCD30 working — app example in this repo
+- [ ] Trust M integration — planned
+- [ ] Mosquitto TLS broker on Pi 4B — planned
+- [ ] Encrypted MQTT tunnel — planned
+- [ ] Autonomous navigation — planned
+
 ## Compatibility
 
 This workflow has been developed and tested on the Arduino UNO Q. It is expected to be largely compatible with the Arduino VENTUNO Q, which shares the same Debian OS, arduino-app-cli, Arduino CLI, and bridge architecture. The FQBN may differ for the VENTUNO Q. Contributions and testing from VENTUNO Q users are welcome.
