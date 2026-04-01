@@ -73,3 +73,9 @@ Last updated: March 31, 2026
 | SparkFun VL53L5CX | 8x8 ToF depth sensor — DOA, RMA submitted |
 | VL53L1X | Long range ToF distance sensor |
 | N20 150:1 motors with encoders x4 | SMARS drivetrain |
+
+## Raspberry Pi HATs
+
+| HAT | Qty | Notes |
+|-----|-----|-------|
+| Adafruit DC & Stepper Motor HAT for Raspberry Pi (ADA2348) | 1 | 4x DC or 2x Stepper, I2C, 4.5V-13.5V, 1.2A per channel |
