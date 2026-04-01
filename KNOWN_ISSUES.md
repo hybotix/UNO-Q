@@ -3,7 +3,7 @@
 ## Docker Network Isolation — Local Hostname Resolution Fails
 
 **Status:** Open — waiting for Arduino to fix  
-**Filed:** [arduino-app-cli GitHub issue](https://github.com/arduino/arduino-app-cli/issues)  
+**Filed:** [arduino-app-cli GitHub issue #328](https://github.com/arduino/arduino-app-cli/issues/328)  
 **Affects:** All apps that connect to local network services by hostname
 
 ### Problem
