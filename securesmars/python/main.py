@@ -58,6 +58,69 @@ def publish_bno(data):
     client.publish("smars/bno", payload)
     print("BNO: " + payload)
 
+def move_forward(speed=128):
+    Bridge.call("move_forward", speed)
+
+def move_backward(speed=128):
+    Bridge.call("move_backward", speed)
+
+def strafe_left(speed=128):
+    Bridge.call("strafe_left", speed)
+
+def strafe_right(speed=128):
+    Bridge.call("strafe_right", speed)
+
+def rotate_cw(speed=128):
+    Bridge.call("rotate_cw", speed)
+
+def rotate_ccw(speed=128):
+    Bridge.call("rotate_ccw", speed)
+
+def move_diagonal_fl(speed=128):
+    Bridge.call("move_diagonal_fl", speed)
+
+def move_diagonal_fr(speed=128):
+    Bridge.call("move_diagonal_fr", speed)
+
+def move_diagonal_rl(speed=128):
+    Bridge.call("move_diagonal_rl", speed)
+
+def move_diagonal_rr(speed=128):
+    Bridge.call("move_diagonal_rr", speed)
+
+def mecanum_move(x, y, r):
+    Bridge.call("mecanum_move", x, y, r)
+
+def stop():
+    Bridge.call("stop_motors")
+
+def on_command(client, userdata, message):
+    try:
+        cmd = json.loads(message.payload.decode())
+        action = cmd.get("action")
+        speed = cmd.get("speed", 128)
+        if action == "forward":        move_forward(speed)
+        elif action == "backward":     move_backward(speed)
+        elif action == "strafe_left":  strafe_left(speed)
+        elif action == "strafe_right": strafe_right(speed)
+        elif action == "rotate_cw":    rotate_cw(speed)
+        elif action == "rotate_ccw":   rotate_ccw(speed)
+        elif action == "diag_fl":      move_diagonal_fl(speed)
+        elif action == "diag_fr":      move_diagonal_fr(speed)
+        elif action == "diag_rl":      move_diagonal_rl(speed)
+        elif action == "diag_rr":      move_diagonal_rr(speed)
+        elif action == "move":
+            x = cmd.get("x", 0)
+            y = cmd.get("y", 0)
+            r = cmd.get("r", 0)
+            mecanum_move(x, y, r)
+        elif action == "stop":         stop()
+    except Exception as e:
+        print("Command error: " + str(e))
+
+client.subscribe("smars/cmd")
+client.on_message = on_command
+
 def loop():
     time.sleep(5)
 
