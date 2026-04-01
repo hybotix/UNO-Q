@@ -53,3 +53,49 @@ Arduino needs to implement one of the following:
 1. Support `extra_hosts` in `app.yaml` and pass them through to the generated compose file
 2. Use `network_mode: host` for the container
 3. Document a supported way to configure Docker networking for apps
+
+---
+
+## Infineon optigatrust — I2C Bus Hardcoded to `/dev/i2c-1`
+
+**Status:** Open — waiting for Infineon to fix  
+**Filed:** [python-optiga-trust GitHub issue #26](https://github.com/Infineon/python-optiga-trust/issues/26)  
+**Affects:** Any system where the OPTIGA Trust M is not on I2C bus 1
+
+### Problem
+
+The compiled library `liboptigatrust-i2c-linux-aarch64.so` has `/dev/i2c-1` hardcoded. On Raspberry Pi 4B running Debian 13 (Trixie), the OPTIGA Trust M is visible at address 0x30 on `/dev/i2c-21`, but the library always tries `/dev/i2c-1` and fails to connect.
+
+Additionally, the library requires GPIO reset and VDD pins (`GPIO_PIN_RESET 17`, `GPIO_PIN_VDD 27`) which are hardcoded and not needed when using the Adafruit breakout board directly.
+
+### Symptoms
+
+```
+Failed to open gpio direction for writing!
+Trying to open i2c interface: FAIL
+ERROR optigatrust._backend i2c: Failed to connect
+```
+
+### What Was Tried
+
+- Creating symlink `/dev/i2c-1 -> /dev/i2c-21` — library still fails
+- Running as root — still fails
+- Verified Trust M responds correctly: `i2cget -y 21 0x30 0x00` returns `0x00`
+- The source file `extras/pal/linux/target/rpi3/pal_ifx_i2c_config.c` confirms hardcoded path
+
+### Impact on SecureSMARS
+
+The Trust M on pimqtt cannot be used for encrypted MQTT authentication until Infineon fixes the library.
+
+### Required Fix
+
+In `pal_ifx_i2c_config.c`, the I2C device path should be read from an environment variable:
+
+```c
+const char *env = getenv("OPTIGA_I2C_DEV");
+if (env != NULL) {
+    strncpy(i2c_dev, env, sizeof(i2c_dev) - 1);
+}
+```
+
+GPIO pins should also be made optional (set to `-1` to disable).
