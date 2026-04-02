@@ -104,6 +104,24 @@ echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+## Bootstrap Script
+
+`scripts/newrepo.bash` is a reference copy of the bootstrap script. It must live in `$HOME` on the UNO Q — it cannot be in the repo itself since it has to exist before the repo is cloned.
+
+To set it up on a new UNO Q, after cloning the repo once manually:
+
+```bash
+cp ~/Repos/GitHub/hybotix/UNO-Q/scripts/newrepo.bash ~/newrepo.bash
+```
+
+Then on any subsequent reset:
+
+```bash
+bash ~/newrepo.bash
+```
+
+This will clone the repo fresh, copy all apps and bin commands to `$HOME`, copy `secrets.py.template` to each app that needs it, and create versioned symlinks for all bin commands automatically.
+
 ## Remote Development with VSCode
 
 The recommended way to edit files on the UNO Q is via VSCode Remote-SSH. This gives you full syntax highlighting, IntelliSense, and a file browser — all editing happens directly on the UNO Q over SSH.
