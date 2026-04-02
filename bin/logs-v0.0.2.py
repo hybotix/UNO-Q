@@ -31,7 +31,6 @@ def main():
     else:
         app_name = sys.argv[1]
 
-    save_last_app(app_name)
     app_path = get_app_path(app_name)
     subprocess.run(["arduino-app-cli", "app", "logs", app_path])
 
