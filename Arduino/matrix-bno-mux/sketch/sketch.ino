@@ -385,6 +385,52 @@ void set_matrix_msg(String msg) {
     scroll_x = 12;
 }
 
+/**
+ * Calibrate SCD30 temperature offset using SHT45 as reference.
+ * Averages 5 samples from both sensors, calculates the difference,
+ * and applies it as a temperature offset to the SCD30.
+ * Offset is stored in SCD30 non-volatile memory — persists across power cycles.
+ * Also improves CO2 accuracy since SCD30's internal compensation uses temperature.
+ * Only applies offset if between 0.5°C and 20°C (sanity bounds).
+ * Returns: "offset:X.XX" on success, "skipped" if offset out of bounds, "error" on failure.
+ * Python calls this once at startup if ~/.scd30-calibrated does not exist.
+ */
+String calibrate_scd30() {
+    float scd30_temp_sum = 0;
+    float sht45_temp_sum = 0;
+    int   samples        = 0;
+
+    while (samples < 5) {
+        mux2.setPort(MUX2_CH_SCD30);
+        while (!scd30.dataReady()) { delay(100); }
+        scd30.read();
+
+        mux2.setPort(MUX2_CH_SHT45);
+        sensors_event_t humidity_event, temp_event;
+        sht45.getEvent(&humidity_event, &temp_event);
+
+        mux2.setPort(255);
+
+        scd30_temp_sum += scd30.temperature;
+        sht45_temp_sum += temp_event.temperature;
+        samples++;
+        delay(500);
+    }
+
+    float scd30_avg = scd30_temp_sum / samples;
+    float sht45_avg = sht45_temp_sum / samples;
+    float offset    = scd30_avg - sht45_avg;
+
+    if (offset > 0.5 && offset < 20.0) {
+        mux2.setPort(MUX2_CH_SCD30);
+        scd30.setTemperatureOffset(offset);
+        mux2.setPort(255);
+        return "offset:" + String(offset, 2);
+    }
+
+    return "skipped";
+}
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
     matrix.begin();
@@ -419,6 +465,7 @@ void setup() {
     Bridge.provide("get_mux2_channel_data", get_mux2_channel_data);
     Bridge.provide("set_mux1_channel",      set_mux1_channel);
     Bridge.provide("set_mux2_channel",      set_mux2_channel);
+    Bridge.provide("calibrate_scd30",       calibrate_scd30);
     Bridge.provide("set_matrix_msg",        set_matrix_msg);
     updateScrollMetrics();
 }
