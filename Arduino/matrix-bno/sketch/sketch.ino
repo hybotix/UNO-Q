@@ -294,33 +294,25 @@ void set_matrix_msg(String msg) {
     scroll_x = 12;
 }
 
-// ── Setup ─────────────────────────────────────────────────────────────────────
-void setup() {
-    matrix.begin();
-    matrix.clear();
-    Bridge.begin();
-    while (!scd30.begin(0x61, &Wire1)) { delay(100); }
-    while (!bno.begin())               { delay(100); }
-    bno.setExtCrystalUse(true);
-    sht45.begin(&Wire1);
-    //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
-
-    // ── SCD30 temperature offset calibration ──────────────────────────────────
-    // Use SHT45 as reference to calculate and apply SCD30 self-heating offset.
-    // Wait for valid readings from both sensors, average 5 samples for stability,
-    // then apply the offset to the SCD30. Stored in non-volatile memory so it
-    // persists across power cycles. Also improves CO2 accuracy since SCD30's
-    // internal CO2 compensation algorithm uses temperature.
+/**
+ * Calibrate SCD30 temperature offset using SHT45 as reference.
+ * Averages 5 samples from both sensors, calculates the difference,
+ * and applies it as a temperature offset to the SCD30.
+ * Offset is stored in SCD30 non-volatile memory — persists across power cycles.
+ * Also improves CO2 accuracy since SCD30's internal compensation uses temperature.
+ * Only applies offset if between 0.5°C and 20°C (sanity bounds).
+ * Returns: "offset:X.XX" on success, "skipped" if offset out of bounds, "error" on failure.
+ * Python calls this once at startup if ~/.scd30-calibrated does not exist.
+ */
+String calibrate_scd30() {
     float scd30_temp_sum = 0;
     float sht45_temp_sum = 0;
     int   samples        = 0;
 
     while (samples < 5) {
-        // Wait for SCD30 data
         while (!scd30.dataReady()) { delay(100); }
         scd30.read();
 
-        // Read SHT45
         sensors_event_t humidity_event, temp_event;
         sht45.getEvent(&humidity_event, &temp_event);
 
@@ -334,10 +326,24 @@ void setup() {
     float sht45_avg = sht45_temp_sum / samples;
     float offset    = scd30_avg - sht45_avg;
 
-    // Only apply offset if it's meaningful (> 0.5°C) and reasonable (< 20°C)
     if (offset > 0.5 && offset < 20.0) {
         scd30.setTemperatureOffset(offset);
+        return "offset:" + String(offset, 2);
     }
+
+    return "skipped";
+}
+
+
+void setup() {
+    matrix.begin();
+    matrix.clear();
+    Bridge.begin();
+    while (!scd30.begin(0x61, &Wire1)) { delay(100); }
+    while (!bno.begin())               { delay(100); }
+    bno.setExtCrystalUse(true);
+    sht45.begin(&Wire1);
+    //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
@@ -346,6 +352,7 @@ void setup() {
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);
     Bridge.provide("set_mux_channel",      set_mux_channel);
+    Bridge.provide("calibrate_scd30",      calibrate_scd30);
     Bridge.provide("set_matrix_msg",       set_matrix_msg);
     updateScrollMetrics();
 }

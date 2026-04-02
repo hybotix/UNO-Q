@@ -1,9 +1,13 @@
 from arduino.app_utils import *
 import time
+import os
 
 # Scroll timing constants — must match sketch
 PIXELS_PER_CHAR = 6
 MS_PER_PIXEL    = 125
+
+# Calibration flag file — if this exists, skip SCD30 calibration
+CALIBRATION_FILE = os.path.expanduser("~/.scd30-calibrated")
 
 started = False
 
@@ -17,16 +21,40 @@ def scroll_duration(msg):
     """Calculate how long the message takes to scroll once in seconds."""
     return len(msg) * PIXELS_PER_CHAR * MS_PER_PIXEL / 1000
 
+def calibrate():
+    """
+    Calibrate SCD30 temperature offset using SHT45 as reference.
+    Only runs if ~/.scd30-calibrated does not exist.
+    Creates the flag file on success to prevent future recalibration.
+    """
+    if os.path.exists(CALIBRATION_FILE):
+        print("SCD30: calibration file found — skipping calibration")
+        return
+
+    print("SCD30: calibrating temperature offset using SHT45 reference...")
+    result = Bridge.call("calibrate_scd30")
+    print(f"SCD30: calibration result: {result}")
+
+    if result and result.startswith("offset:"):
+        with open(CALIBRATION_FILE, "w") as f:
+            f.write(result)
+        print(f"SCD30: calibration complete — {result}")
+    elif result == "skipped":
+        print("SCD30: offset out of bounds — calibration skipped")
+    else:
+        print("SCD30: calibration failed")
+
 def loop():
     global started
 
     if not started:
         time.sleep(5)
+        calibrate()
         started = True
 
-    scd_data  = Bridge.call("get_scd_data")
-    sht_data  = Bridge.call("get_sht45_data")
-    bno_data  = Bridge.call("get_bno_data")
+    scd_data = Bridge.call("get_scd_data")
+    sht_data = Bridge.call("get_sht45_data")
+    bno_data = Bridge.call("get_bno_data")
 
     co2      = None
     temp_c   = None
@@ -59,7 +87,7 @@ def loop():
 
     if heading is not None:
         cp = compass_point(heading)
-        print(f"H{heading:.1f}\u00b0{cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
+        print(f"H{heading:.1f}\u00b0 {cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
         msg2 = f" H{heading:.0f}\u00b0 {cp} P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
