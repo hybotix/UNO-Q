@@ -3,7 +3,7 @@ import time
 
 # Scroll timing constants — must match sketch
 PIXELS_PER_CHAR = 6
-MS_PER_PIXEL    = 100
+MS_PER_PIXEL    = 125
 
 started = False
 
