@@ -180,7 +180,58 @@ String get_mux_data() {
     return any ? result : "none";
 }
 
-void set_matrix_msg(String msg) {
+/**
+ * Enable or disable a mux channel by index.
+ * Python calls: set_mux_channel("0,true") or set_mux_channel("2,false")
+ */
+void set_mux_channel(String params) {
+    int comma = params.indexOf(',');
+    if (comma < 0) return;
+    int channel = params.substring(0, comma).toInt();
+    bool active = params.substring(comma + 1).equalsIgnoreCase("true");
+    for (int i = 0; i < MUX_NUM_CHANNELS; i++) {
+        if (mux_channels[i].channel == channel) {
+            mux_channels[i].active = active;
+            return;
+        }
+    }
+}
+
+/**
+ * Return all mux channels and their active state.
+ * Format: channel:name:active,channel:name:active,...
+ */
+String get_mux_channels() {
+    String result = "";
+    for (int i = 0; i < MUX_NUM_CHANNELS; i++) {
+        result += String(mux_channels[i].channel) + ":" +
+                  String(mux_channels[i].name) + ":" +
+                  String(mux_channels[i].active ? "true" : "false");
+        if (i < MUX_NUM_CHANNELS - 1) result += ",";
+    }
+    return result;
+}
+
+/**
+ * Read data from a specific mux channel by channel number.
+ * Returns "inactive" if channel is not active.
+ * Add sensor-specific read logic per channel as sensors are connected.
+ */
+String get_mux_channel_data(String param) {
+    int channel = param.toInt();
+    for (int i = 0; i < MUX_NUM_CHANNELS; i++) {
+        if (mux_channels[i].channel == channel) {
+            if (!mux_channels[i].active) return "inactive";
+            //mux.setPort(channel);
+            // Add sensor-specific read logic here per channel
+            //mux.setPort(255);
+            return "0";  // placeholder
+        }
+    }
+    return "invalid";
+}
+
+
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
     updateScrollMetrics();
@@ -198,11 +249,14 @@ void setup() {
     sht45.begin(&Wire1);
     //mux.begin(MUX_ADDR, Wire1);  // Activate when mux is in use
 
-    Bridge.provide("get_scd_data",  get_scd_data);
-    Bridge.provide("get_sht45_data", get_sht45_data);
-    Bridge.provide("get_bno_data",  get_bno_data);
-    Bridge.provide("get_mux_data",  get_mux_data);
-    Bridge.provide("set_matrix_msg", set_matrix_msg);
+    Bridge.provide("get_scd_data",          get_scd_data);
+    Bridge.provide("get_sht45_data",        get_sht45_data);
+    Bridge.provide("get_bno_data",          get_bno_data);
+    Bridge.provide("get_mux_data",          get_mux_data);
+    Bridge.provide("get_mux_channels",      get_mux_channels);
+    Bridge.provide("get_mux_channel_data",  get_mux_channel_data);
+    Bridge.provide("set_mux_channel",       set_mux_channel);
+    Bridge.provide("set_matrix_msg",        set_matrix_msg);
     updateScrollMetrics();
 }
 
