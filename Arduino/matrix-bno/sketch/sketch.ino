@@ -62,9 +62,11 @@ void scrollTick() {
 String get_scd_data() {
     if (scd30.dataReady()) {
         scd30.read();
-        return String(scd30.CO2);
+        return String(scd30.CO2) + "," +
+               String(scd30.temperature) + "," +
+               String(scd30.relative_humidity);
     }
-    return "0";
+    return "0,0,0";
 }
 
 String get_sht45_data() {
