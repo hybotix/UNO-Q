@@ -6,6 +6,7 @@
  * - SCD30: CO2 only
  * - SHT45: Temperature and humidity
  * - BNO055: Heading, pitch, roll
+ * - TCA9548A: SparkFun Qwiic Mux Breakout 8-Channel (not yet active)
  *
  * Bridge provides:
  *   get_scd_data()         - SCD30 CO2 CSV
@@ -22,11 +23,13 @@
 #include <Adafruit_SHT4x.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
+//#include <SparkFun_I2C_Mux_Arduino_Library.h>  // TCA9548A — activate when hardware present
 
 Arduino_LED_Matrix matrix;
 Adafruit_SCD30 scd30;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x sht45;
+//QWIICMUX mux;  // TCA9548A default I2C address 0x70
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char matrix_msg[64] = " ... ";
@@ -130,6 +133,7 @@ void setup() {
     while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
+    //mux.begin(Wire1);  // TCA9548A — activate when hardware present
     Bridge.provide("get_scd_data", get_scd_data);
     Bridge.provide("get_sht45_data", get_sht45_data);
     Bridge.provide("get_bno_data", get_bno_data);
