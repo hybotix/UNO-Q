@@ -32,6 +32,7 @@ def calibrate():
         return
 
     print("SCD30: calibrating temperature offset using SHT45 reference...")
+    Bridge.call("set_matrix_msg", " Calibrating SCD30... ")
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
