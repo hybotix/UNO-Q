@@ -2,12 +2,15 @@
  * Matrix BNO Sketch
  * Hybrid RobotiX
  *
- * MCU provides SCD30 and BNO055 data, accepts display content from Python.
- * Python reads sensor data, formats message, sends to matrix.
+ * MCU provides sensor data, accepts display content from Python.
+ * - SCD30: CO2 only
+ * - SHT45: Temperature and humidity
+ * - BNO055: Heading, pitch, roll
  *
  * Bridge provides:
- *   get_scd_data()         - SCD30 CSV data
- *   get_bno_data()         - BNO055 CSV data
+ *   get_scd_data()         - SCD30 CO2 CSV
+ *   get_sht45_data()       - SHT45 temperature and humidity CSV
+ *   get_bno_data()         - BNO055 orientation CSV
  *   set_matrix_msg(String) - Display string from Python
  */
 
@@ -16,12 +19,14 @@
 #include <ArduinoGraphics.h>
 #include <Adafruit_SCD30.h>
 #include <Adafruit_BNO055.h>
+#include <SensirionI2cSht4x.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 
 Arduino_LED_Matrix matrix;
 Adafruit_SCD30 scd30;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
+SensirionI2cSht4x sht45;
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char matrix_msg[64] = " ... ";
@@ -57,11 +62,18 @@ void scrollTick() {
 String get_scd_data() {
     if (scd30.dataReady()) {
         scd30.read();
-        return String(scd30.CO2) + "," +
-               String(scd30.temperature) + "," +
-               String(scd30.relative_humidity);
+        return String(scd30.CO2);
     }
-    return "0,0,0";
+    return "0";
+}
+
+String get_sht45_data() {
+    float tempC, humidity;
+    uint16_t error = sht45.measureHighPrecision(tempC, humidity);
+    if (error == 0) {
+        return String(tempC) + "," + String(humidity);
+    }
+    return "0,0";
 }
 
 String get_bno_data() {
@@ -118,7 +130,9 @@ void setup() {
     while (!scd30.begin(0x61, &Wire1)) { delay(100); }
     while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
+    sht45.begin(Wire1, SHT40_I2C_ADDR_44);
     Bridge.provide("get_scd_data", get_scd_data);
+    Bridge.provide("get_sht45_data", get_sht45_data);
     Bridge.provide("get_bno_data", get_bno_data);
     Bridge.provide("set_matrix_msg", set_matrix_msg);
     updateScrollMetrics();
