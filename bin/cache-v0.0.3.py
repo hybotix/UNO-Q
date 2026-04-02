@@ -19,6 +19,7 @@ def load_last_app():
 
 def main():
     os.system("clear")
+    print(f"=== cache ===")
 
     if len(sys.argv) < 2:
         app_name = load_last_app()

@@ -35,6 +35,7 @@ def clear_cache(app_path):
 
 def main():
     os.system("clear")
+    print(f"=== start ===")
 
     if len(sys.argv) < 2:
         app_name = load_last_app()
