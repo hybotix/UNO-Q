@@ -1,0 +1,3 @@
+name: matrix-bno-mux
+icon: 🔀
+description: Full dual-mux sensor platform — SCD30, SHT45, BNO055, VL53L5CX, VL53L1X x4 via dual TCA9548A mux.
