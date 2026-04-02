@@ -19,14 +19,14 @@
 #include <ArduinoGraphics.h>
 #include <Adafruit_SCD30.h>
 #include <Adafruit_BNO055.h>
-#include <SensirionI2cSht4x.h>
+#include <Adafruit_SHT4x.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 
 Arduino_LED_Matrix matrix;
 Adafruit_SCD30 scd30;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
-SensirionI2cSht4x sht45;
+Adafruit_SHT4x sht45;
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char matrix_msg[64] = " ... ";
@@ -70,12 +70,9 @@ String get_scd_data() {
 }
 
 String get_sht45_data() {
-    float tempC, humidity;
-    uint16_t error = sht45.measureHighPrecision(tempC, humidity);
-    if (error == 0) {
-        return String(tempC) + "," + String(humidity);
-    }
-    return "0,0";
+    sensors_event_t humidity_event, temp_event;
+    sht45.getEvent(&humidity_event, &temp_event);
+    return String(temp_event.temperature) + "," + String(humidity_event.relative_humidity);
 }
 
 String get_bno_data() {
@@ -132,7 +129,7 @@ void setup() {
     while (!scd30.begin(0x61, &Wire1)) { delay(100); }
     while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
-    sht45.begin(Wire1, SHT40_I2C_ADDR_44);
+    sht45.begin(&Wire1);
     Bridge.provide("get_scd_data", get_scd_data);
     Bridge.provide("get_sht45_data", get_sht45_data);
     Bridge.provide("get_bno_data", get_bno_data);
