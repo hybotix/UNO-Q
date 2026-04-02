@@ -27,7 +27,7 @@ volatile float lastTempC = 0;
 volatile float lastHumidity = 0;
 
 #define MATRIX_STACK_SIZE 2048
-#define MATRIX_PRIORITY   7
+#define MATRIX_PRIORITY   14
 
 K_THREAD_STACK_DEFINE(matrix_stack, MATRIX_STACK_SIZE);
 struct k_thread matrix_thread_data;
