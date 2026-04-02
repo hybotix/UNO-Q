@@ -14,5 +14,7 @@ profiles:
       - Adafruit BusIO (1.17.4)
       - Adafruit Unified Sensor (1.1.15)
       - Adafruit SHT4x Library (1.0.5)
+      - SparkFun VL53L5CX Arduino Library (1.0.3)
+      - Adafruit VL53L1X (3.1.2)
       - ArduinoGraphics (1.1.5)
 default_profile: default
