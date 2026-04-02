@@ -25,11 +25,17 @@
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // TCA9548A — activate when hardware present
 
+// ── TCA9548A Mux configuration (not yet active) ───────────────────────────────
+//#define MUX_ADDR      0x70  // TCA9548A default I2C address
+//#define MUX_CH_SCD30  0     // SCD30 on channel 0
+//#define MUX_CH_SHT45  1     // SHT45 on channel 1
+//#define MUX_CH_BNO055 2     // BNO055 on channel 2
+
 Arduino_LED_Matrix matrix;
 Adafruit_SCD30 scd30;
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x sht45;
-//QWIICMUX mux;  // TCA9548A default I2C address 0x70
+//QWIICMUX mux;  // TCA9548A at MUX_ADDR
 
 // ── TCA9548A channel assignments (activate with mux hardware) ─────────────────
 //#define MUX_CH_VL53L5CX_FRONT  0  // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
@@ -140,7 +146,7 @@ void setup() {
     while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
-//mux.begin(Wire1);  // TCA9548A — activate when hardware present
+    //mux.begin(MUX_ADDR, Wire1);  // TCA9548A — activate when hardware present
 
     // TCA9548A channel assignments (activate with mux hardware):
     // #define MUX_CH_VL53L5CX_FRONT  0  // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
