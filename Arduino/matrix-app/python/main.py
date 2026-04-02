@@ -21,11 +21,11 @@ def loop():
 
         print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
 
-        msg = f" {temp_f:.0f}F({temp_c:.0f}C) {humidity:.0f}% {co2:.0f}ppm "
+        msg = f" {temp_f:.0f}\u00b0F({temp_c:.0f}\u00b0C) {humidity:.0f}% {co2:.0f}ppm "
         Bridge.call("set_matrix_msg", msg)
     else:
         print("SCD30: no data")
 
-    time.sleep(5)
+    time.sleep(30)
 
 App.run(user_loop=loop)
