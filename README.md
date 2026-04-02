@@ -410,6 +410,3 @@ restart ~/Arduino/securesmars/
 
 **Note:** Requires Mosquitto MQTT broker running on pimqtt (192.168.1.117). See KNOWN_ISSUES.md for current Docker networking limitation.
 
-## Known Issues
-
-See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for current open vendor issues affecting this project.
