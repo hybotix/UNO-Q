@@ -69,9 +69,14 @@ void matrixThread(void *p1, void *p2, void *p3) {
         // Wait indefinitely for a scroll trigger event
         k_event_wait(&matrix_event, 0x001, true, K_FOREVER);
 
+        matrix.beginDraw();
+        matrix.stroke(0xFFFFFFFF);
+        matrix.textScrollSpeed(50);
+        matrix.textFont(Font_5x7);
         matrix.beginText(0, 1, 0xFFFFFF);
         matrix.print(matrix_msg);
         matrix.endText(SCROLL_LEFT);
+        matrix.endDraw();
     }
 }
 
@@ -177,8 +182,6 @@ void setup() {
 
     // Initialize matrix
     matrix.begin();
-    matrix.textFont(Font_5x7);
-    matrix.textScrollSpeed(50);
 
     // Initialize Zephyr event and start matrix scroll thread
     k_event_init(&matrix_event);
