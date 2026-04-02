@@ -1,14 +1,31 @@
 from arduino.app_utils import *
+import time
 
-def log_scd_data(data):
-    """Receive SCD30 data from MCU and log it."""
-    try:
-        co2, temp_c, humidity = data.split(",")
+started = False
+
+def loop():
+    global started
+
+    if not started:
+        time.sleep(5)
+        started = True
+
+    scd_data = Bridge.call("get_scd_data")
+
+    if scd_data and scd_data != "0,0,0":
+        co2, temp_c, humidity = scd_data.split(",")
         temp_c = float(temp_c)
         temp_f = (temp_c * 9.0 / 5.0) + 32.0
-        print(f"{temp_f:.1f}°F ({temp_c:.1f}°C)  {float(humidity):.1f}%  {float(co2):.1f} ppm")
-    except Exception as e:
-        print(f"Error parsing data: {e}")
+        co2 = float(co2)
+        humidity = float(humidity)
 
-Bridge.provide("log_scd_data", log_scd_data)
-App.run()
+        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
+
+        msg = f" {temp_f:.0f}F({temp_c:.0f}C) {humidity:.0f}% {co2:.0f}ppm "
+        Bridge.call("set_matrix_msg", msg)
+    else:
+        print("SCD30: no data")
+
+    time.sleep(5)
+
+App.run(user_loop=loop)
