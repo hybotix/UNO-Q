@@ -305,6 +305,40 @@ void setup() {
     sht45.begin(&Wire1);
     //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
+    // ── SCD30 temperature offset calibration ──────────────────────────────────
+    // Use SHT45 as reference to calculate and apply SCD30 self-heating offset.
+    // Wait for valid readings from both sensors, average 5 samples for stability,
+    // then apply the offset to the SCD30. Stored in non-volatile memory so it
+    // persists across power cycles. Also improves CO2 accuracy since SCD30's
+    // internal CO2 compensation algorithm uses temperature.
+    float scd30_temp_sum = 0;
+    float sht45_temp_sum = 0;
+    int   samples        = 0;
+
+    while (samples < 5) {
+        // Wait for SCD30 data
+        while (!scd30.dataReady()) { delay(100); }
+        scd30.read();
+
+        // Read SHT45
+        sensors_event_t humidity_event, temp_event;
+        sht45.getEvent(&humidity_event, &temp_event);
+
+        scd30_temp_sum += scd30.temperature;
+        sht45_temp_sum += temp_event.temperature;
+        samples++;
+        delay(500);
+    }
+
+    float scd30_avg = scd30_temp_sum / samples;
+    float sht45_avg = sht45_temp_sum / samples;
+    float offset    = scd30_avg - sht45_avg;
+
+    // Only apply offset if it's meaningful (> 0.5°C) and reasonable (< 20°C)
+    if (offset > 0.5 && offset < 20.0) {
+        scd30.setTemperatureOffset(offset);
+    }
+
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
     Bridge.provide("get_bno_data",         get_bno_data);
