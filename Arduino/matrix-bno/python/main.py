@@ -60,7 +60,7 @@ def loop():
     if heading is not None:
         cp = compass_point(heading)
         print(f"H{heading:.1f}\u00b0{cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
-        msg2 = f" H{heading:.0f}\u00b0{cp} P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
+        msg2 = f" H{heading:.0f}\u00b0 {cp} P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
 
