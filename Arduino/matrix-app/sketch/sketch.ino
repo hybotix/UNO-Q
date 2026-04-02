@@ -94,4 +94,5 @@ void loop() {
         lastHumidity = scd30.relative_humidity;
         triggerMatrixScroll();
     }
+    delay(1);
 }
