@@ -28,6 +28,20 @@
  *   set_matrix_msg(msg)         - Set scroll message: Python sends formatted string to display
  */
 
+// ── TCA9548A Mux configuration ────────────────────────────────────────────────
+#define MUX_ADDR             0x70  // TCA9548A default I2C address on Wire1
+#define MUX_CH_VL53L5CX      0     // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
+#define MUX_CH_VL53L1X_FRONT 1     // VL53L1X long range distance — front
+#define MUX_CH_VL53L1X_REAR  2     // VL53L1X long range distance — rear
+#define MUX_CH_VL53L1X_LEFT  3     // VL53L1X long range distance — left
+#define MUX_CH_VL53L1X_RIGHT 4     // VL53L1X long range distance — right
+#define MUX_NUM_CHANNELS     5     // Total number of defined mux channels
+
+// ── Scroll configuration ──────────────────────────────────────────────────────
+#define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
+#define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
+
+// ── Includes ──────────────────────────────────────────────────────────────────
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
@@ -37,15 +51,6 @@
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
-
-// ── TCA9548A Mux configuration ────────────────────────────────────────────────
-#define MUX_ADDR             0x70  // TCA9548A default I2C address on Wire1
-#define MUX_CH_VL53L5CX      0     // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
-#define MUX_CH_VL53L1X_FRONT 1     // VL53L1X long range distance — front
-#define MUX_CH_VL53L1X_REAR  2     // VL53L1X long range distance — rear
-#define MUX_CH_VL53L1X_LEFT  3     // VL53L1X long range distance — left
-#define MUX_CH_VL53L1X_RIGHT 4     // VL53L1X long range distance — right
-#define MUX_NUM_CHANNELS     5     // Total number of defined mux channels
 
 // ── Mux channel descriptor ────────────────────────────────────────────────────
 struct MuxChannel {
@@ -75,8 +80,6 @@ static char          matrix_msg[64] = " ... ";
 static int           scroll_x = 12;
 static int           msg_pixel_width = 0;
 static unsigned long last_scroll_ms = 0;
-#define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
-#define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
 
 /**
  * Recalculate scroll width after message changes.

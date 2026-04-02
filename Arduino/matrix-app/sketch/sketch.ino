@@ -10,6 +10,11 @@
  *   set_matrix_msg(String) - Display string (Python -> MCU)
  */
 
+// ── Scroll configuration ──────────────────────────────────────────────────────
+#define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
+#define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
+
+// ── Includes ──────────────────────────────────────────────────────────────────
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
@@ -25,8 +30,6 @@ static char matrix_msg[64] = " ... ";
 static int scroll_x = 12;
 static int msg_pixel_width = 0;
 static unsigned long last_scroll_ms = 0;
-#define SCROLL_SPEED_MS  125  // Sweet spot — readable without being sluggish
-#define CHAR_WIDTH        6
 
 void updateScrollMetrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
