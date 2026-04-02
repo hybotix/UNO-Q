@@ -1,8 +1,16 @@
 from arduino.app_utils import *
 import time
-import json
+
+started = False
 
 def loop():
+    global started
+
+    # Wait for MCU Bridge to be ready on first run
+    if not started:
+        time.sleep(5)
+        started = True
+
     scd_data = Bridge.call("get_scd_data")
     bno_data = Bridge.call("get_bno_data")
 
