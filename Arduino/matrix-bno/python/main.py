@@ -6,8 +6,9 @@ import os
 PIXELS_PER_CHAR = 6
 MS_PER_PIXEL    = 125
 
-# Calibration flag file — if this exists, skip SCD30 calibration
-CALIBRATION_FILE = os.path.expanduser("~/.scd30-calibrated")
+# Calibration flag file — stored in app directory which is mounted from host
+# This persists across container rebuilds
+CALIBRATION_FILE = "/app/python/.scd30-calibrated"
 
 started = False
 
