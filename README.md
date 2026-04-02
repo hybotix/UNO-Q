@@ -352,3 +352,64 @@ Gyro Z: -0.02 rad/s
 Temp: 24.77 C
 ```
 
+
+### matrix-app
+
+Standalone LED matrix display app — no MQTT, no Python side required. Scrolls SCD30 and BNO055 sensor readings directly on the UNO Q's built-in 12x8 LED matrix. Requires ArduinoGraphics library.
+
+```
+matrix-app/
+├── app.yaml
+└── sketch/
+    ├── sketch.ino
+    └── sketch.yaml
+```
+
+Scrolls: Temperature F → Temperature C → CO2 ppm → Humidity % → Heading
+
+To run:
+
+```bash
+restart ~/Arduino/matrix-app/
+```
+
+### securesmars
+
+Full SecureSMARS robot app. Publishes SCD30 and BNO055 sensor data to MQTT broker on pimqtt, subscribes to motor commands on `smars/cmd`, and scrolls sensor data on the LED matrix.
+
+```
+securesmars/
+├── app.yaml
+├── sketch/
+│   ├── sketch.ino
+│   └── sketch.yaml
+└── python/
+    ├── main.py
+    └── secrets.py
+```
+
+MQTT topics:
+- `smars/scd` — CO2, temperature, humidity
+- `smars/bno` — full 9-DoF IMU data
+- `smars/cmd` — motor commands (subscribed)
+
+Motor command JSON format:
+```json
+{"action": "forward", "speed": 128}
+{"action": "strafe_left", "speed": 128}
+{"action": "rotate_cw", "speed": 128}
+{"action": "move", "x": 100, "y": 100, "r": 0}
+{"action": "stop"}
+```
+
+To run:
+
+```bash
+restart ~/Arduino/securesmars/
+```
+
+**Note:** Requires Mosquitto MQTT broker running on pimqtt (192.168.1.117). See KNOWN_ISSUES.md for current Docker networking limitation.
+
+## Known Issues
+
+See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for current open vendor issues affecting this project.
