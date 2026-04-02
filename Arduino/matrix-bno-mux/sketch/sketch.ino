@@ -36,22 +36,22 @@
  */
 
 // ── Mux 1 configuration (0x70) — Distance sensors ────────────────────────────
-#define MUX1_ADDR            0x70  // TCA9548A address — A0/A1/A2 all LOW
-#define MUX1_CH_VL53L5CX     0     // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
-#define MUX1_CH_VL53L1X_FRONT 1   // VL53L1X long range distance — front
-#define MUX1_CH_VL53L1X_REAR  2   // VL53L1X long range distance — rear
-#define MUX1_CH_VL53L1X_LEFT  3   // VL53L1X long range distance — left
-#define MUX1_CH_VL53L1X_RIGHT 4   // VL53L1X long range distance — right
-#define MUX1_NUM_CHANNELS    5    // Total defined channels on mux1
+#define MUX1_ADDR             0x70  // TCA9548A address — A0/A1/A2 all LOW
+#define MUX1_CH_VL53L5CX      0     // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
+#define MUX1_CH_VL53L1X_FRONT 1     // VL53L1X long range distance — front
+#define MUX1_CH_VL53L1X_REAR  2     // VL53L1X long range distance — rear
+#define MUX1_CH_VL53L1X_LEFT  3     // VL53L1X long range distance — left
+#define MUX1_CH_VL53L1X_RIGHT 4     // VL53L1X long range distance — right
+#define MUX1_NUM_CHANNELS     5     // Total defined channels on mux1
 
 // ── Mux 2 configuration (0x71) — Environmental sensors ───────────────────────
-#define MUX2_ADDR            0x71  // TCA9548A address — A0 HIGH, A1/A2 LOW
-#define MUX2_CH_SCD30        0     // SCD30 — CO2, temperature, humidity
-#define MUX2_CH_SHT45        1     // SHT45 — temperature, humidity (primary)
-#define MUX2_CH_BNO055       2     // BNO055 — 9-DoF orientation
-#define MUX2_CH_BME688       3     // BME688 — temp, humidity, pressure, VOC (planned)
-#define MUX2_CH_ENS161       4     // ENS161 — TVOC, eCO2, AQI (planned)
-#define MUX2_NUM_CHANNELS    5    // Total defined channels on mux2
+#define MUX2_ADDR             0x71  // TCA9548A address — A0 HIGH, A1/A2 LOW
+#define MUX2_CH_SCD30         0     // SCD30 — CO2, temperature, humidity
+#define MUX2_CH_SHT45         1     // SHT45 — temperature, humidity (primary)
+#define MUX2_CH_BNO055        2     // BNO055 — 9-DoF orientation
+#define MUX2_CH_BME688        3     // BME688 — temp, humidity, pressure, VOC (planned)
+#define MUX2_CH_ENS161        4     // ENS161 — TVOC, eCO2, AQI (planned)
+#define MUX2_NUM_CHANNELS     5     // Total defined channels on mux2
 
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
@@ -66,7 +66,7 @@
 #include <Adafruit_SHT4x.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
-//#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux hardware is in use
+#include <SparkFun_I2C_Mux_Arduino_Library.h>
 
 // ── Mux channel descriptor ────────────────────────────────────────────────────
 struct MuxChannel {
@@ -100,8 +100,8 @@ Arduino_LED_Matrix matrix;
 Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
-//QWIICMUX mux1;  // Uncomment when TCA9548A mux1 is in use
-//QWIICMUX mux2;  // Uncomment when TCA9548A mux2 is in use
+QWIICMUX           mux1;
+QWIICMUX           mux2;
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char          matrix_msg[64] = " ... ";
@@ -143,35 +143,40 @@ void scrollTick() {
 // ── Bridge functions ──────────────────────────────────────────────────────────
 
 /**
- * Read SCD30 CO2, temperature, and humidity.
+ * Read SCD30 CO2, temperature, and humidity via mux2 channel 0.
  * Returns: "co2,tempC,humidity" as floats (e.g. "473.2,28.1,47.5")
  * Returns: "0,0,0" if new data is not yet ready.
  * Note: SCD30 temperature reads high due to self-heating — use SHT45 for accurate temp.
  */
 String get_scd_data() {
+    mux2.setPort(MUX2_CH_SCD30);
     if (scd30.dataReady()) {
         scd30.read();
+        mux2.setPort(255);
         return String(scd30.CO2) + "," +
                String(scd30.temperature) + "," +
                String(scd30.relative_humidity);
     }
+    mux2.setPort(255);
     return "0,0,0";
 }
 
 /**
- * Read SHT45 temperature and humidity (high precision mode).
+ * Read SHT45 temperature and humidity via mux2 channel 1 (high precision mode).
  * Returns: "tempC,humidity" as floats (e.g. "23.4,48.2")
  * Primary source for temperature and humidity — more accurate than SCD30.
  */
 String get_sht45_data() {
+    mux2.setPort(MUX2_CH_SHT45);
     sensors_event_t humidity_event, temp_event;
     sht45.getEvent(&humidity_event, &temp_event);
+    mux2.setPort(255);
     return String(temp_event.temperature) + "," +
            String(humidity_event.relative_humidity);
 }
 
 /**
- * Read full BNO055 9-DoF IMU data.
+ * Read full BNO055 9-DoF IMU data via mux2 channel 2.
  * Returns: 27-field CSV string in this order:
  *   [0]  heading (deg)        [1]  pitch (deg)         [2]  roll (deg)
  *   [3]  gyro_x (rad/s)       [4]  gyro_y (rad/s)      [5]  gyro_z (rad/s)
@@ -184,6 +189,7 @@ String get_sht45_data() {
  *   [26] temperature (C)
  */
 String get_bno_data() {
+    mux2.setPort(MUX2_CH_BNO055);
     sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
     bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
     bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
@@ -195,6 +201,7 @@ String get_bno_data() {
     uint8_t sys, gyro, accel, mag;
     bno.getCalibration(&sys, &gyro, &accel, &mag);
     int8_t temp = bno.getTemp();
+    mux2.setPort(255);
 
     return String(orientationData.orientation.x) + "," +
            String(orientationData.orientation.y) + "," +
@@ -224,23 +231,24 @@ String get_bno_data() {
 }
 
 /**
- * Helper — read all active channels on a given mux channel array.
+ * Helper — read all active channels on a given mux.
  * Activates each channel, reads the sensor, then deactivates.
- * Returns: "name:value,name:value,..." for all active channels
- * Returns: "none" if no channels are currently active.
+ * Returns: "name:value,..." for all active channels, or "none".
  */
-String readMuxChannels(MuxChannel* channels, int count) {
+String readMuxChannels(QWIICMUX& mux, MuxChannel* channels, int count) {
     String result = "";
     bool   any    = false;
 
     for (int i = 0; i < count; i++) {
         if (!channels[i].active) continue;
-        // TODO: activate channel, read sensor, deactivate
+        mux.setPort(channels[i].channel);
+        // TODO: Add sensor-specific read logic here per channel
         result += String(channels[i].name) + ":0";  // placeholder
         if (i < count - 1) result += ",";
         any = true;
     }
 
+    mux.setPort(255);
     return any ? result : "none";
 }
 
@@ -249,7 +257,7 @@ String readMuxChannels(MuxChannel* channels, int count) {
  * Returns: "name:value,..." or "none" if no active channels.
  */
 String get_mux1_data() {
-    return readMuxChannels(mux1_channels, MUX1_NUM_CHANNELS);
+    return readMuxChannels(mux1, mux1_channels, MUX1_NUM_CHANNELS);
 }
 
 /**
@@ -257,12 +265,12 @@ String get_mux1_data() {
  * Returns: "name:value,..." or "none" if no active channels.
  */
 String get_mux2_data() {
-    return readMuxChannels(mux2_channels, MUX2_NUM_CHANNELS);
+    return readMuxChannels(mux2, mux2_channels, MUX2_NUM_CHANNELS);
 }
 
 /**
  * Helper — return status of all channels in a mux channel array.
- * Returns: "channel:name:active,..." for all channels
+ * Returns: "channel:name:active,..." for all channels.
  */
 String getMuxChannels(MuxChannel* channels, int count) {
     String result = "";
@@ -277,7 +285,7 @@ String getMuxChannels(MuxChannel* channels, int count) {
 
 /**
  * Return status of all mux1 channels (distance sensors).
- * Returns: "channel:name:active,..." for all MUX1_NUM_CHANNELS channels
+ * Returns: "channel:name:active,..." for all MUX1_NUM_CHANNELS channels.
  * Example: "0:VL53L5CX:false,1:FRONT:true,..."
  */
 String get_mux1_channels() {
@@ -286,7 +294,7 @@ String get_mux1_channels() {
 
 /**
  * Return status of all mux2 channels (environmental sensors).
- * Returns: "channel:name:active,..." for all MUX2_NUM_CHANNELS channels
+ * Returns: "channel:name:active,..." for all MUX2_NUM_CHANNELS channels.
  * Example: "0:SCD30:true,1:SHT45:true,..."
  */
 String get_mux2_channels() {
@@ -294,14 +302,16 @@ String get_mux2_channels() {
 }
 
 /**
- * Helper — read a single channel from a mux channel array.
- * Returns: sensor reading, "inactive", or "invalid"
+ * Helper — read a single channel from a mux.
+ * Returns: sensor reading, "inactive", or "invalid".
  */
-String getMuxChannelData(MuxChannel* channels, int count, int channel) {
+String getMuxChannelData(QWIICMUX& mux, MuxChannel* channels, int count, int channel) {
     for (int i = 0; i < count; i++) {
         if (channels[i].channel == channel) {
             if (!channels[i].active) return "inactive";
-            // TODO: activate channel, read sensor, deactivate
+            mux.setPort(channel);
+            // TODO: Add sensor-specific read logic here per channel
+            mux.setPort(255);
             return "0";  // placeholder
         }
     }
@@ -311,24 +321,24 @@ String getMuxChannelData(MuxChannel* channels, int count, int channel) {
 /**
  * Read data from a single mux1 channel (distance sensors).
  * Parameter: channel number as string (e.g. "0", "1")
- * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined
+ * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined.
  */
 String get_mux1_channel_data(String param) {
-    return getMuxChannelData(mux1_channels, MUX1_NUM_CHANNELS, param.toInt());
+    return getMuxChannelData(mux1, mux1_channels, MUX1_NUM_CHANNELS, param.toInt());
 }
 
 /**
  * Read data from a single mux2 channel (environmental sensors).
  * Parameter: channel number as string (e.g. "0", "1")
- * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined
+ * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined.
  */
 String get_mux2_channel_data(String param) {
-    return getMuxChannelData(mux2_channels, MUX2_NUM_CHANNELS, param.toInt());
+    return getMuxChannelData(mux2, mux2_channels, MUX2_NUM_CHANNELS, param.toInt());
 }
 
 /**
  * Helper — enable or disable a channel in a mux channel array.
- * Parameter: "channel,state" where state is "true" or "false"
+ * Parameter: "channel,state" where state is "true" or "false".
  */
 void setMuxChannel(MuxChannel* channels, int count, String params) {
     int comma = params.indexOf(',');
@@ -381,15 +391,22 @@ void setup() {
     matrix.clear();
     Bridge.begin();
 
-    // Direct sensor init (bypassing mux until mux hardware active)
+    // Init mux1 (distance sensors) and mux2 (environmental sensors)
+    mux1.begin(MUX1_ADDR, Wire1);
+    mux2.begin(MUX2_ADDR, Wire1);
+
+    // Init environmental sensors via mux2
+    mux2.setPort(MUX2_CH_SCD30);
     while (!scd30.begin(0x61, &Wire1)) { delay(100); }
-    while (!bno.begin())               { delay(100); }
+
+    mux2.setPort(MUX2_CH_BNO055);
+    while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
+
+    mux2.setPort(MUX2_CH_SHT45);
     sht45.begin(&Wire1);
 
-    // Mux init — uncomment when hardware is connected
-    //mux1.begin(MUX1_ADDR, Wire1);
-    //mux2.begin(MUX2_ADDR, Wire1);
+    mux2.setPort(255);  // Disable all mux2 channels
 
     Bridge.provide("get_scd_data",          get_scd_data);
     Bridge.provide("get_sht45_data",        get_sht45_data);

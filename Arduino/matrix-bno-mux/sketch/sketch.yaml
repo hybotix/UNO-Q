@@ -16,5 +16,6 @@ profiles:
       - Adafruit SHT4x Library (1.0.5)
       - SparkFun VL53L5CX Arduino Library (1.0.3)
       - Adafruit VL53L1X (3.1.2)
+      - SparkFun I2C Mux Arduino Library (1.0.3)
       - ArduinoGraphics (1.1.5)
 default_profile: default
