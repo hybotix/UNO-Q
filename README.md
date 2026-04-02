@@ -104,6 +104,28 @@ echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+## Remote Development with VSCode
+
+The recommended way to edit files on the UNO Q is via VSCode Remote-SSH. This gives you full syntax highlighting, IntelliSense, and a file browser — all editing happens directly on the UNO Q over SSH.
+
+### Setup
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) on your desktop machine
+2. Install the **Remote - SSH** extension (Microsoft, extension ID: `ms-vscode-remote.remote-ssh`)
+3. Open the Command Palette (`Ctrl+Shift+P`) and select **Remote-SSH: Add New SSH Host**
+4. Enter: `ssh arduino@unoq.local`
+5. Save to your SSH config file when prompted
+6. Open the Command Palette again and select **Remote-SSH: Connect to Host**
+7. Select `unoq.local` from the list
+8. VSCode will install its server component on the UNO Q automatically
+9. Once connected, open the folder `~/Arduino` to browse and edit your apps
+
+### Tips
+
+- The integrated terminal in VSCode runs directly on the UNO Q — use it to run `start`, `stop`, `restart`, and `logs` commands without switching windows
+- Install the **C/C++** extension after connecting for Arduino sketch syntax highlighting
+- Install the **Python** extension after connecting for Python syntax highlighting in app scripts
+
 ## Installing the Scripts
 
 Clone this repo onto the UNO Q:
