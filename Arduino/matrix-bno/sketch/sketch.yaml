@@ -13,5 +13,6 @@ profiles:
       - Adafruit BNO055 (1.6.3)
       - Adafruit BusIO (1.17.4)
       - Adafruit Unified Sensor (1.1.15)
+      - Adafruit SHT4x Library (1.0.5)
       - ArduinoGraphics (1.1.5)
 default_profile: default
