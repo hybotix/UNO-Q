@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
 import sys
 import subprocess
-import os
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: start <app_name>")
-        print("Example: start securesmars")
+        print("Usage: start <app_path>")
         sys.exit(1)
 
-    app_name = sys.argv[1]
-
-    # If full path given, use as-is. Otherwise prepend ~/Arduino/
-    if app_name.startswith("/") or app_name.startswith("~") or app_name.startswith("."):
-        app_path = app_name
-    else:
-        app_path = os.path.expanduser(f"~/Arduino/{app_name}")
+    app_path = sys.argv[1]
 
     subprocess.run(["arduino-app-cli", "app", "start", app_path])
 
