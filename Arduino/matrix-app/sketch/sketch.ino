@@ -2,8 +2,8 @@
  * Matrix App Sketch
  * Hybrid RobotiX
  *
- * MCU reads SCD30, sends data to Python for logging, drives matrix.
- * Correct Bridge pattern — MCU calls Python, not the other way around.
+ * MCU reads SCD30 and drives matrix standalone.
+ * No Bridge calls — pure MCU operation.
  */
 
 #include <Arduino_LED_Matrix.h>
@@ -44,15 +44,6 @@ void setup() {
 void loop() {
     if (scd30.dataReady()) {
         scd30.read();
-        float co2      = scd30.CO2;
-        float tempC    = scd30.temperature;
-        float humidity = scd30.relative_humidity;
-
-        // Send data to Python for logging
-        String payload = String(co2) + "," + String(tempC) + "," + String(humidity);
-        Bridge.call("log_scd_data", payload);
-
-        // Drive the matrix
-        scrollSensorData(co2, tempC, humidity);
+        scrollSensorData(scd30.CO2, scd30.temperature, scd30.relative_humidity);
     }
 }
