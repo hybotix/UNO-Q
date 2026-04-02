@@ -31,6 +31,13 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x sht45;
 //QWIICMUX mux;  // TCA9548A default I2C address 0x70
 
+// ── TCA9548A channel assignments (activate with mux hardware) ─────────────────
+//#define MUX_CH_VL53L5CX_FRONT  0  // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
+//#define MUX_CH_VL53L1X_FRONT   1  // VL53L1X long range front
+//#define MUX_CH_VL53L1X_REAR    2  // VL53L1X long range rear
+//#define MUX_CH_VL53L1X_LEFT    3  // VL53L1X long range left
+//#define MUX_CH_VL53L1X_RIGHT   4  // VL53L1X long range right
+
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char matrix_msg[64] = " ... ";
 static int scroll_x = 12;
@@ -133,7 +140,14 @@ void setup() {
     while (!bno.begin()) { delay(100); }
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
-    //mux.begin(Wire1);  // TCA9548A — activate when hardware present
+//mux.begin(Wire1);  // TCA9548A — activate when hardware present
+
+    // TCA9548A channel assignments (activate with mux hardware):
+    // #define MUX_CH_VL53L5CX_FRONT  0  // SparkFun VL53L5CX 8x8 ToF (zoned depth map)
+    // #define MUX_CH_VL53L1X_FRONT   1  // VL53L1X long range front
+    // #define MUX_CH_VL53L1X_REAR    2  // VL53L1X long range rear
+    // #define MUX_CH_VL53L1X_LEFT    3  // VL53L1X long range left
+    // #define MUX_CH_VL53L1X_RIGHT   4  // VL53L1X long range right
     Bridge.provide("get_scd_data", get_scd_data);
     Bridge.provide("get_sht45_data", get_sht45_data);
     Bridge.provide("get_bno_data", get_bno_data);
