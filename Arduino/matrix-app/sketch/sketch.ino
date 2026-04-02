@@ -180,6 +180,11 @@ void triggerMatrixScroll() {
 void setup() {
     Bridge.begin();
 
+    // Register sensor functions with Bridge immediately so Python side
+    // doesn't fail while sensors are still initializing
+    Bridge.provide("get_scd_data", get_scd_data);
+    Bridge.provide("get_bno_data", get_bno_data);
+
     // Initialize matrix
     matrix.begin();
 
@@ -190,39 +195,49 @@ void setup() {
                     matrixThread, NULL, NULL, NULL,
                     MATRIX_PRIORITY, 0, K_NO_WAIT);
 
-    // Initialize SCD30 on QWIIC bus (Wire1)
-    while (!scd30.begin(0x61, &Wire1)) {
+    // Initialize SCD30 on QWIIC bus (Wire1) — timeout after 10 seconds
+    uint32_t t = millis();
+    bool scd30_ok = false;
+    while (millis() - t < 10000) {
+        if (scd30.begin(0x61, &Wire1)) { scd30_ok = true; break; }
         delay(100);
     }
 
-    // Wait for first valid SCD30 reading
-    while (!scd30.dataReady()) {
+    if (scd30_ok) {
+        // Wait for first valid SCD30 reading — timeout after 10 seconds
+        t = millis();
+        while (millis() - t < 10000 && !scd30.dataReady()) {
+            delay(100);
+        }
+        if (scd30.dataReady()) {
+            scd30.read();
+            lastCO2      = scd30.CO2;
+            lastTempC    = scd30.temperature;
+            lastHumidity = scd30.relative_humidity;
+        }
+    }
+
+    // Initialize BNO055 on QWIIC bus (Wire1) — timeout after 10 seconds
+    t = millis();
+    bool bno_ok = false;
+    while (millis() - t < 10000) {
+        if (bno.begin()) { bno_ok = true; break; }
         delay(100);
     }
-    scd30.read();
-    lastCO2      = scd30.CO2;
-    lastTempC    = scd30.temperature;
-    lastHumidity = scd30.relative_humidity;
 
-    // Initialize BNO055 on QWIIC bus (Wire1), use external crystal
-    while (!bno.begin()) {
-        delay(100);
+    if (bno_ok) {
+        bno.setExtCrystalUse(true);
+
+        // Get initial BNO055 heading
+        sensors_event_t orientationData;
+        bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
+        lastHeading = orientationData.orientation.x;
+        lastPitch   = orientationData.orientation.y;
+        lastRoll    = orientationData.orientation.z;
     }
-    bno.setExtCrystalUse(true);
-
-    // Get initial BNO055 heading
-    sensors_event_t orientationData;
-    bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-    lastHeading = orientationData.orientation.x;
-    lastPitch   = orientationData.orientation.y;
-    lastRoll    = orientationData.orientation.z;
 
     // Trigger first matrix scroll
     triggerMatrixScroll();
-
-    // Register sensor functions with Bridge
-    Bridge.provide("get_scd_data", get_scd_data);
-    Bridge.provide("get_bno_data", get_bno_data);
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
