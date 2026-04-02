@@ -7,6 +7,12 @@ MS_PER_PIXEL    = 125
 
 started = False
 
+def compass_point(heading):
+    """Return 8-point compass direction for a heading in degrees."""
+    points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    index = int((heading + 22.5) / 45) % 8
+    return points[index]
+
 def scroll_duration(msg):
     """Calculate how long the message takes to scroll once in seconds."""
     return len(msg) * PIXELS_PER_CHAR * MS_PER_PIXEL / 1000
@@ -42,8 +48,9 @@ def loop():
         if bno_data:
             pitch = float(values[1])
             roll  = float(values[2])
-            print(f"H{heading:.1f}\u00b0  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
-            msg2 = f" H{heading:.0f}\u00b0 P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
+            cp    = compass_point(heading)
+            print(f"H{heading:.1f}\u00b0{cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
+            msg2 = f" H{heading:.0f}\u00b0{cp} P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
             Bridge.call("set_matrix_msg", msg2)
             time.sleep(scroll_duration(msg2))
     else:
