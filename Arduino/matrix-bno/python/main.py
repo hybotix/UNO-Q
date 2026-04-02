@@ -35,10 +35,17 @@ def loop():
 
         print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm  {heading:.1f}\u00b0")
 
-        msg = f" {temp_f:.0f}\u00b0F({temp_c:.0f}\u00b0C) {humidity:.0f}% {co2:.0f}ppm {heading:.0f}\u00b0 "
-        Bridge.call("set_matrix_msg", msg)
+        msg1 = f" {temp_f:.0f}\u00b0F({temp_c:.0f}\u00b0C) {humidity:.0f}% {co2:.0f}ppm "
+        Bridge.call("set_matrix_msg", msg1)
+        time.sleep(scroll_duration(msg1))
 
-        time.sleep(scroll_duration(msg))
+        if bno_data:
+            pitch = float(values[1])
+            roll  = float(values[2])
+            print(f"H{heading:.1f}\u00b0  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
+            msg2 = f" H{heading:.0f}\u00b0 P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
+            Bridge.call("set_matrix_msg", msg2)
+            time.sleep(scroll_duration(msg2))
     else:
         print("SCD30: no data")
         time.sleep(5)
