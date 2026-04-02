@@ -1,0 +1,3 @@
+name: matrix-bno
+icon: 🧭
+description: Scrolls SCD30 and BNO055 sensor readings on the UNO Q LED matrix.
