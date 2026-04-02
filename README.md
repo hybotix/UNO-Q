@@ -110,17 +110,17 @@ Clone this repo onto the UNO Q:
 
 ```bash
 mkdir -p ~/Repos/GitHub/hybotix
-git clone https://github.com/hybotix/UNO-Q.git ~/Repos/GitHub/hybotix/UNO-Q
+git clone https://github.com/hybotix/UNO-Q.git ~/arduino
 ```
 
 Create symlinks in `~/bin`:
 
 ```bash
 mkdir -p ~/bin
-ln -s ~/Repos/GitHub/hybotix/UNO-Q/build-v0.0.1.py ~/bin/build
-ln -s ~/Repos/GitHub/hybotix/UNO-Q/start-v0.0.1.py ~/bin/start
-ln -s ~/Repos/GitHub/hybotix/UNO-Q/restart-v0.0.1.py ~/bin/restart
-ln -s ~/Repos/GitHub/hybotix/UNO-Q/stop-v0.0.1.py ~/bin/stop
+ln -s ~/arduino/build-v0.0.1.py ~/bin/build
+ln -s ~/arduino/start-v0.0.1.py ~/bin/start
+ln -s ~/arduino/restart-v0.0.1.py ~/bin/restart
+ln -s ~/arduino/stop-v0.0.1.py ~/bin/stop
 chmod +x ~/bin/build ~/bin/start ~/bin/restart ~/bin/stop
 ```
 
