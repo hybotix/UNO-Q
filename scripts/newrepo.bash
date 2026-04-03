@@ -10,11 +10,12 @@
 # This script lives in $HOME and is NEVER stored in the repo.
 # Copy it manually to $HOME on any new UNO Q for the first run:
 #   cp ~/Repos/GitHub/hybotix/UNO-Q/scripts/newrepo.bash ~/newrepo.bash
-# After the first run, it installs itself as ~/bin/newrepo automatically.
+#
+# After the first run, the start command installs ~/bin/newrepo automatically.
 #
 # Usage:
 #   bash ~/newrepo.bash   # first time
-#   newrepo               # after first run
+#   newrepo               # after first start
 #
 
 REPO_DEST="$HOME/Repos/GitHub/hybotix/UNO-Q"
@@ -27,13 +28,6 @@ rm -rf Arduino bin Repos
 git clone $REPO $REPO_DEST
 cd $REPO_DEST
 cp -rp Arduino bin $HOME
-
-#
-# Install newrepo command to ~/bin
-#
-cp $REPO_DEST/scripts/newrepo.bash $HOME/bin/newrepo
-chmod +x $HOME/bin/newrepo
-echo "Installed: newrepo -> ~/bin/newrepo"
 
 #
 #   Copy secrets.py.template to app directories
