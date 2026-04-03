@@ -56,9 +56,10 @@ def loop():
         calibrate()
         started = True
 
-    scd_data = Bridge.call("get_scd_data")
-    sht_data = Bridge.call("get_sht45_data")
-    bno_data = Bridge.call("get_bno_data")
+    scd_data   = Bridge.call("get_scd_data")
+    sht_data   = Bridge.call("get_sht45_data")
+    bno_data   = Bridge.call("get_bno_data")
+    veml_data  = Bridge.call("get_veml7700_data")
 
     co2      = None
     temp_c   = None
@@ -66,6 +67,7 @@ def loop():
     heading  = None
     pitch    = None
     roll     = None
+    lux      = None
 
     if scd_data and scd_data != "0,0,0":
         co2 = float(scd_data.split(",")[0])
@@ -81,18 +83,23 @@ def loop():
         pitch   = float(values[1])
         roll    = float(values[2])
 
+    if veml_data and veml_data != "0,0,0":
+        lux = float(veml_data.split(",")[0])
+
+    # Message 1 — environmental data (always first)
     if temp_c is not None and co2 is not None:
         temp_f = (temp_c * 9.0 / 5.0) + 32.0
-        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
-
-        msg1 = f" {temp_f:.0f}\u00b0F({temp_c:.0f}\u00b0C) {humidity:.0f}% {co2:.0f}ppm "
+        lux_str = f" {lux:.1f}lx" if lux is not None else ""
+        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm{lux_str}")
+        msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm{lux_str} "
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
 
+    # Message 2 — orientation data
     if heading is not None:
         cp = compass_point(heading)
         print(f"H{heading:.1f}\u00b0 {cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
-        msg2 = f" H{heading:.0f}\u00b0 {cp} P{pitch:.0f}\u00b0 R{roll:.0f}\u00b0 "
+        msg2 = f" H{heading:.1f}\u00b0 {cp} P{pitch:.1f}\u00b0 R{roll:.1f}\u00b0 "
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
 

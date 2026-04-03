@@ -48,6 +48,7 @@
 #include <Adafruit_SCD30.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
+#include <Adafruit_VEML7700.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
@@ -73,6 +74,7 @@ Arduino_LED_Matrix matrix;
 Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
+Adafruit_VEML7700  veml7700;
 //QWIICMUX mux;  // Uncomment when TCA9548A is in use
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
@@ -335,6 +337,21 @@ String calibrate_scd30() {
 }
 
 
+/**
+ * Read VEML7700 ambient light sensor.
+ * Returns: "lux,white,raw_als" as floats
+ *   lux     — calculated lux value
+ *   white   — white channel reading
+ *   raw_als — raw ALS channel reading
+ */
+String get_veml7700_data() {
+    float lux   = veml7700.readLux();
+    float white = veml7700.readWhite();
+    float als   = veml7700.readALS();
+    return String(lux, 2) + "," + String(white, 2) + "," + String(als, 2);
+}
+
+
 void setup() {
     matrix.begin();
     matrix.clear();
@@ -343,11 +360,13 @@ void setup() {
     while (!bno.begin())               { delay(100); }
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
+    veml7700.begin(&Wire1);
     //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
     Bridge.provide("get_bno_data",         get_bno_data);
+    Bridge.provide("get_veml7700_data",    get_veml7700_data);
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);
