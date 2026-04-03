@@ -16,7 +16,7 @@ started = False
 def compass_point(heading):
     """Return 8-point compass direction for a heading in degrees."""
     points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    index = int((heading + 22.5) / 45) % 8
+    index  = int((heading + 22.5) / 45) % 8
     return points[index]
 
 def scroll_duration(msg):
@@ -35,9 +35,11 @@ def calibrate():
 
     print("SCD30: calibrating temperature offset using SHT45 reference...")
     cal_msg = " Calibrating SCD-30... "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", cal_msg)
         time.sleep(scroll_duration(cal_msg))
+
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
@@ -60,9 +62,12 @@ def parse_as7343(data):
     """
     if not data or data == "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
         return None
+
     values = [int(v) for v in data.split(",")]
+
     if len(values) != 14:
         return None
+
     return {
         "F1_405nm":   values[0],
         "F2_425nm":   values[1],
@@ -97,6 +102,7 @@ def scroll_as7343(spectral):
     clear = spectral["CLEAR"]
     print(f"Visible: B={blue} G={green} R={red} Clear={clear}")
     msg3a = f" B:{blue} G:{green} R:{red} Clr:{clear} "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg3a)
         time.sleep(scroll_duration(msg3a))
@@ -108,10 +114,10 @@ def scroll_as7343(spectral):
     nir     = spectral["NIR"]
     print(f"NIR: 910={nir910} 940={nir940} 1000={nir1000} NIR={nir}")
     msg3b = f" 910:{nir910} 940:{nir940} NIR:{nir} "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg3b)
         time.sleep(scroll_duration(msg3b))
-
 
 def parse_apds9999(data):
     """
@@ -121,9 +127,12 @@ def parse_apds9999(data):
     """
     if not data or data == "0,0,0,0,0,0":
         return None
+
     values = data.split(",")
+
     if len(values) != 6:
         return None
+
     return {
         "proximity": int(values[0]),
         "lux":       float(values[1]),
@@ -140,50 +149,19 @@ def scroll_apds9999(apds):
     """
     if apds is None:
         return
+
     proximity = apds["proximity"]
     lux       = apds["lux"]
     r         = apds["r"]
     g         = apds["g"]
     b         = apds["b"]
+    ir        = apds["ir"]
     print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} IR:{ir}")
     msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg)
         time.sleep(scroll_duration(msg))
-
-
-def parse_sgp41(data):
-    """
-    Parse SGP41 VOC and NOx raw signals.
-    Returns dict or None if data unavailable.
-    Fields: voc_raw, nox_raw
-    Use Sensirion algorithm to convert raw to index values.
-    """
-    if not data or data == "0,0":
-        return None
-    values = data.split(",")
-    if len(values) != 2:
-        return None
-    return {
-        "voc_raw": int(values[0]),
-        "nox_raw": int(values[1]),
-    }
-
-def scroll_sgp41(sgp):
-    """
-    Scroll SGP41 VOC and NOx raw signal data.
-    Call this from loop() when SGP41 is connected.
-    """
-    if sgp is None:
-        return
-    voc = sgp["voc_raw"]
-    nox = sgp["nox_raw"]
-    print(f"VOC:{voc} NOx:{nox}")
-    msg = f" VOC:{voc} NOx:{nox} "
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", msg)
-        time.sleep(scroll_duration(msg))
-
 
 def parse_sgp41(data):
     """
@@ -194,9 +172,12 @@ def parse_sgp41(data):
     """
     if not data or data == "0,0":
         return None
+
     values = data.split(",")
+
     if len(values) != 2:
         return None
+
     return {
         "voc_raw": int(values[0]),
         "nox_raw": int(values[1]),
@@ -209,10 +190,12 @@ def scroll_sgp41(sgp):
     """
     if sgp is None:
         return
+
     voc = sgp["voc_raw"]
     nox = sgp["nox_raw"]
     print(f"VOC:{voc} NOx:{nox}")
     msg = f" VOC:{voc} NOx:{nox} "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg)
         time.sleep(scroll_duration(msg))
@@ -226,18 +209,20 @@ def loop():
         # Wait for valid SCD30 data before starting scroll
         while True:
             scd_check = Bridge.call("get_scd_data")
+
             if scd_check and scd_check != "0,0,0":
                 break
+
             time.sleep(1)
+
         started = True
 
     scd_data  = Bridge.call("get_scd_data")
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno_data")
-    # as7343_data = Bridge.call("get_as7343_data")  # Uncomment when AS7343 connected
+    # as7343_data   = Bridge.call("get_as7343_data")    # Uncomment when AS7343 connected
     # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
-    # sgp41_data = Bridge.call("get_sgp41_data")  # Uncomment when SGP41 connected
-    # sgp41_data = Bridge.call("get_sgp41_data")  # Uncomment when SGP41 connected
+    # sgp41_data    = Bridge.call("get_sgp41_data")     # Uncomment when SGP41 connected
 
     co2      = None
     temp_c   = None
@@ -247,7 +232,6 @@ def loop():
     roll     = None
     spectral = None
     apds     = None
-    sgp      = None
     sgp      = None
 
     if scd_data and scd_data != "0,0,0":
@@ -264,10 +248,9 @@ def loop():
         pitch   = float(values[1])
         roll    = float(values[2])
 
-    # spectral = parse_as7343(as7343_data)  # Uncomment when AS7343 connected
-    # apds = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
-    # sgp = parse_sgp41(sgp41_data)  # Uncomment when SGP41 connected
-    # sgp = parse_sgp41(sgp41_data)  # Uncomment when SGP41 connected
+    # spectral = parse_as7343(as7343_data)      # Uncomment when AS7343 connected
+    # apds     = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
+    # sgp      = parse_sgp41(sgp41_data)        # Uncomment when SGP41 connected
 
     # Skip loop iteration if primary sensor data not ready
     if temp_c is None or co2 is None:
@@ -278,6 +261,7 @@ def loop():
     temp_f = (temp_c * 9.0 / 5.0) + 32.0
     print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.0f} ppm")
     msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.0f} ppm "
+
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
@@ -287,15 +271,18 @@ def loop():
         cp = compass_point(heading)
         print(f"H{heading:.1f}\u00b0 {cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
         msg2 = f" H{heading:.1f}\u00b0 {cp} P{pitch:.1f}\u00b0 R{roll:.1f}\u00b0 "
+
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg2)
             time.sleep(scroll_duration(msg2))
 
-    # Message 3 — AS7343 spectral data
-    # Uncomment when AS7343 is connected:
+    # Message 3 — AS7343 spectral data (uncomment when connected)
     # scroll_as7343(spectral)
+
+    # Message 4 — APDS9999 proximity/color data (uncomment when connected)
     # scroll_apds9999(apds)
-    # scroll_sgp41(sgp)
+
+    # Message 5 — SGP41 VOC/NOx data (uncomment when connected)
     # scroll_sgp41(sgp)
 
 App.run(user_loop=loop)
