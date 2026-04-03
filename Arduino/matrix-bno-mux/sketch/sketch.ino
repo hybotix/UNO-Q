@@ -504,6 +504,21 @@ String get_sgp41_data() {
     return String(voc_raw) + "," + String(nox_raw);
 }
 
+/**
+ * Read SGP41 VOC and NOx gas sensor via mux2 channel 7.
+ * Returns: "voc_raw,nox_raw" as integers
+ *   voc_raw — raw VOC signal (0-65535)
+ *   nox_raw — raw NOx signal (0-65535)
+ * Use Sensirion VOC/NOx algorithm for index values.
+ */
+String get_sgp41_data() {
+    mux2.setPort(MUX2_CH_SGP41);
+    uint16_t voc_raw, nox_raw;
+    sgp41.measureRawSignals(voc_raw, nox_raw);
+    mux2.setPort(255);
+    return String(voc_raw) + "," + String(nox_raw);
+}
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
     matrix.begin();
@@ -534,6 +549,9 @@ void setup() {
     //mux2.setPort(MUX2_CH_SGP41);
     //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
 
+    //mux2.setPort(MUX2_CH_SGP41);
+    //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
+
     mux2.setPort(255);  // Disable all mux2 channels
 
     Bridge.provide("get_scd_data",          get_scd_data);
@@ -541,6 +559,7 @@ void setup() {
     Bridge.provide("get_bno_data",          get_bno_data);
     Bridge.provide("get_as7343_data",     get_as7343_data);
     Bridge.provide("get_apds9999_data",   get_apds9999_data);
+    Bridge.provide("get_sgp41_data",      get_sgp41_data);
     Bridge.provide("get_sgp41_data",      get_sgp41_data);
     Bridge.provide("get_mux1_data",         get_mux1_data);
     Bridge.provide("get_mux2_data",         get_mux2_data);

@@ -178,6 +178,38 @@ def scroll_sgp41(sgp):
     Bridge.call("set_matrix_msg", msg)
     time.sleep(scroll_duration(msg))
 
+
+def parse_sgp41(data):
+    """
+    Parse SGP41 VOC and NOx raw signals.
+    Returns dict or None if data unavailable.
+    Fields: voc_raw, nox_raw
+    Use Sensirion VOC/NOx algorithm for index conversion.
+    """
+    if not data or data == "0,0":
+        return None
+    values = data.split(",")
+    if len(values) != 2:
+        return None
+    return {
+        "voc_raw": int(values[0]),
+        "nox_raw": int(values[1]),
+    }
+
+def scroll_sgp41(sgp):
+    """
+    Scroll SGP41 VOC and NOx raw signal data.
+    Call this from loop() when SGP41 is connected.
+    """
+    if sgp is None:
+        return
+    voc = sgp["voc_raw"]
+    nox = sgp["nox_raw"]
+    print(f"VOC:{voc} NOx:{nox}")
+    msg = f" VOC:{voc} NOx:{nox} "
+    Bridge.call("set_matrix_msg", msg)
+    time.sleep(scroll_duration(msg))
+
 def loop():
     global started
 
@@ -198,6 +230,7 @@ def loop():
     # as7343_data = Bridge.call("get_as7343_data")  # Uncomment when AS7343 connected
     # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
     # sgp41_data = Bridge.call("get_sgp41_data")  # Uncomment when SGP41 connected
+    # sgp41_data = Bridge.call("get_sgp41_data")  # Uncomment when SGP41 connected
 
     co2      = None
     temp_c   = None
@@ -207,6 +240,7 @@ def loop():
     roll     = None
     spectral = None
     apds     = None
+    sgp      = None
     sgp      = None
 
     if scd_data and scd_data != "0,0,0":
@@ -225,6 +259,7 @@ def loop():
 
     # spectral = parse_as7343(as7343_data)  # Uncomment when AS7343 connected
     # apds = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
+    # sgp = parse_sgp41(sgp41_data)  # Uncomment when SGP41 connected
     # sgp = parse_sgp41(sgp41_data)  # Uncomment when SGP41 connected
 
     # Skip loop iteration if primary sensor data not ready
@@ -251,6 +286,7 @@ def loop():
     # Uncomment when AS7343 is connected:
     # scroll_as7343(spectral)
     # scroll_apds9999(apds)
+    # scroll_sgp41(sgp)
     # scroll_sgp41(sgp)
 
 App.run(user_loop=loop)
