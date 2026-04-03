@@ -16,12 +16,12 @@
  * Mux 2 (MUX2_ADDR 0x71) — Environmental sensors:
  *   Ch 0: SCD30  — CO2, temperature, humidity
  *   Ch 1: SHT45  — Temperature, humidity (primary temp/humidity source)
- *   Ch 2: BNO055 — 9-DoF orientation
+ *   Ch 2: SGP41   — VOC & NOx gas sensor (planned)
  *   Ch 3: BME688 — Temperature, humidity, pressure, VOC (planned)
  *   Ch 4: ENS161 — TVOC, eCO2, AQI (planned)
  *   Ch 5: AS7343   — 14-channel spectral/color sensor (planned)
  *   Ch 6: APDS9999 — proximity, lux, RGB color (planned)
- *   Ch 7: SGP41   — VOC & NOx gas sensor (planned)
+ *   Ch 7: BNO055 — 9-DoF orientation
  *
  * Bridge functions exposed to Python:
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
@@ -52,12 +52,12 @@
 #define MUX2_ADDR             0x71  // TCA9548A address — A0 HIGH, A1/A2 LOW
 #define MUX2_CH_SCD30         0     // SCD30 — CO2, temperature, humidity
 #define MUX2_CH_SHT45         1     // SHT45 — temperature, humidity (primary)
-#define MUX2_CH_BNO055        2     // BNO055 — 9-DoF orientation
+#define MUX2_CH_BNO055        7     // BNO055 — 9-DoF orientation
 #define MUX2_CH_BME688        3     // BME688 — temp, humidity, pressure, VOC (planned)
 #define MUX2_CH_ENS161        4     // ENS161 — TVOC, eCO2, AQI (planned)
 #define MUX2_CH_AS7343        5     // AS7343 — 14-channel spectral/color sensor (planned)
 #define MUX2_CH_APDS9999      6     // APDS9999 — proximity, lux, RGB color (planned)
-#define MUX2_CH_SGP41         7     // SGP41 — VOC & NOx gas sensor (planned)
+#define MUX2_CH_SGP41         2     // SGP41 — VOC & NOx gas sensor (planned)
 #define MUX2_NUM_CHANNELS     8     // Total defined channels on mux2
 
 // ── Scroll configuration ──────────────────────────────────────────────────────
