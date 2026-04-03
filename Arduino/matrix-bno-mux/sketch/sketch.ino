@@ -21,6 +21,7 @@
  *   Ch 4: ENS161 — TVOC, eCO2, AQI (planned)
  *   Ch 5: AS7343   — 14-channel spectral/color sensor (planned)
  *   Ch 6: APDS9999 — proximity, lux, RGB color (planned)
+ *   Ch 7: SGP41   — VOC & NOx gas sensor (planned)
  *
  * Bridge functions exposed to Python:
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
@@ -56,7 +57,8 @@
 #define MUX2_CH_ENS161        4     // ENS161 — TVOC, eCO2, AQI (planned)
 #define MUX2_CH_AS7343        5     // AS7343 — 14-channel spectral/color sensor (planned)
 #define MUX2_CH_APDS9999      6     // APDS9999 — proximity, lux, RGB color (planned)
-#define MUX2_NUM_CHANNELS     7     // Total defined channels on mux2
+#define MUX2_CH_SGP41         7     // SGP41 — VOC & NOx gas sensor (planned)
+#define MUX2_NUM_CHANNELS     8     // Total defined channels on mux2
 
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
@@ -72,6 +74,7 @@
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
 #include <Adafruit_AS7343.h>
 #include <Adafruit_APDS9999.h>
+#include <Adafruit_SGP41.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 #include <SparkFun_I2C_Mux_Arduino_Library.h>
@@ -103,6 +106,7 @@ MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
     { MUX2_CH_ENS161,  "ENS161",  false },
     { MUX2_CH_AS7343,  "AS7343",  false },
     { MUX2_CH_APDS9999, "APDS9999", false },
+    { MUX2_CH_SGP41,   "SGP41",   false },
 };
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
@@ -113,6 +117,7 @@ Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
 Adafruit_AS7343    as7343;
 Adafruit_APDS9999  apds9999;
+Adafruit_SGP41     sgp41;
 QWIICMUX           mux1;
 QWIICMUX           mux2;
 
@@ -484,6 +489,21 @@ String get_apds9999_data() {
            String(ir);
 }
 
+/**
+ * Read SGP41 VOC and NOx gas sensor via mux2 channel 7.
+ * Returns: "voc_raw,nox_raw" as integers
+ *   voc_raw — raw VOC signal (0-65535)
+ *   nox_raw — raw NOx signal (0-65535)
+ * Use Sensirion VOC/NOx algorithm for index values.
+ */
+String get_sgp41_data() {
+    mux2.setPort(MUX2_CH_SGP41);
+    uint16_t voc_raw, nox_raw;
+    sgp41.measureRawSignals(voc_raw, nox_raw);
+    mux2.setPort(255);
+    return String(voc_raw) + "," + String(nox_raw);
+}
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
     matrix.begin();
@@ -511,6 +531,9 @@ void setup() {
     //mux2.setPort(MUX2_CH_APDS9999);
     //apds9999.begin(&Wire1);  // Uncomment when APDS9999 is connected
 
+    //mux2.setPort(MUX2_CH_SGP41);
+    //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
+
     mux2.setPort(255);  // Disable all mux2 channels
 
     Bridge.provide("get_scd_data",          get_scd_data);
@@ -518,6 +541,7 @@ void setup() {
     Bridge.provide("get_bno_data",          get_bno_data);
     Bridge.provide("get_as7343_data",     get_as7343_data);
     Bridge.provide("get_apds9999_data",   get_apds9999_data);
+    Bridge.provide("get_sgp41_data",      get_sgp41_data);
     Bridge.provide("get_mux1_data",         get_mux1_data);
     Bridge.provide("get_mux2_data",         get_mux2_data);
     Bridge.provide("get_mux1_channels",     get_mux1_channels);

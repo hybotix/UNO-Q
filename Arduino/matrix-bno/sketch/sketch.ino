@@ -52,6 +52,7 @@
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
 #include <Adafruit_AS7343.h>
 #include <Adafruit_APDS9999.h>
+#include <Adafruit_SGP41.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
@@ -80,6 +81,7 @@ Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
 Adafruit_AS7343    as7343;
 Adafruit_APDS9999  apds9999;
+Adafruit_SGP41     sgp41;
 //QWIICMUX mux;  // Uncomment when TCA9548A is in use
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
@@ -380,6 +382,20 @@ String get_apds9999_data() {
 }
 
 
+/**
+ * Read SGP41 VOC and NOx gas sensor.
+ * Returns: "voc_raw,nox_raw" as integers
+ *   voc_raw — raw VOC signal (0-65535)
+ *   nox_raw — raw NOx signal (0-65535)
+ * Use Sensirion VOC/NOx algorithm for index values.
+ */
+String get_sgp41_data() {
+    uint16_t voc_raw, nox_raw;
+    sgp41.measureRawSignals(voc_raw, nox_raw);
+    return String(voc_raw) + "," + String(nox_raw);
+}
+
+
 void setup() {
     matrix.begin();
     matrix.clear();
@@ -390,6 +406,7 @@ void setup() {
     sht45.begin(&Wire1);
     //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
     //apds9999.begin(&Wire1);  // Uncomment when APDS9999 is connected
+    //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
     //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
     Bridge.provide("get_scd_data",         get_scd_data);
@@ -397,6 +414,7 @@ void setup() {
     Bridge.provide("get_bno_data",         get_bno_data);
     Bridge.provide("get_as7343_data",    get_as7343_data);
     Bridge.provide("get_apds9999_data",  get_apds9999_data);
+    Bridge.provide("get_sgp41_data",     get_sgp41_data);
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);

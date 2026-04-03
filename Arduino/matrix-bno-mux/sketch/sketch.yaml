@@ -16,6 +16,7 @@ profiles:
       - Adafruit SHT4x Library (1.0.5)
       - Adafruit AS7343 (1.1.0)
       - Adafruit APDS9999 (1.0.2)
+      - Adafruit SGP41 (1.0.1)
       - SparkFun VL53L5CX Arduino Library (1.0.3)
       - Adafruit VL53L1X (3.1.2)
       - SparkFun I2C Mux Arduino Library (1.0.3)
