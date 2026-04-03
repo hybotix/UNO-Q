@@ -6,26 +6,33 @@
  * Python is the controller — it reads all sensors, formats display
  * messages, and sends them back to the MCU for display.
  *
- * Sensors:
- *   - SCD30:   CO2 (ppm), temperature (C), humidity (%)
- *   - SHT45:   Temperature (C), humidity (%) — primary temp/humidity source
- *   - BNO055:  9-DoF orientation — heading, pitch, roll + full IMU data
- *   - TCA9548A: SparkFun Qwiic Mux Breakout 8-Channel (not yet active)
- *     Ch 0: SparkFun VL53L5CX — 8x8 ToF zoned depth map
- *     Ch 1: VL53L1X — long range front distance
- *     Ch 2: VL53L1X — long range rear distance
- *     Ch 3: VL53L1X — long range left distance
- *     Ch 4: VL53L1X — long range right distance
+ * Sensors (direct QWIIC — no mux):
+ *   - SCD30:    CO2 (ppm), temperature (C), humidity (%)
+ *   - SHT45:    Temperature (C), humidity (%) — primary temp/humidity source
+ *   - BNO055:   9-DoF orientation — heading, pitch, roll + full IMU data
+ *   - AS7343:   14-channel spectral/color sensor
+ *   - APDS9999: Proximity, lux, RGB color
+ *   - SGP41:    VOC & NOx gas sensor
+ *
+ * Mux 1 (MUX_ADDR 0x70) — Distance sensors (pending hardware):
+ *   Ch 0: SparkFun VL53L5CX — 8x8 ToF zoned depth map
+ *   Ch 1: VL53L1X — long range front distance
+ *   Ch 2: VL53L1X — long range rear distance
+ *   Ch 3: VL53L1X — long range left distance
+ *   Ch 4: VL53L1X — long range right distance
  *
  * Bridge functions exposed to Python:
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
  *   get_sht45_data()            - Read SHT45: returns "tempC,humidity"
  *   get_bno_data()              - Read BNO055: returns full 27-field CSV
- *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV (planned)
+ *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV
+ *   get_apds9999_data()         - Read APDS9999: returns "proximity,lux,r,g,b,ir"
+ *   get_sgp41_data()            - Read SGP41: returns "voc_raw,nox_raw"
  *   get_mux_data()              - Read all active mux channels: returns "name:value,..." or "none"
  *   get_mux_channels()          - List all channels: returns "ch:name:active,..."
  *   get_mux_channel_data(ch)    - Read one mux channel: returns value or "inactive"/"invalid"
  *   set_mux_channel(ch,active)  - Enable/disable a mux channel: params "ch,true|false"
+ *   calibrate_scd30()           - Calibrate SCD30 temp offset using SHT45: returns "offset:X.XX"
  *   set_matrix_msg(msg)         - Set scroll message: Python sends formatted string to display
  */
 
