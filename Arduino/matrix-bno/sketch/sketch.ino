@@ -371,7 +371,7 @@ void setup() {
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
     Bridge.provide("get_bno_data",         get_bno_data);
-    //Bridge.provide("get_as7343_data",    get_as7343_data);  // Uncomment when AS7343 is connected
+    Bridge.provide("get_as7343_data",    get_as7343_data);
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);
