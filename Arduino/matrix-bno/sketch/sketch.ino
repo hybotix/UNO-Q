@@ -50,7 +50,7 @@
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
-//#include <Adafruit_AS7343.h>         // Uncomment when AS7343 is connected
+#include <Adafruit_AS7343.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
@@ -77,7 +77,7 @@ Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
-//Adafruit_AS7343    as7343;           // Uncomment when AS7343 is connected
+Adafruit_AS7343    as7343;
 //QWIICMUX mux;  // Uncomment when TCA9548A is in use
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
@@ -344,18 +344,17 @@ String calibrate_scd30() {
  * Read AS7343 14-channel spectral/color sensor.
  * Returns: "ch0,ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10,ch11,ch12,ch13" — raw channel counts
  * Channels cover 400nm–1000nm visible and NIR spectrum.
- * Uncomment when AS7343 is physically connected.
  */
-//String get_as7343_data() {
-//    uint16_t readings[14];
-//    as7343.readAllChannels(readings);
-//    String result = "";
-//    for (int i = 0; i < 14; i++) {
-//        result += String(readings[i]);
-//        if (i < 13) result += ",";
-//    }
-//    return result;
-//}
+String get_as7343_data() {
+    uint16_t readings[14];
+    as7343.readAllChannels(readings);
+    String result = "";
+    for (int i = 0; i < 14; i++) {
+        result += String(readings[i]);
+        if (i < 13) result += ",";
+    }
+    return result;
+}
 
 
 void setup() {

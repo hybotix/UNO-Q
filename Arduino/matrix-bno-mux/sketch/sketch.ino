@@ -68,7 +68,7 @@
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
-//#include <Adafruit_AS7343.h>         // Uncomment when AS7343 is connected
+#include <Adafruit_AS7343.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 #include <SparkFun_I2C_Mux_Arduino_Library.h>
@@ -107,7 +107,7 @@ Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
-//Adafruit_AS7343    as7343;           // Uncomment when AS7343 is connected
+Adafruit_AS7343    as7343;
 QWIICMUX           mux1;
 QWIICMUX           mux2;
 
@@ -443,20 +443,19 @@ String calibrate_scd30() {
  * Read AS7343 14-channel spectral/color sensor via mux2 channel 5.
  * Returns: "ch0,ch1,...,ch13" — 14 raw spectral channel counts
  * Channels span 400nm–1000nm visible and NIR spectrum.
- * Uncomment when AS7343 is physically connected.
  */
-//String get_as7343_data() {
-//    mux2.setPort(MUX2_CH_AS7343);
-//    uint16_t readings[14];
-//    as7343.readAllChannels(readings);
-//    mux2.setPort(255);
-//    String result = "";
-//    for (int i = 0; i < 14; i++) {
-//        result += String(readings[i]);
-//        if (i < 13) result += ",";
-//    }
-//    return result;
-//}
+String get_as7343_data() {
+    mux2.setPort(MUX2_CH_AS7343);
+    uint16_t readings[14];
+    as7343.readAllChannels(readings);
+    mux2.setPort(255);
+    String result = "";
+    for (int i = 0; i < 14; i++) {
+        result += String(readings[i]);
+        if (i < 13) result += ",";
+    }
+    return result;
+}
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
