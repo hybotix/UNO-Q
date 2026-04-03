@@ -102,6 +102,15 @@ def main():
     nuke_docker(app_id)
     clear_cache(app_path)
 
+    # Install newrepo as a bin command from the repo
+    newrepo_src = os.path.expanduser("~/Repos/GitHub/hybotix/UNO-Q/scripts/newrepo.bash")
+    newrepo_dst = os.path.expanduser("~/bin/newrepo")
+    if os.path.exists(newrepo_src):
+        import shutil
+        shutil.copy2(newrepo_src, newrepo_dst)
+        os.chmod(newrepo_dst, 0o755)
+        print(f"Installed: newrepo -> ~/bin/newrepo")
+
     subprocess.run(["arduino-app-cli", "app", "start", app_path])
     patch_compose(app_path)
 
