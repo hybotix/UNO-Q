@@ -6,9 +6,9 @@ import os
 PIXELS_PER_CHAR = 6
 MS_PER_PIXEL    = 125
 
-# Calibration flag file — stored in app directory which is mounted from host
-# This persists across container rebuilds
-CALIBRATION_FILE = "/app/python/.scd30-calibrated"
+# Calibration flag file — lives in $HOME on the UNO Q
+# $HOME is bind-mounted into the container by the start command
+CALIBRATION_FILE = os.path.expanduser("~/.scd30-calibrated")
 
 started = False
 
