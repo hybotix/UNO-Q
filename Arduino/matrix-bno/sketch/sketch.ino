@@ -48,7 +48,8 @@
 #include <Adafruit_SCD30.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
-#include <Adafruit_VEML7700.h>
+//#include <Adafruit_VEML7700.h>       // Replaced by AS7343
+//#include <Adafruit_AS7343.h>         // Uncomment when AS7343 is connected
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
@@ -74,7 +75,8 @@ Arduino_LED_Matrix matrix;
 Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
-Adafruit_VEML7700  veml7700;
+//Adafruit_VEML7700  veml7700;         // Replaced by AS7343
+//Adafruit_AS7343    as7343;           // Uncomment when AS7343 is connected
 //QWIICMUX mux;  // Uncomment when TCA9548A is in use
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
@@ -338,18 +340,21 @@ String calibrate_scd30() {
 
 
 /**
- * Read VEML7700 ambient light sensor.
- * Returns: "lux,white,raw_als" as floats
- *   lux     — calculated lux value
- *   white   — white channel reading
- *   raw_als — raw ALS channel reading
+ * Read AS7343 14-channel spectral/color sensor.
+ * Returns: "ch0,ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10,ch11,ch12,ch13" — raw channel counts
+ * Channels cover 400nm–1000nm visible and NIR spectrum.
+ * Uncomment when AS7343 is physically connected.
  */
-String get_veml7700_data() {
-    float lux   = veml7700.readLux();
-    float white = veml7700.readWhite();
-    float als   = veml7700.readALS();
-    return String(lux, 2) + "," + String(white, 2) + "," + String(als, 2);
-}
+//String get_as7343_data() {
+//    uint16_t readings[14];
+//    as7343.readAllChannels(readings);
+//    String result = "";
+//    for (int i = 0; i < 14; i++) {
+//        result += String(readings[i]);
+//        if (i < 13) result += ",";
+//    }
+//    return result;
+//}
 
 
 void setup() {
@@ -360,13 +365,13 @@ void setup() {
     while (!bno.begin())               { delay(100); }
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
-    veml7700.begin(&Wire1);
+    //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
     //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
     Bridge.provide("get_bno_data",         get_bno_data);
-    Bridge.provide("get_veml7700_data",    get_veml7700_data);
+    //Bridge.provide("get_as7343_data",    get_as7343_data);  // Uncomment when AS7343 is connected
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);

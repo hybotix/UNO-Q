@@ -19,7 +19,7 @@
  *   Ch 2: BNO055 — 9-DoF orientation
  *   Ch 3: BME688 — Temperature, humidity, pressure, VOC (planned)
  *   Ch 4: ENS161 — TVOC, eCO2, AQI (planned)
- *   Ch 5: VEML7700 — Ambient light (lux)
+ *   Ch 5: AS7343 — 14-channel spectral/color sensor (planned)
  *
  * Bridge functions exposed to Python:
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
@@ -52,7 +52,7 @@
 #define MUX2_CH_BNO055        2     // BNO055 — 9-DoF orientation
 #define MUX2_CH_BME688        3     // BME688 — temp, humidity, pressure, VOC (planned)
 #define MUX2_CH_ENS161        4     // ENS161 — TVOC, eCO2, AQI (planned)
-#define MUX2_CH_VEML7700      5     // VEML7700 — ambient light (lux)
+#define MUX2_CH_AS7343        5     // AS7343 — 14-channel spectral/color sensor (planned)
 #define MUX2_NUM_CHANNELS     6     // Total defined channels on mux2
 
 // ── Scroll configuration ──────────────────────────────────────────────────────
@@ -66,7 +66,8 @@
 #include <Adafruit_SCD30.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
-#include <Adafruit_VEML7700.h>
+//#include <Adafruit_VEML7700.h>       // Replaced by AS7343
+//#include <Adafruit_AS7343.h>         // Uncomment when AS7343 is connected
 #include <utility/imumaths.h>
 #include <Wire.h>
 #include <SparkFun_I2C_Mux_Arduino_Library.h>
@@ -94,9 +95,9 @@ MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
     { MUX2_CH_SCD30,  "SCD30",  false },
     { MUX2_CH_SHT45,  "SHT45",  false },
     { MUX2_CH_BNO055, "BNO055", false },
-    { MUX2_CH_BME688, "BME688", false },
-    { MUX2_CH_ENS161, "ENS161", false },
-    { MUX2_CH_VEML7700, "VEML7700", false },
+    { MUX2_CH_BME688,  "BME688",  false },
+    { MUX2_CH_ENS161,  "ENS161",  false },
+    { MUX2_CH_AS7343,  "AS7343",  false },
 };
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
@@ -104,7 +105,8 @@ Arduino_LED_Matrix matrix;
 Adafruit_SCD30     scd30;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
-Adafruit_VEML7700  veml7700;
+//Adafruit_VEML7700  veml7700;         // Replaced by AS7343
+//Adafruit_AS7343    as7343;           // Uncomment when AS7343 is connected
 QWIICMUX           mux1;
 QWIICMUX           mux2;
 
@@ -437,20 +439,23 @@ String calibrate_scd30() {
 }
 
 /**
- * Read VEML7700 ambient light sensor via mux2 channel 5.
- * Returns: "lux,white,raw_als" as floats
- *   lux     — calculated lux value
- *   white   — white channel reading
- *   raw_als — raw ALS channel reading
+ * Read AS7343 14-channel spectral/color sensor via mux2 channel 5.
+ * Returns: "ch0,ch1,...,ch13" — 14 raw spectral channel counts
+ * Channels span 400nm–1000nm visible and NIR spectrum.
+ * Uncomment when AS7343 is physically connected.
  */
-String get_veml7700_data() {
-    mux2.setPort(MUX2_CH_VEML7700);
-    float lux   = veml7700.readLux();
-    float white = veml7700.readWhite();
-    float als   = veml7700.readALS();
-    mux2.setPort(255);
-    return String(lux, 2) + "," + String(white, 2) + "," + String(als, 2);
-}
+//String get_as7343_data() {
+//    mux2.setPort(MUX2_CH_AS7343);
+//    uint16_t readings[14];
+//    as7343.readAllChannels(readings);
+//    mux2.setPort(255);
+//    String result = "";
+//    for (int i = 0; i < 14; i++) {
+//        result += String(readings[i]);
+//        if (i < 13) result += ",";
+//    }
+//    return result;
+//}
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
@@ -473,15 +478,15 @@ void setup() {
     mux2.setPort(MUX2_CH_SHT45);
     sht45.begin(&Wire1);
 
-    mux2.setPort(MUX2_CH_VEML7700);
-    veml7700.begin(&Wire1);
+    //mux2.setPort(MUX2_CH_AS7343);
+    //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
 
     mux2.setPort(255);  // Disable all mux2 channels
 
     Bridge.provide("get_scd_data",          get_scd_data);
     Bridge.provide("get_sht45_data",        get_sht45_data);
     Bridge.provide("get_bno_data",          get_bno_data);
-    Bridge.provide("get_veml7700_data",     get_veml7700_data);
+    //Bridge.provide("get_as7343_data",     get_as7343_data);  // Uncomment when AS7343 connected
     Bridge.provide("get_mux1_data",         get_mux1_data);
     Bridge.provide("get_mux2_data",         get_mux2_data);
     Bridge.provide("get_mux1_channels",     get_mux1_channels);

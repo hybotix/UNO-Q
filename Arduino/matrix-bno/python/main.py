@@ -35,7 +35,7 @@ def calibrate():
     print("SCD30: calibrating temperature offset using SHT45 reference...")
     cal_msg = " Calibrating SCD-30... "
     Bridge.call("set_matrix_msg", cal_msg)
-    time.sleep(scroll_duration(cal_msg))  # Wait for full scroll before calibrating
+    time.sleep(scroll_duration(cal_msg))
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
@@ -62,10 +62,10 @@ def loop():
             time.sleep(1)
         started = True
 
-    scd_data   = Bridge.call("get_scd_data")
-    sht_data   = Bridge.call("get_sht45_data")
-    bno_data   = Bridge.call("get_bno_data")
-    veml_data  = Bridge.call("get_veml7700_data")
+    scd_data = Bridge.call("get_scd_data")
+    sht_data = Bridge.call("get_sht45_data")
+    bno_data = Bridge.call("get_bno_data")
+    # as7343_data = Bridge.call("get_as7343_data")  # Uncomment when AS7343 connected
 
     co2      = None
     temp_c   = None
@@ -73,7 +73,6 @@ def loop():
     heading  = None
     pitch    = None
     roll     = None
-    lux      = None
 
     if scd_data and scd_data != "0,0,0":
         co2 = float(scd_data.split(",")[0])
@@ -89,21 +88,17 @@ def loop():
         pitch   = float(values[1])
         roll    = float(values[2])
 
-    if veml_data and veml_data != "0,0,0":
-        lux = float(veml_data.split(",")[0])
-
     # Skip loop iteration entirely if primary sensor data not ready
     if temp_c is None or co2 is None:
         time.sleep(1)
         return
 
     # Message 1 — environmental data (always first)
-    if temp_c is not None and co2 is not None:
-        temp_f = (temp_c * 9.0 / 5.0) + 32.0
-        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
-        msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm "
-        Bridge.call("set_matrix_msg", msg1)
-        time.sleep(scroll_duration(msg1))
+    temp_f = (temp_c * 9.0 / 5.0) + 32.0
+    print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
+    msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm "
+    Bridge.call("set_matrix_msg", msg1)
+    time.sleep(scroll_duration(msg1))
 
     # Message 2 — orientation data
     if heading is not None:
@@ -113,11 +108,7 @@ def loop():
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
 
-    # Message 3 — ambient light
-    if lux is not None:
-        print(f"Light: {lux:.1f} lux")
-        msg3 = f" Light: {lux:.1f} lux "
-        Bridge.call("set_matrix_msg", msg3)
-        time.sleep(scroll_duration(msg3))
+    # Message 3 — spectral/color data (AS7343, when connected)
+    # Uncomment when AS7343 is connected and get_as7343_data is active
 
 App.run(user_loop=loop)
