@@ -92,6 +92,11 @@ def loop():
     if veml_data and veml_data != "0,0,0":
         lux = float(veml_data.split(",")[0])
 
+    # Skip loop iteration entirely if primary sensor data not ready
+    if temp_c is None or co2 is None:
+        time.sleep(1)
+        return
+
     # Message 1 — environmental data (always first)
     if temp_c is not None and co2 is not None:
         temp_f = (temp_c * 9.0 / 5.0) + 32.0
