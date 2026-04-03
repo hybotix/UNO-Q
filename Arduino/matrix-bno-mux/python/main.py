@@ -242,7 +242,7 @@ def loop():
     sgp      = None
 
     if scd_data and scd_data != "0,0,0":
-        co2 = float(scd_data.split(",")[0])
+        co2 = round(float(scd_data.split(",")[0]))
 
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
