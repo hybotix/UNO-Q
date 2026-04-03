@@ -66,6 +66,7 @@
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
 #define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
+#define SCROLLING_ENABLED true  // Set to false to disable matrix scrolling in production
 
 // ── Includes ──────────────────────────────────────────────────────────────────
 #include <Arduino_LED_Matrix.h>
@@ -144,6 +145,7 @@ void updateScrollMetrics() {
  * Resets to right edge when message has fully scrolled off left.
  */
 void scrollTick() {
+    if (!SCROLLING_ENABLED) return;
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
     last_scroll_ms = millis();
 
@@ -400,6 +402,7 @@ void set_mux2_channel(String params) {
  * Scroll speed is controlled by SCROLL_SPEED_MS (currently 125ms per pixel).
  */
 void set_matrix_msg(String msg) {
+    if (!SCROLLING_ENABLED) return;
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
     updateScrollMetrics();

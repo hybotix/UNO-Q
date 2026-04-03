@@ -3,8 +3,9 @@ import time
 import os
 
 # Scroll timing constants — must match sketch
-PIXELS_PER_CHAR = 6
-MS_PER_PIXEL    = 125
+PIXELS_PER_CHAR   = 6
+MS_PER_PIXEL      = 125
+SCROLLING_ENABLED = True  # Set to False to disable matrix scrolling in production
 
 # Calibration flag file — lives in $HOME on the UNO Q
 # $HOME is bind-mounted into the container by the start command
@@ -34,8 +35,9 @@ def calibrate():
 
     print("SCD30: calibrating temperature offset using SHT45 reference...")
     cal_msg = " Calibrating SCD-30... "
-    Bridge.call("set_matrix_msg", cal_msg)
-    time.sleep(scroll_duration(cal_msg))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", cal_msg)
+        time.sleep(scroll_duration(cal_msg))
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
@@ -95,8 +97,9 @@ def scroll_as7343(spectral):
     clear = spectral["CLEAR"]
     print(f"Visible: B={blue} G={green} R={red} Clear={clear}")
     msg3a = f" B:{blue} G:{green} R:{red} Clr:{clear} "
-    Bridge.call("set_matrix_msg", msg3a)
-    time.sleep(scroll_duration(msg3a))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg3a)
+        time.sleep(scroll_duration(msg3a))
 
     # Message 3b — NIR channels
     nir910  = spectral["F10_910nm"]
@@ -105,8 +108,9 @@ def scroll_as7343(spectral):
     nir     = spectral["NIR"]
     print(f"NIR: 910={nir910} 940={nir940} 1000={nir1000} NIR={nir}")
     msg3b = f" 910:{nir910} 940:{nir940} NIR:{nir} "
-    Bridge.call("set_matrix_msg", msg3b)
-    time.sleep(scroll_duration(msg3b))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg3b)
+        time.sleep(scroll_duration(msg3b))
 
 
 def parse_apds9999(data):
@@ -143,8 +147,9 @@ def scroll_apds9999(apds):
     b         = apds["b"]
     print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} IR:{ir}")
     msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
-    Bridge.call("set_matrix_msg", msg)
-    time.sleep(scroll_duration(msg))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg)
+        time.sleep(scroll_duration(msg))
 
 
 def parse_sgp41(data):
@@ -175,8 +180,9 @@ def scroll_sgp41(sgp):
     nox = sgp["nox_raw"]
     print(f"VOC:{voc} NOx:{nox}")
     msg = f" VOC:{voc} NOx:{nox} "
-    Bridge.call("set_matrix_msg", msg)
-    time.sleep(scroll_duration(msg))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg)
+        time.sleep(scroll_duration(msg))
 
 
 def parse_sgp41(data):
@@ -207,8 +213,9 @@ def scroll_sgp41(sgp):
     nox = sgp["nox_raw"]
     print(f"VOC:{voc} NOx:{nox}")
     msg = f" VOC:{voc} NOx:{nox} "
-    Bridge.call("set_matrix_msg", msg)
-    time.sleep(scroll_duration(msg))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg)
+        time.sleep(scroll_duration(msg))
 
 def loop():
     global started
@@ -271,16 +278,18 @@ def loop():
     temp_f = (temp_c * 9.0 / 5.0) + 32.0
     print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
     msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm "
-    Bridge.call("set_matrix_msg", msg1)
-    time.sleep(scroll_duration(msg1))
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg1)
+        time.sleep(scroll_duration(msg1))
 
     # Message 2 — orientation data
     if heading is not None:
         cp = compass_point(heading)
         print(f"H{heading:.1f}\u00b0 {cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
         msg2 = f" H{heading:.1f}\u00b0 {cp} P{pitch:.1f}\u00b0 R{roll:.1f}\u00b0 "
-        Bridge.call("set_matrix_msg", msg2)
-        time.sleep(scroll_duration(msg2))
+        if SCROLLING_ENABLED:
+            Bridge.call("set_matrix_msg", msg2)
+            time.sleep(scroll_duration(msg2))
 
     # Message 3 — AS7343 spectral data
     # Uncomment when AS7343 is connected:

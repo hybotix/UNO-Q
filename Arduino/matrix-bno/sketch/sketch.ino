@@ -48,6 +48,7 @@
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
 #define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
+#define SCROLLING_ENABLED true  // Set to false to disable matrix scrolling in production
 
 // ── Includes ──────────────────────────────────────────────────────────────────
 #include <Arduino_LED_Matrix.h>
@@ -109,8 +110,10 @@ void updateScrollMetrics() {
  * Advance the scroll animation by one pixel if enough time has elapsed.
  * Call from loop() — non-blocking, uses millis() for timing.
  * Resets to right edge when message has fully scrolled off left.
+ * Has no effect if SCROLLING_ENABLED is false.
  */
 void scrollTick() {
+    if (!SCROLLING_ENABLED) return;
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
     last_scroll_ms = millis();
 
@@ -302,8 +305,10 @@ void set_mux_channel(String params) {
  * Clears the matrix, resets scroll position, and begins scrolling the new message.
  * Python calls this after formatting sensor data into a human-readable string.
  * Scroll speed is controlled by SCROLL_SPEED_MS (currently 125ms per pixel).
+ * Has no effect if SCROLLING_ENABLED is false.
  */
 void set_matrix_msg(String msg) {
+    if (!SCROLLING_ENABLED) return;
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
     updateScrollMetrics();
