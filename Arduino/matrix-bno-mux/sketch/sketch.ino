@@ -475,12 +475,13 @@ String get_as7343_data() {
  * Returns: "proximity,lux,r,g,b,ir" as integers
  *   proximity — IR proximity (0-65535, higher = closer)
  *   lux       — calculated lux value
- *   r,g,b,c   — raw red, green, blue, clear channel counts
+ *   r,g,b,ir  — raw red, green, blue, infrared channel counts (uint32_t)
  */
 String get_apds9999_data() {
     mux2.setPort(MUX2_CH_APDS9999);
-    uint16_t r, g, b, c_val, proximity;
-    apds9999.readRGBC(&r, &g, &b, &c_val);
+    uint32_t r, g, b, ir;
+    uint16_t proximity;
+    apds9999.getRGBIRData(&r, &g, &b, &ir);
     apds9999.readProximity(&proximity);
     float lux = apds9999.calculateLux(g);
     mux2.setPort(255);
@@ -489,7 +490,7 @@ String get_apds9999_data() {
            String(r) + "," +
            String(g) + "," +
            String(b) + "," +
-           String(c_val);
+           String(ir);
 }
 
 /**
