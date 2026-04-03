@@ -99,14 +99,14 @@ MuxChannel mux1_channels[MUX1_NUM_CHANNELS] = {
 // Mux 2 channel array — environmental sensors
 // Set active=true per channel when sensor is physically connected
 MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
-    { MUX2_CH_SCD30,  "SCD30",  false },
-    { MUX2_CH_SHT45,  "SHT45",  false },
-    { MUX2_CH_BNO055, "BNO055", false },
+    { MUX2_CH_SCD30,   "SCD30",   false },
+    { MUX2_CH_SHT45,   "SHT45",   false },
+    { MUX2_CH_SGP41,   "SGP41",   false },
     { MUX2_CH_BME688,  "BME688",  false },
     { MUX2_CH_ENS161,  "ENS161",  false },
     { MUX2_CH_AS7343,  "AS7343",  false },
-    { MUX2_CH_APDS9999, "APDS9999", false },
-    { MUX2_CH_SGP41,   "SGP41",   false },
+    { MUX2_CH_APDS9999,"APDS9999",false },
+    { MUX2_CH_BNO055,  "BNO055",  false },
 };
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
@@ -540,14 +540,14 @@ void setup() {
     mux2.setPort(MUX2_CH_SHT45);
     sht45.begin(&Wire1);
 
+    //mux2.setPort(MUX2_CH_SGP41);
+    //sgp41.begin(&Wire1);       // Uncomment when SGP41 is connected
+
     //mux2.setPort(MUX2_CH_AS7343);
-    //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
+    //as7343.begin(&Wire1);      // Uncomment when AS7343 is connected
 
     //mux2.setPort(MUX2_CH_APDS9999);
-    //apds9999.begin(&Wire1);  // Uncomment when APDS9999 is connected
-
-    //mux2.setPort(MUX2_CH_SGP41);
-    //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
+    //apds9999.begin(&Wire1);    // Uncomment when APDS9999 is connected
 
     //mux2.setPort(MUX2_CH_SGP41);
     //sgp41.begin(&Wire1);     // Uncomment when SGP41 is connected
