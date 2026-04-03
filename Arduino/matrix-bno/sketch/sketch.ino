@@ -376,10 +376,10 @@ String get_as7343_data() {
  *   r,g,b,c   — raw red, green, blue, clear channel counts
  */
 String get_apds9999_data() {
-    uint16_t r, g, b, c_val;
-    apds9999.getColorData(&r, &g, &b, &c_val);
-    uint16_t proximity = apds9999.readProximity();
-    float    lux       = apds9999.calculateLux(r, g, b);
+    uint16_t r, g, b, c_val, proximity;
+    apds9999.readRGBC(&r, &g, &b, &c_val);
+    apds9999.readProximity(&proximity);
+    float lux = apds9999.calculateLux(g);
     return String(proximity) + "," +
            String(lux, 2) + "," +
            String(r) + "," +

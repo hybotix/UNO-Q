@@ -43,8 +43,9 @@ def patch_compose(app_path):
     """
     compose_file = os.path.join(app_path, ".cache", "app-compose.yaml")
 
-    # Wait for compose file to be generated
-    for _ in range(30):
+    # Wait for compose file to be generated — up to 60 seconds
+    print("Waiting for compose file...")
+    for _ in range(120):
         if os.path.exists(compose_file):
             break
         time.sleep(0.5)
