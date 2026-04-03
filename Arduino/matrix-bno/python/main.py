@@ -126,7 +126,7 @@ def parse_apds9999(data):
         "r":         int(values[2]),
         "g":         int(values[3]),
         "b":         int(values[4]),
-        "ir":        int(values[5]),
+        "clear":     int(values[5]),
     }
 
 def scroll_apds9999(apds):
@@ -141,7 +141,7 @@ def scroll_apds9999(apds):
     r         = apds["r"]
     g         = apds["g"]
     b         = apds["b"]
-    print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b}")
+    print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} C:{clear}")
     msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
     Bridge.call("set_matrix_msg", msg)
     time.sleep(scroll_duration(msg))

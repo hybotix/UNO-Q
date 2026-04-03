@@ -373,19 +373,19 @@ String get_as7343_data() {
  * Returns: "proximity,lux,r,g,b,ir" as integers
  *   proximity — IR proximity (0-65535, higher = closer)
  *   lux       — calculated lux value
- *   r,g,b,ir  — raw red, green, blue, infrared channel counts
+ *   r,g,b,c   — raw red, green, blue, clear channel counts
  */
 String get_apds9999_data() {
-    uint16_t r, g, b, ir;
-    apds9999.getRGBIR(&r, &g, &b, &ir);
-    uint16_t proximity = apds9999.getProximity();
-    float    lux       = apds9999.calculateLux(g);
+    uint16_t r, g, b, c_val;
+    apds9999.getColorData(&r, &g, &b, &c_val);
+    uint16_t proximity = apds9999.readProximity();
+    float    lux       = apds9999.calculateLux(r, g, b);
     return String(proximity) + "," +
            String(lux, 2) + "," +
            String(r) + "," +
            String(g) + "," +
            String(b) + "," +
-           String(ir);
+           String(c_val);
 }
 
 
@@ -398,7 +398,7 @@ String get_apds9999_data() {
  */
 String get_sgp41_data() {
     uint16_t voc_raw, nox_raw;
-    sgp41.measureRawSignals(voc_raw, nox_raw);
+    sgp41.measureRawSignals(&voc_raw, &nox_raw);
     return String(voc_raw) + "," + String(nox_raw);
 }
 
