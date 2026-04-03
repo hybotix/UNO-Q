@@ -108,6 +108,44 @@ def scroll_as7343(spectral):
     Bridge.call("set_matrix_msg", msg3b)
     time.sleep(scroll_duration(msg3b))
 
+
+def parse_apds9999(data):
+    """
+    Parse APDS9999 proximity, lux and RGB color data.
+    Returns dict or None if data unavailable.
+    Fields: proximity, lux, r, g, b, ir
+    """
+    if not data or data == "0,0,0,0,0,0":
+        return None
+    values = data.split(",")
+    if len(values) != 6:
+        return None
+    return {
+        "proximity": int(values[0]),
+        "lux":       float(values[1]),
+        "r":         int(values[2]),
+        "g":         int(values[3]),
+        "b":         int(values[4]),
+        "ir":        int(values[5]),
+    }
+
+def scroll_apds9999(apds):
+    """
+    Scroll APDS9999 data as one message: proximity, lux, and RGB.
+    Call this from loop() when APDS9999 is connected.
+    """
+    if apds is None:
+        return
+    proximity = apds["proximity"]
+    lux       = apds["lux"]
+    r         = apds["r"]
+    g         = apds["g"]
+    b         = apds["b"]
+    print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b}")
+    msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
+    Bridge.call("set_matrix_msg", msg)
+    time.sleep(scroll_duration(msg))
+
 def loop():
     global started
 
@@ -126,6 +164,7 @@ def loop():
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno_data")
     # as7343_data = Bridge.call("get_as7343_data")  # Uncomment when AS7343 connected
+    # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
 
     co2      = None
     temp_c   = None
@@ -134,6 +173,7 @@ def loop():
     pitch    = None
     roll     = None
     spectral = None
+    apds     = None
 
     if scd_data and scd_data != "0,0,0":
         co2 = float(scd_data.split(",")[0])
@@ -150,6 +190,7 @@ def loop():
         roll    = float(values[2])
 
     # spectral = parse_as7343(as7343_data)  # Uncomment when AS7343 connected
+    # apds = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
 
     # Skip loop iteration if primary sensor data not ready
     if temp_c is None or co2 is None:
@@ -174,5 +215,6 @@ def loop():
     # Message 3 — AS7343 spectral data
     # Uncomment when AS7343 is connected:
     # scroll_as7343(spectral)
+    # scroll_apds9999(apds)
 
 App.run(user_loop=loop)

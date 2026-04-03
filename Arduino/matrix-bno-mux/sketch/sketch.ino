@@ -19,7 +19,8 @@
  *   Ch 2: BNO055 — 9-DoF orientation
  *   Ch 3: BME688 — Temperature, humidity, pressure, VOC (planned)
  *   Ch 4: ENS161 — TVOC, eCO2, AQI (planned)
- *   Ch 5: AS7343 — 14-channel spectral/color sensor (planned)
+ *   Ch 5: AS7343   — 14-channel spectral/color sensor (planned)
+ *   Ch 6: APDS9999 — proximity, lux, RGB color (planned)
  *
  * Bridge functions exposed to Python:
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
@@ -54,7 +55,8 @@
 #define MUX2_CH_BME688        3     // BME688 — temp, humidity, pressure, VOC (planned)
 #define MUX2_CH_ENS161        4     // ENS161 — TVOC, eCO2, AQI (planned)
 #define MUX2_CH_AS7343        5     // AS7343 — 14-channel spectral/color sensor (planned)
-#define MUX2_NUM_CHANNELS     6     // Total defined channels on mux2
+#define MUX2_CH_APDS9999      6     // APDS9999 — proximity, lux, RGB color (planned)
+#define MUX2_NUM_CHANNELS     7     // Total defined channels on mux2
 
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot for readability
@@ -69,6 +71,7 @@
 #include <Adafruit_SHT4x.h>
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
 #include <Adafruit_AS7343.h>
+#include <Adafruit_APDS9999.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 #include <SparkFun_I2C_Mux_Arduino_Library.h>
@@ -99,6 +102,7 @@ MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
     { MUX2_CH_BME688,  "BME688",  false },
     { MUX2_CH_ENS161,  "ENS161",  false },
     { MUX2_CH_AS7343,  "AS7343",  false },
+    { MUX2_CH_APDS9999, "APDS9999", false },
 };
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
@@ -108,6 +112,7 @@ Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
 Adafruit_AS7343    as7343;
+Adafruit_APDS9999  apds9999;
 QWIICMUX           mux1;
 QWIICMUX           mux2;
 
@@ -457,6 +462,28 @@ String get_as7343_data() {
     return result;
 }
 
+/**
+ * Read APDS9999 proximity, lux, and RGB color sensor via mux2 channel 6.
+ * Returns: "proximity,lux,r,g,b,ir" as integers
+ *   proximity — IR proximity (0-65535, higher = closer)
+ *   lux       — calculated lux value
+ *   r,g,b,ir  — raw red, green, blue, infrared channel counts
+ */
+String get_apds9999_data() {
+    mux2.setPort(MUX2_CH_APDS9999);
+    uint16_t r, g, b, ir;
+    apds9999.getRGBIR(&r, &g, &b, &ir);
+    uint16_t proximity = apds9999.getProximity();
+    float    lux       = apds9999.calculateLux(g);
+    mux2.setPort(255);
+    return String(proximity) + "," +
+           String(lux, 2) + "," +
+           String(r) + "," +
+           String(g) + "," +
+           String(b) + "," +
+           String(ir);
+}
+
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
     matrix.begin();
@@ -481,12 +508,16 @@ void setup() {
     //mux2.setPort(MUX2_CH_AS7343);
     //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
 
+    //mux2.setPort(MUX2_CH_APDS9999);
+    //apds9999.begin(&Wire1);  // Uncomment when APDS9999 is connected
+
     mux2.setPort(255);  // Disable all mux2 channels
 
     Bridge.provide("get_scd_data",          get_scd_data);
     Bridge.provide("get_sht45_data",        get_sht45_data);
     Bridge.provide("get_bno_data",          get_bno_data);
     Bridge.provide("get_as7343_data",     get_as7343_data);
+    Bridge.provide("get_apds9999_data",   get_apds9999_data);
     Bridge.provide("get_mux1_data",         get_mux1_data);
     Bridge.provide("get_mux2_data",         get_mux2_data);
     Bridge.provide("get_mux1_channels",     get_mux1_channels);

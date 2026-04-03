@@ -51,6 +51,7 @@
 #include <Adafruit_SHT4x.h>
 //#include <Adafruit_VEML7700.h>       // Replaced by AS7343
 #include <Adafruit_AS7343.h>
+#include <Adafruit_APDS9999.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 //#include <SparkFun_I2C_Mux_Arduino_Library.h>  // Uncomment when mux is in use
@@ -78,6 +79,7 @@ Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 //Adafruit_VEML7700  veml7700;         // Replaced by AS7343
 Adafruit_AS7343    as7343;
+Adafruit_APDS9999  apds9999;
 //QWIICMUX mux;  // Uncomment when TCA9548A is in use
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
@@ -357,6 +359,27 @@ String get_as7343_data() {
 }
 
 
+/**
+ * Read APDS9999 proximity, lux, and RGB color sensor.
+ * Returns: "proximity,lux,r,g,b,ir" as integers
+ *   proximity — IR proximity (0-65535, higher = closer)
+ *   lux       — calculated lux value
+ *   r,g,b,ir  — raw red, green, blue, infrared channel counts
+ */
+String get_apds9999_data() {
+    uint16_t r, g, b, ir;
+    apds9999.getRGBIR(&r, &g, &b, &ir);
+    uint16_t proximity = apds9999.getProximity();
+    float    lux       = apds9999.calculateLux(g);
+    return String(proximity) + "," +
+           String(lux, 2) + "," +
+           String(r) + "," +
+           String(g) + "," +
+           String(b) + "," +
+           String(ir);
+}
+
+
 void setup() {
     matrix.begin();
     matrix.clear();
@@ -366,12 +389,14 @@ void setup() {
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
     //as7343.begin(&Wire1);  // Uncomment when AS7343 is connected
+    //apds9999.begin(&Wire1);  // Uncomment when APDS9999 is connected
     //mux.begin(MUX_ADDR, Wire1);  // Uncomment when TCA9548A is in use
 
     Bridge.provide("get_scd_data",         get_scd_data);
     Bridge.provide("get_sht45_data",       get_sht45_data);
     Bridge.provide("get_bno_data",         get_bno_data);
     Bridge.provide("get_as7343_data",    get_as7343_data);
+    Bridge.provide("get_apds9999_data",  get_apds9999_data);
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);
