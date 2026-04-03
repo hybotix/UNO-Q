@@ -21,6 +21,7 @@
  *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
  *   get_sht45_data()            - Read SHT45: returns "tempC,humidity"
  *   get_bno_data()              - Read BNO055: returns full 27-field CSV
+ *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV (planned)
  *   get_mux_data()              - Read all active mux channels: returns "name:value,..." or "none"
  *   get_mux_channels()          - List all channels: returns "ch:name:active,..."
  *   get_mux_channel_data(ch)    - Read one mux channel: returns value or "inactive"/"invalid"

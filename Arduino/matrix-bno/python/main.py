@@ -48,6 +48,36 @@ def calibrate():
     else:
         print("SCD30: calibration failed")
 
+def parse_as7343(data):
+    """
+    Parse AS7343 14-channel spectral data.
+    Returns dict of channel readings, or None if data unavailable.
+    Channels: F1(405nm), F2(425nm), F3(450nm), F4(475nm), F5(515nm),
+              F6(555nm), F7(590nm), F8(630nm), F9(680nm), F10(910nm),
+              F11(940nm), F12(1000nm), CLEAR, NIR
+    """
+    if not data or data == "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
+        return None
+    values = [int(v) for v in data.split(",")]
+    if len(values) != 14:
+        return None
+    return {
+        "F1_405nm":  values[0],
+        "F2_425nm":  values[1],
+        "F3_450nm":  values[2],
+        "F4_475nm":  values[3],
+        "F5_515nm":  values[4],
+        "F6_555nm":  values[5],
+        "F7_590nm":  values[6],
+        "F8_630nm":  values[7],
+        "F9_680nm":  values[8],
+        "F10_910nm": values[9],
+        "F11_940nm": values[10],
+        "F12_1000nm":values[11],
+        "CLEAR":     values[12],
+        "NIR":       values[13],
+    }
+
 def loop():
     global started
 
@@ -62,9 +92,9 @@ def loop():
             time.sleep(1)
         started = True
 
-    scd_data = Bridge.call("get_scd_data")
-    sht_data = Bridge.call("get_sht45_data")
-    bno_data = Bridge.call("get_bno_data")
+    scd_data  = Bridge.call("get_scd_data")
+    sht_data  = Bridge.call("get_sht45_data")
+    bno_data  = Bridge.call("get_bno_data")
     # as7343_data = Bridge.call("get_as7343_data")  # Uncomment when AS7343 connected
 
     co2      = None
@@ -73,6 +103,7 @@ def loop():
     heading  = None
     pitch    = None
     roll     = None
+    spectral = None
 
     if scd_data and scd_data != "0,0,0":
         co2 = float(scd_data.split(",")[0])
@@ -88,7 +119,9 @@ def loop():
         pitch   = float(values[1])
         roll    = float(values[2])
 
-    # Skip loop iteration entirely if primary sensor data not ready
+    # spectral = parse_as7343(as7343_data)  # Uncomment when AS7343 connected
+
+    # Skip loop iteration if primary sensor data not ready
     if temp_c is None or co2 is None:
         time.sleep(1)
         return
@@ -108,7 +141,13 @@ def loop():
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
 
-    # Message 3 — spectral/color data (AS7343, when connected)
-    # Uncomment when AS7343 is connected and get_as7343_data is active
+    # Message 3 — spectral data (when AS7343 connected)
+    # if spectral is not None:
+    #     clear = spectral["CLEAR"]
+    #     nir   = spectral["NIR"]
+    #     print(f"Spectral: CLEAR={clear} NIR={nir}")
+    #     msg3 = f" Clear:{clear} NIR:{nir} "
+    #     Bridge.call("set_matrix_msg", msg3)
+    #     time.sleep(scroll_duration(msg3))
 
 App.run(user_loop=loop)
