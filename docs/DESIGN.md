@@ -237,7 +237,7 @@ MQTT-connected robot app. Currently blocked by Docker mDNS issue (Arduino issue 
 
 ## 6. Known Issues
 
-See the [UNO Q Development System known issues](https://github.com/hybotix/UNO-Q-Development-System/blob/main/docs/KNOWN_ISSUES.md) for full details:
+See the [HybX Development System known issues](https://github.com/hybotix/HybX-Development-System/blob/main/docs/KNOWN_ISSUES.md) for full details:
 
 - **Docker mDNS resolution** — apps cannot resolve `*.local` hostnames inside Docker containers (Arduino issue #328)
 - **Infineon optigatrust I2C bus** — hardcoded to `/dev/i2c-1` (Infineon issue #26)
