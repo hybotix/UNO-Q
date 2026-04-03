@@ -89,9 +89,8 @@ def loop():
     # Message 1 — environmental data (always first)
     if temp_c is not None and co2 is not None:
         temp_f = (temp_c * 9.0 / 5.0) + 32.0
-        lux_str = f" {lux:.1f}lx" if lux is not None else ""
-        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm{lux_str}")
-        msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm{lux_str} "
+        print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")
+        msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.1f}ppm "
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
 
@@ -102,5 +101,12 @@ def loop():
         msg2 = f" H{heading:.1f}\u00b0 {cp} P{pitch:.1f}\u00b0 R{roll:.1f}\u00b0 "
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))
+
+    # Message 3 — ambient light
+    if lux is not None:
+        print(f"Light: {lux:.1f} lx")
+        msg3 = f" Light: {lux:.1f}lx "
+        Bridge.call("set_matrix_msg", msg3)
+        time.sleep(scroll_duration(msg3))
 
 App.run(user_loop=loop)
