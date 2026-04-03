@@ -54,6 +54,12 @@ def loop():
     if not started:
         time.sleep(5)
         calibrate()
+        # Wait for valid SCD30 data before starting scroll
+        while True:
+            scd_check = Bridge.call("get_scd_data")
+            if scd_check and scd_check != "0,0,0":
+                break
+            time.sleep(1)
         started = True
 
     scd_data   = Bridge.call("get_scd_data")
@@ -104,8 +110,8 @@ def loop():
 
     # Message 3 — ambient light
     if lux is not None:
-        print(f"Light: {lux:.1f} lx")
-        msg3 = f" Light: {lux:.1f}lx "
+        print(f"Light: {lux:.1f} lux")
+        msg3 = f" Light: {lux:.1f} lux "
         Bridge.call("set_matrix_msg", msg3)
         time.sleep(scroll_duration(msg3))
 
