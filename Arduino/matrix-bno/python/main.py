@@ -23,6 +23,13 @@ def scroll_duration(msg):
     """Calculate how long the message takes to scroll once in seconds."""
     return len(msg) * PIXELS_PER_CHAR * MS_PER_PIXEL / 1000
 
+
+def fmt(value, decimals=1):
+    """Format a float — drop decimal if zero, otherwise show specified decimal places."""
+    if round(value, decimals) == int(value):
+        return str(int(value))
+    return f"{value:.{decimals}f}"
+
 def calibrate():
     """
     Calibrate SCD30 temperature offset using SHT45 as reference.
@@ -259,8 +266,8 @@ def loop():
 
     # Message 1 — environmental data (always first)
     temp_f = (temp_c * 9.0 / 5.0) + 32.0
-    print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.0f} ppm")
-    msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.0f} ppm "
+    print(f"{fmt(temp_f)}\u00b0F ({fmt(temp_c)}\u00b0C)  {fmt(humidity)}%  {co2:.0f} ppm")
+    msg1 = f" {fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C) {fmt(humidity)}% {co2:.0f} ppm "
 
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg1)
@@ -269,8 +276,8 @@ def loop():
     # Message 2 — orientation data
     if heading is not None:
         cp = compass_point(heading)
-        print(f"H{heading:.1f}\u00b0 {cp}  P{pitch:.1f}\u00b0  R{roll:.1f}\u00b0")
-        msg2 = f" H{heading:.1f}\u00b0 {cp} P{pitch:.1f}\u00b0 R{roll:.1f}\u00b0 "
+        print(f"H{fmt(heading)}\u00b0 {cp}  P{fmt(pitch)}\u00b0  R{fmt(roll)}\u00b0")
+        msg2 = f" H{fmt(heading)}\u00b0 {cp} P{fmt(pitch)}\u00b0 R{fmt(roll)}\u00b0 "
 
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg2)
