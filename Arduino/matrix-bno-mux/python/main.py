@@ -277,7 +277,7 @@ def loop():
     # Message 1 — environmental data (always first)
     temp_f = (temp_c * 9.0 / 5.0) + 32.0
     print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.0f} ppm")
-    msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.0f}ppm "
+    msg1 = f" {temp_f:.1f}\u00b0F({temp_c:.1f}\u00b0C) {humidity:.1f}% {co2:.0f} ppm "
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
