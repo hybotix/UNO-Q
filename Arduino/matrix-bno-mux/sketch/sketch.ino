@@ -16,7 +16,7 @@
  * Mux 2 (MUX2_ADDR 0x71) — Environmental sensors:
  *   Ch 0: SCD30    — CO2, temperature, humidity
  *   Ch 1: SHT45    — Temperature, humidity (primary temp/humidity source)
- *   Ch 2: SGP41    — VOC & NOx gas sensor
+ *   Ch 2: PMSA003I — Particulate matter PM1.0, PM2.5, PM10 (ordered)
  *   Ch 3: BME688   — Temperature, humidity, pressure, VOC (planned)
  *   Ch 4: ENS161   — TVOC, eCO2, AQI (planned)
  *   Ch 5: AS7343   — 14-channel spectral/color sensor
@@ -105,7 +105,7 @@ MuxChannel mux1_channels[MUX1_NUM_CHANNELS] = {
 MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
     { MUX2_CH_SCD30,   "SCD30",   false },
     { MUX2_CH_SHT45,   "SHT45",   false },
-    { MUX2_CH_SGP41,   "SGP41",   false },
+    { MUX2_CH_PMSA003I, "PMSA003I", false },
     { MUX2_CH_BME688,  "BME688",  false },
     { MUX2_CH_ENS161,  "ENS161",  false },
     { MUX2_CH_AS7343,  "AS7343",  false },
