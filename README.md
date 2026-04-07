@@ -111,7 +111,7 @@ source ~/.bashrc
 To set it up on a new UNO Q, after cloning the repo once manually:
 
 ```bash
-cp ~/Repos/GitHub/hybotix/UNO-Q/scripts/newrepo.bash ~/newrepo.bash
+cp ~/Repos/GitHub/hybotix/UNOQ/scripts/newrepo.bash ~/newrepo.bash
 ```
 
 Then on any subsequent reset:
@@ -150,7 +150,7 @@ Clone this repo onto the UNO Q:
 
 ```bash
 mkdir -p ~/Repos/GitHub/hybotix
-git clone https://github.com/hybotix/UNO-Q.git ~/arduino
+git clone https://github.com/hybotix/UNOQ.git ~/arduino
 ```
 
 Create symlinks in `~/bin`:
