@@ -2,19 +2,18 @@
  * matrix-lis3dh
  * Hybrid RobotiX
  *
- * Scrolls LIS3DH accelerometer data, tap detection, and free fall
- * on the UNO Q LED matrix display.
- * Python is the controller — reads all sensor data, formats messages,
- * and sends them to the MCU for display.
+ * MCU provides LIS3DH sensor data and accepts display content from Python.
+ * Python is the controller — it reads sensors, formats messages,
+ * and sends them back to the MCU for display on the LED matrix.
  *
  * Sensors:
- *   - LIS3DH: 3-axis acceleration (m/s²), single tap, double tap, free fall
+ *   - LIS3DH: 3-axis acceleration, single tap, double tap, free fall
  *
  * Bridge functions exposed to Python:
  *   get_lis3dh_data()     - Read acceleration: returns "x,y,z" in m/s²
- *   get_lis3dh_click()    - Read tap status: returns "none", "single", "double"
+ *   get_lis3dh_click()    - Read tap status: returns "none", "single", or "double"
  *   get_lis3dh_freefall() - Read free fall: returns "true" or "false"
- *   set_matrix_msg(msg)   - Set scroll message on LED matrix
+ *   set_matrix_msg(msg)   - Set scroll message: Python sends formatted string to display
  */
 
 // ── Configuration ─────────────────────────────────────────────────────────────
@@ -26,9 +25,11 @@
 #define CLICK_TIMEWINDOW   255    // Window for double click in ODR units
 #define FREEFALL_THRESHOLD 2      // Free fall threshold (~0.35g)
 #define FREEFALL_DURATION  5      // Free fall duration in ODR units
-#define SCROLL_SPEED_MS    125    // ms per pixel — 125ms is the sweet spot
-#define CHAR_WIDTH         6      // Font_5x7 character width including spacing
-#define SCROLLING_ENABLED  true   // Set to false to disable scrolling in production
+
+// ── Scroll configuration ──────────────────────────────────────────────────────
+#define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot
+#define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
+#define SCROLLING_ENABLED true  // Set to false to disable in production
 
 // ── Includes ──────────────────────────────────────────────────────────────────
 #include <Arduino_LED_Matrix.h>
@@ -38,7 +39,7 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
-// ── Sensor and display instances ──────────────────────────────────────────────
+// ── Sensor instances ──────────────────────────────────────────────────────────
 Arduino_LED_Matrix matrix;
 Adafruit_LIS3DH    lis3dh;
 
@@ -50,7 +51,6 @@ static unsigned long last_scroll_ms  = 0;
 
 /**
  * Recalculate scroll width after message changes.
- * Must be called any time matrix_msg is updated.
  */
 void updateScrollMetrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
@@ -58,8 +58,7 @@ void updateScrollMetrics() {
 
 /**
  * Advance the scroll animation by one pixel if enough time has elapsed.
- * Call from loop() — non-blocking, uses millis() for timing.
- * Has no effect if SCROLLING_ENABLED is false.
+ * Non-blocking, uses millis(). Has no effect if SCROLLING_ENABLED is false.
  */
 void scrollTick() {
     if (!SCROLLING_ENABLED) return;
@@ -98,9 +97,7 @@ String get_lis3dh_data() {
 
 /**
  * Read LIS3DH tap/click detection status.
- * Returns: "none"   — no tap detected
- *          "single" — single tap detected
- *          "double" — double tap detected
+ * Returns: "none", "single", or "double"
  */
 String get_lis3dh_click() {
     uint8_t click = lis3dh.getClick();
@@ -122,8 +119,7 @@ String get_lis3dh_click() {
 
 /**
  * Read LIS3DH free fall detection status.
- * Returns: "true"  — free fall detected
- *          "false" — no free fall
+ * Returns: "true" or "false"
  */
 String get_lis3dh_freefall() {
     uint8_t int_src = lis3dh.readRegister8(LIS3DH_REG_INT1SRC);
@@ -137,7 +133,7 @@ String get_lis3dh_freefall() {
 
 /**
  * Set the LED matrix scroll message.
- * Parameter: formatted string to display
+ * Python calls this after formatting sensor data.
  * Has no effect if SCROLLING_ENABLED is false.
  */
 void set_matrix_msg(String msg) {
