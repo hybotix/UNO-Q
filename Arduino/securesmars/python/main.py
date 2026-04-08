@@ -202,12 +202,12 @@ def loop():
     time.sleep(5)
 
     # Read and publish SCD30 data
-    scd_data = Bridge.call("get_scd_data")
+    scd_data = Bridge.call("get_scd30_data")
     if scd_data and scd_data != "0,0,0":
         publish_scd(scd_data)
 
     # Read and publish BNO055 data
-    bno_data = Bridge.call("get_bno_data")
+    bno_data = Bridge.call("get_bno055_data")
     if bno_data:
         publish_bno(bno_data)
 

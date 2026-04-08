@@ -24,9 +24,9 @@
  *   Ch 7: BNO055   — 9-DoF orientation
  *
  * Bridge functions exposed to Python:
- *   get_scd_data()              - Read SCD30: returns "co2,tempC,humidity"
+ *   get_scd30_data()              - Read SCD30: returns "co2,tempC,humidity"
  *   get_sht45_data()            - Read SHT45: returns "tempC,humidity"
- *   get_bno_data()              - Read BNO055: returns full 27-field CSV
+ *   get_bno055_data()              - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV
  *   get_apds9999_data()         - Read APDS9999: returns "proximity,lux,r,g,b,ir"
  *   get_sgp41_data()            - Read SGP41: returns "voc_raw,nox_raw"
@@ -171,7 +171,7 @@ void scrollTick() {
  * Returns: "0,0,0" if new data is not yet ready.
  * Note: SCD30 temperature reads high due to self-heating — use SHT45 for accurate temp.
  */
-String get_scd_data() {
+String get_scd30_data() {
     mux2.setPort(MUX2_CH_SCD30);
     if (scd30.dataReady()) {
         scd30.read();
@@ -211,7 +211,7 @@ String get_sht45_data() {
  *   [22] cal_sys              [23] cal_gyro             [24] cal_accel [25] cal_mag
  *   [26] temperature (C)
  */
-String get_bno_data() {
+String get_bno055_data() {
     mux2.setPort(MUX2_CH_BNO055);
     sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
     bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
@@ -561,9 +561,9 @@ void setup() {
 
     mux2.setPort(255);  // Disable all mux2 channels
 
-    Bridge.provide("get_scd_data",          get_scd_data);
+    Bridge.provide("get_scd30_data",          get_scd30_data);
     Bridge.provide("get_sht45_data",        get_sht45_data);
-    Bridge.provide("get_bno_data",          get_bno_data);
+    Bridge.provide("get_bno055_data",          get_bno055_data);
     Bridge.provide("get_as7343_data",     get_as7343_data);
     Bridge.provide("get_apds9999_data",   get_apds9999_data);
     Bridge.provide("get_sgp41_data",      get_sgp41_data);

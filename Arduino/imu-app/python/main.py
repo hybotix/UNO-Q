@@ -3,7 +3,7 @@ import time
 
 def loop():
     time.sleep(5)
-    result = Bridge.call("get_imu_data")
+    result = Bridge.call("get_lsm6dsox_data")
     if result:
         ax, ay, az, gx, gy, gz, temp = result.split(",")
         print("Accel X: " + ax + " m/s^2")

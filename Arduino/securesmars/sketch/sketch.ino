@@ -150,7 +150,7 @@ void bridge_mecanum_move(int x, int y, int r) { mecanum_move(x, y, r); }
  * Also updates lastCO2, lastTempC, lastHumidity for LED matrix display.
  * Returns "0,0,0" if data not ready.
  */
-String get_scd_data() {
+String get_scd30_data() {
     if (scd30.dataReady()) {
         scd30.read();
         lastCO2 = scd30.CO2;
@@ -169,7 +169,7 @@ String get_scd_data() {
  *        gravity xyz, mag xyz, accel xyz, quat wxyz,
  *        cal sys/gyro/accel/mag, temperature
  */
-String get_bno_data() {
+String get_bno055_data() {
     sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
     bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
     bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
@@ -265,8 +265,8 @@ void setup() {
     bno.setExtCrystalUse(true);
 
     // Register sensor functions with Bridge
-    Bridge.provide("get_scd_data", get_scd_data);
-    Bridge.provide("get_bno_data", get_bno_data);
+    Bridge.provide("get_scd30_data", get_scd30_data);
+    Bridge.provide("get_bno055_data", get_bno055_data);
 
     // Register motor control functions with Bridge
     Bridge.provide("set_motor", bridge_set_motor);

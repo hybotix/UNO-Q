@@ -18,7 +18,7 @@ def loop():
         time.sleep(5)
         started = True
 
-    scd_data = Bridge.call("get_scd_data")
+    scd_data = Bridge.call("get_scd30_data")
 
     if scd_data and scd_data != "0,0,0":
         co2, temp_c, humidity = scd_data.split(",")

@@ -6,7 +6,7 @@
  * Python reads sensor data, formats message, sends to matrix.
  *
  * Bridge provides:
- *   get_scd_data()        - SCD30 CSV data (MCU -> Python)
+ *   get_scd30_data()        - SCD30 CSV data (MCU -> Python)
  *   set_matrix_msg(String) - Display string (Python -> MCU)
  */
 
@@ -54,7 +54,7 @@ void scrollTick() {
 }
 
 // ── Bridge functions ──────────────────────────────────────────────────────────
-String get_scd_data() {
+String get_scd30_data() {
     if (scd30.dataReady()) {
         scd30.read();
         return String(scd30.CO2) + "," +
@@ -77,7 +77,7 @@ void setup() {
     matrix.clear();
     Bridge.begin();
     while (!scd30.begin(0x61, &Wire1)) { delay(100); }
-    Bridge.provide("get_scd_data", get_scd_data);
+    Bridge.provide("get_scd30_data", get_scd30_data);
     Bridge.provide("set_matrix_msg", set_matrix_msg);
     updateScrollMetrics();
 }

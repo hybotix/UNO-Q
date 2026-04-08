@@ -3,7 +3,7 @@
 
 Adafruit_LSM6DSOX imu;
 
-String get_imu_data() {
+String get_lsm6dsox_data() {
     sensors_event_t accel, gyro, temp;
     imu.getEvent(&accel, &gyro, &temp);
     return String(accel.acceleration.x) + "," +
@@ -20,7 +20,7 @@ void setup() {
     while (!imu.begin_I2C(0x6A, &Wire1)) {
         delay(100);
     }
-    Bridge.provide("get_imu_data", get_imu_data);
+    Bridge.provide("get_lsm6dsox_data", get_lsm6dsox_data);
 }
 
 void loop() {

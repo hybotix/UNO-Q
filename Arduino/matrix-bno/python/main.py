@@ -215,7 +215,7 @@ def loop():
         calibrate()
         # Wait for valid SCD30 data before starting scroll
         while True:
-            scd_check = Bridge.call("get_scd_data")
+            scd_check = Bridge.call("get_scd30_data")
 
             if scd_check and scd_check != "0,0,0":
                 break
@@ -224,9 +224,9 @@ def loop():
 
         started = True
 
-    scd_data  = Bridge.call("get_scd_data")
+    scd_data  = Bridge.call("get_scd30_data")
     sht_data  = Bridge.call("get_sht45_data")
-    bno_data  = Bridge.call("get_bno_data")
+    bno_data  = Bridge.call("get_bno055_data")
     # as7343_data   = Bridge.call("get_as7343_data")    # Uncomment when AS7343 connected
     # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
     # sgp41_data    = Bridge.call("get_sgp41_data")     # Uncomment when SGP41 connected
