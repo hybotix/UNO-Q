@@ -1,0 +1,3 @@
+name: LIS3DH Accelerometer
+icon: 📐
+description: Reads acceleration, tap detection, double-tap detection, and free fall from the LIS3DH triple-axis accelerometer via QWIIC.
