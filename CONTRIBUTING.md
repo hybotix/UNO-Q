@@ -8,12 +8,15 @@ this repo more useful for everyone building on the Arduino UNO Q platform.
 
 ---
 
-## Philosophy
+## The Philosophy
 
 This repo contains the Arduino sketches and Python apps that run on the
 UNO Q. The goal is clean, well-structured, reproducible code that works
 reliably in the HybX Development System environment. Every contribution
-should move in that direction.
+should move in that direction — cleaner, more reliable, more capable.
+
+We are not at a 1.x release yet. This is the time to get things right.
+If something is wrong, fix it properly.
 
 ---
 
@@ -24,11 +27,25 @@ should move in that direction.
 - **Bug fixes** — if something is broken, tell us or fix it
 - **Improvements to existing apps** — better sensor handling, better Bridge
   integration, better Python logic
+- **New entries in KNOWN_ISSUES.md** — discovered vendor or hardware bugs
+  belong there with a link to the upstream issue
 - **Documentation** — if something is unclear, fix it
 - **Ideas and discussion** — open an issue, start a conversation
 
 No contribution is too small. A comment fix is welcome. A one-line
 improvement is welcome. A completely new app is welcome.
+
+---
+
+## What We Do Not Accept
+
+- Arduino sketches that do not use the Bridge architecture
+- Python apps that bypass `arduino.app_utils`
+- Library management outside of `libs` — never install or reference
+  libraries directly; always use `libs install` and `libs use`
+- Hardcoded paths or credentials of any kind
+- Manual edits to `sketch.yaml` library sections — `libs` owns that
+- Code that does not follow the standards below
 
 ---
 
@@ -42,13 +59,13 @@ this scaffold:
   app.yaml          — App metadata (name, icon, description)
   sketch/
     sketch.ino      — MCU code (Arduino Bridge template)
-    sketch.yaml     — Library dependencies (managed by libs — do not edit manually)
+    sketch.yaml     — Library dependencies (managed by libs — never edit manually)
   python/
     main.py         — Python controller
     requirements.txt — Python dependencies
 ```
 
-Use `project new arduino <name>` from the HybX Development System to
+Use `project new arduino <n>` from the HybX Development System to
 create a correctly scaffolded project.
 
 ---
@@ -62,6 +79,14 @@ create a correctly scaffolded project.
 - Keep `loop()` empty when using Bridge — the Bridge drives execution
 - Initialize all sensors in `setup()`
 
+### Sensor Code Completeness
+
+- All sensor code must be fully present: include, instance, function,
+  and `Bridge.provide()` active
+- Only `begin()` calls are commented out for sensors not yet physically
+  connected — everything else stays active
+- Unconnected sensors are commented out, never deleted
+
 ### QWIIC / Stemma QT
 
 - The QWIIC connector is on I2C bus 1, not bus 0
@@ -72,8 +97,8 @@ create a correctly scaffolded project.
 
 - Never manually edit `sketch.yaml` library sections
 - `sketch.yaml` is owned exclusively by `libs` in the HybX Development System
-- To add a library to a project: `libs install <name>` then `libs use <project> <name>`
-- To remove a library: `libs unuse <project> <name>` then `libs remove <name>`
+- To add a library to a project: `libs install <n>` then `libs use <project> <n>`
+- To remove a library: `libs unuse <project> <n>` then `libs remove <n>`
 
 ### Code Style
 
@@ -101,9 +126,28 @@ create a correctly scaffolded project.
 ### Code Style
 
 - Python 3, PEP 8 compliant
+- Column-aligned assignments are the project style — keep them
 - Clear, readable variable names
 - Docstrings on all functions
-- No hardcoded paths — use environment variables or config where needed
+- No hardcoded paths — use `os.path.expanduser()` or config
+
+---
+
+## Naming Conventions
+
+- **Hybrid RobotiX** — capital H, R, X — always
+- **My Chairiet** — title case, always (portmanteau of CHAIR and CHARIOT)
+- **HybX** — Discord tag, always exactly this
+- **"essentially the same"** is never acceptable when accessibility
+  needs are specified in writing
+
+---
+
+## Commit Messages
+
+- First line: `app/sketch: short description` (50 chars or less)
+- Body: explain what changed and why, not just what
+- Reference sensor datasheets or vendor issues where relevant
 
 ---
 
@@ -127,7 +171,8 @@ Open a GitHub issue. Include:
 - What you expected instead
 - Board firmware version if relevant
 
-The more specific, the faster it gets fixed.
+Vendor and hardware bugs belong in `docs/KNOWN_ISSUES.md` with a link
+to the upstream issue if one exists.
 
 ---
 
@@ -142,3 +187,7 @@ of people is not.
 ## Questions
 
 Open an issue tagged `question`. No question is too basic.
+
+---
+
+*Hybrid RobotiX — San Diego*
