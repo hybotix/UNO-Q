@@ -50,7 +50,7 @@ static unsigned long last_scroll_ms  = 0;
 /**
  * Recalculate scroll width after message changes.
  */
-void updateScrollMetrics() {
+void update_scroll_metrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
 }
 
@@ -58,7 +58,7 @@ void updateScrollMetrics() {
  * Advance the scroll animation by one pixel if enough time has elapsed.
  * Non-blocking, uses millis(). Has no effect if SCROLLING_ENABLED is false.
  */
-void scrollTick() {
+void scroll_tick() {
     if (!SCROLLING_ENABLED) return;
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
 
@@ -146,7 +146,7 @@ void set_matrix_msg(String msg) {
 
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    updateScrollMetrics();
+    update_scroll_metrics();
     scroll_x = 12;
 }
 
@@ -173,10 +173,10 @@ void setup() {
     Bridge.provide("get_lis3dh_freefall", get_lis3dh_freefall);
     Bridge.provide("set_matrix_msg",      set_matrix_msg);
 
-    updateScrollMetrics();
+    update_scroll_metrics();
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 void loop() {
-    scrollTick();
+    scroll_tick();
 }

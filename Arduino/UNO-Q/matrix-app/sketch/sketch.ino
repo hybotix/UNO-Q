@@ -31,11 +31,11 @@ static int scroll_x = 12;
 static int msg_pixel_width = 0;
 static unsigned long last_scroll_ms = 0;
 
-void updateScrollMetrics() {
+void update_scroll_metrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
 }
 
-void scrollTick() {
+void scroll_tick() {
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
     last_scroll_ms = millis();
 
@@ -67,7 +67,7 @@ String get_scd30_data() {
 void set_matrix_msg(String msg) {
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    updateScrollMetrics();
+    update_scroll_metrics();
     scroll_x = 12;
 }
 
@@ -79,10 +79,10 @@ void setup() {
     while (!scd30.begin(0x61, &Wire1)) { delay(100); }
     Bridge.provide("get_scd30_data", get_scd30_data);
     Bridge.provide("set_matrix_msg", set_matrix_msg);
-    updateScrollMetrics();
+    update_scroll_metrics();
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 void loop() {
-    scrollTick();
+    scroll_tick();
 }

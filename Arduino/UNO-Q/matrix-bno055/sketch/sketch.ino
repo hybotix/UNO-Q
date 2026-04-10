@@ -102,7 +102,7 @@ static unsigned long last_scroll_ms = 0;
  * Recalculate scroll width after message changes.
  * Must be called any time matrix_msg is updated.
  */
-void updateScrollMetrics() {
+void update_scroll_metrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
 }
 
@@ -112,7 +112,7 @@ void updateScrollMetrics() {
  * Resets to right edge when message has fully scrolled off left.
  * Has no effect if SCROLLING_ENABLED is false.
  */
-void scrollTick() {
+void scroll_tick() {
     if (!SCROLLING_ENABLED) return;
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
     last_scroll_ms = millis();
@@ -311,7 +311,7 @@ void set_matrix_msg(String msg) {
     if (!SCROLLING_ENABLED) return;
     matrix.clear();
     msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    updateScrollMetrics();
+    update_scroll_metrics();
     scroll_x = 12;
 }
 
@@ -437,10 +437,10 @@ void setup() {
     Bridge.provide("set_mux_channel",      set_mux_channel);
     Bridge.provide("calibrate_scd30",      calibrate_scd30);
     Bridge.provide("set_matrix_msg",       set_matrix_msg);
-    updateScrollMetrics();
+    update_scroll_metrics();
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 void loop() {
-    scrollTick();
+    scroll_tick();
 }
