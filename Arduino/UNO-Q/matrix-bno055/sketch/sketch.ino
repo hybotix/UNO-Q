@@ -22,8 +22,8 @@
  *   Ch 4: VL53L1X — long range right distance
  *
  * Bridge functions exposed to Python:
- *   get_scd30_data()              - Read SCD30: returns "co2,tempC,humidity"
- *   get_sht45_data()            - Read SHT45: returns "tempC,humidity"
+ *   get_scd30_data()              - Read SCD30: returns "co2,temp_c,humidity"
+ *   get_sht45_data()            - Read SHT45: returns "temp_c,humidity"
  *   get_bno055_data()              - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV
  *   get_apds9999_data()         - Read APDS9999: returns "proximity,lux,r,g,b,ir"
@@ -135,7 +135,7 @@ void scroll_tick() {
 
 /**
  * Read SCD30 CO2, temperature, and humidity.
- * Returns: "co2,tempC,humidity" as floats (e.g. "473.2,28.1,47.5")
+ * Returns: "co2,temp_c,humidity" as floats (e.g. "473.2,28.1,47.5")
  * Returns: "0,0,0" if new data is not yet ready.
  * Note: SCD30 temperature reads high due to self-heating — use SHT45 for accurate temp.
  */
@@ -151,7 +151,7 @@ String get_scd30_data() {
 
 /**
  * Read SHT45 temperature and humidity (high precision mode).
- * Returns: "tempC,humidity" as floats (e.g. "23.4,48.2")
+ * Returns: "temp_c,humidity" as floats (e.g. "23.4,48.2")
  * Primary source for temperature and humidity — more accurate than SCD30.
  */
 String get_sht45_data() {
@@ -175,36 +175,36 @@ String get_sht45_data() {
  *   [26] temperature (C)
  */
 String get_bno055_data() {
-    sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
-    bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-    bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-    bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    bno.getEvent(&gravityData,     Adafruit_BNO055::VECTOR_GRAVITY);
-    bno.getEvent(&magData,         Adafruit_BNO055::VECTOR_MAGNETOMETER);
-    bno.getEvent(&accelData,       Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    sensors_event_t orientation_data, ang_velocity_data, linear_accel_data, gravity_data, mag_data, accel_data;
+    bno.getEvent(&orientation_data, Adafruit_BNO055::VECTOR_EULER);
+    bno.getEvent(&ang_velocity_data, Adafruit_BNO055::VECTOR_GYROSCOPE);
+    bno.getEvent(&linear_accel_data, Adafruit_BNO055::VECTOR_LINEARACCEL);
+    bno.getEvent(&gravity_data,     Adafruit_BNO055::VECTOR_GRAVITY);
+    bno.getEvent(&mag_data,         Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    bno.getEvent(&accel_data,       Adafruit_BNO055::VECTOR_ACCELEROMETER);
     imu::Quaternion quat = bno.getQuat();
     uint8_t sys, gyro, accel, mag;
     bno.getCalibration(&sys, &gyro, &accel, &mag);
     int8_t temp = bno.getTemp();
 
-    return String(orientationData.orientation.x) + "," +
-           String(orientationData.orientation.y) + "," +
-           String(orientationData.orientation.z) + "," +
-           String(angVelocityData.gyro.x) + "," +
-           String(angVelocityData.gyro.y) + "," +
-           String(angVelocityData.gyro.z) + "," +
-           String(linearAccelData.acceleration.x) + "," +
-           String(linearAccelData.acceleration.y) + "," +
-           String(linearAccelData.acceleration.z) + "," +
-           String(gravityData.acceleration.x) + "," +
-           String(gravityData.acceleration.y) + "," +
-           String(gravityData.acceleration.z) + "," +
-           String(magData.magnetic.x) + "," +
-           String(magData.magnetic.y) + "," +
-           String(magData.magnetic.z) + "," +
-           String(accelData.acceleration.x) + "," +
-           String(accelData.acceleration.y) + "," +
-           String(accelData.acceleration.z) + "," +
+    return String(orientation_data.orientation.x) + "," +
+           String(orientation_data.orientation.y) + "," +
+           String(orientation_data.orientation.z) + "," +
+           String(ang_velocity_data.gyro.x) + "," +
+           String(ang_velocity_data.gyro.y) + "," +
+           String(ang_velocity_data.gyro.z) + "," +
+           String(linear_accel_data.acceleration.x) + "," +
+           String(linear_accel_data.acceleration.y) + "," +
+           String(linear_accel_data.acceleration.z) + "," +
+           String(gravity_data.acceleration.x) + "," +
+           String(gravity_data.acceleration.y) + "," +
+           String(gravity_data.acceleration.z) + "," +
+           String(mag_data.magnetic.x) + "," +
+           String(mag_data.magnetic.y) + "," +
+           String(mag_data.magnetic.z) + "," +
+           String(accel_data.acceleration.x) + "," +
+           String(accel_data.acceleration.y) + "," +
+           String(accel_data.acceleration.z) + "," +
            String(quat.w(), 4) + "," +
            String(quat.x(), 4) + "," +
            String(quat.y(), 4) + "," +

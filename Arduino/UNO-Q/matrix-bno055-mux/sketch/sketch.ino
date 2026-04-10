@@ -24,8 +24,8 @@
  *   Ch 7: BNO055   — 9-DoF orientation
  *
  * Bridge functions exposed to Python:
- *   get_scd30_data()              - Read SCD30: returns "co2,tempC,humidity"
- *   get_sht45_data()            - Read SHT45: returns "tempC,humidity"
+ *   get_scd30_data()              - Read SCD30: returns "co2,temp_c,humidity"
+ *   get_sht45_data()            - Read SHT45: returns "temp_c,humidity"
  *   get_bno055_data()              - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV
  *   get_apds9999_data()         - Read APDS9999: returns "proximity,lux,r,g,b,ir"
@@ -167,7 +167,7 @@ void scroll_tick() {
 
 /**
  * Read SCD30 CO2, temperature, and humidity via mux2 channel 0.
- * Returns: "co2,tempC,humidity" as floats (e.g. "473.2,28.1,47.5")
+ * Returns: "co2,temp_c,humidity" as floats (e.g. "473.2,28.1,47.5")
  * Returns: "0,0,0" if new data is not yet ready.
  * Note: SCD30 temperature reads high due to self-heating — use SHT45 for accurate temp.
  */
@@ -186,7 +186,7 @@ String get_scd30_data() {
 
 /**
  * Read SHT45 temperature and humidity via mux2 channel 1 (high precision mode).
- * Returns: "tempC,humidity" as floats (e.g. "23.4,48.2")
+ * Returns: "temp_c,humidity" as floats (e.g. "23.4,48.2")
  * Primary source for temperature and humidity — more accurate than SCD30.
  */
 String get_sht45_data() {
@@ -213,37 +213,37 @@ String get_sht45_data() {
  */
 String get_bno055_data() {
     mux2.setPort(MUX2_CH_BNO055);
-    sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
-    bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-    bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-    bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    bno.getEvent(&gravityData,     Adafruit_BNO055::VECTOR_GRAVITY);
-    bno.getEvent(&magData,         Adafruit_BNO055::VECTOR_MAGNETOMETER);
-    bno.getEvent(&accelData,       Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    sensors_event_t orientation_data, ang_velocity_data, linear_accel_data, gravity_data, mag_data, accel_data;
+    bno.getEvent(&orientation_data, Adafruit_BNO055::VECTOR_EULER);
+    bno.getEvent(&ang_velocity_data, Adafruit_BNO055::VECTOR_GYROSCOPE);
+    bno.getEvent(&linear_accel_data, Adafruit_BNO055::VECTOR_LINEARACCEL);
+    bno.getEvent(&gravity_data,     Adafruit_BNO055::VECTOR_GRAVITY);
+    bno.getEvent(&mag_data,         Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    bno.getEvent(&accel_data,       Adafruit_BNO055::VECTOR_ACCELEROMETER);
     imu::Quaternion quat = bno.getQuat();
     uint8_t sys, gyro, accel, mag;
     bno.getCalibration(&sys, &gyro, &accel, &mag);
     int8_t temp = bno.getTemp();
     mux2.setPort(255);
 
-    return String(orientationData.orientation.x) + "," +
-           String(orientationData.orientation.y) + "," +
-           String(orientationData.orientation.z) + "," +
-           String(angVelocityData.gyro.x) + "," +
-           String(angVelocityData.gyro.y) + "," +
-           String(angVelocityData.gyro.z) + "," +
-           String(linearAccelData.acceleration.x) + "," +
-           String(linearAccelData.acceleration.y) + "," +
-           String(linearAccelData.acceleration.z) + "," +
-           String(gravityData.acceleration.x) + "," +
-           String(gravityData.acceleration.y) + "," +
-           String(gravityData.acceleration.z) + "," +
-           String(magData.magnetic.x) + "," +
-           String(magData.magnetic.y) + "," +
-           String(magData.magnetic.z) + "," +
-           String(accelData.acceleration.x) + "," +
-           String(accelData.acceleration.y) + "," +
-           String(accelData.acceleration.z) + "," +
+    return String(orientation_data.orientation.x) + "," +
+           String(orientation_data.orientation.y) + "," +
+           String(orientation_data.orientation.z) + "," +
+           String(ang_velocity_data.gyro.x) + "," +
+           String(ang_velocity_data.gyro.y) + "," +
+           String(ang_velocity_data.gyro.z) + "," +
+           String(linear_accel_data.acceleration.x) + "," +
+           String(linear_accel_data.acceleration.y) + "," +
+           String(linear_accel_data.acceleration.z) + "," +
+           String(gravity_data.acceleration.x) + "," +
+           String(gravity_data.acceleration.y) + "," +
+           String(gravity_data.acceleration.z) + "," +
+           String(mag_data.magnetic.x) + "," +
+           String(mag_data.magnetic.y) + "," +
+           String(mag_data.magnetic.z) + "," +
+           String(accel_data.acceleration.x) + "," +
+           String(accel_data.acceleration.y) + "," +
+           String(accel_data.acceleration.z) + "," +
            String(quat.w(), 4) + "," +
            String(quat.x(), 4) + "," +
            String(quat.y(), 4) + "," +
@@ -258,7 +258,7 @@ String get_bno055_data() {
  * Activates each channel, reads the sensor, then deactivates.
  * Returns: "name:value,..." for all active channels, or "none".
  */
-String readMuxChannels(QWIICMUX& mux, MuxChannel* channels, int count) {
+String read_mux_channels(QWIICMUX& mux, MuxChannel* channels, int count) {
     String result = "";
     bool   any    = false;
 
@@ -280,7 +280,7 @@ String readMuxChannels(QWIICMUX& mux, MuxChannel* channels, int count) {
  * Returns: "name:value,..." or "none" if no active channels.
  */
 String get_mux1_data() {
-    return readMuxChannels(mux1, mux1_channels, MUX1_NUM_CHANNELS);
+    return read_mux_channels(mux1, mux1_channels, MUX1_NUM_CHANNELS);
 }
 
 /**
@@ -288,14 +288,14 @@ String get_mux1_data() {
  * Returns: "name:value,..." or "none" if no active channels.
  */
 String get_mux2_data() {
-    return readMuxChannels(mux2, mux2_channels, MUX2_NUM_CHANNELS);
+    return read_mux_channels(mux2, mux2_channels, MUX2_NUM_CHANNELS);
 }
 
 /**
  * Helper — return status of all channels in a mux channel array.
  * Returns: "channel:name:active,..." for all channels.
  */
-String getMuxChannels(MuxChannel* channels, int count) {
+String get_mux_channels(MuxChannel* channels, int count) {
     String result = "";
     for (int i = 0; i < count; i++) {
         result += String(channels[i].channel) + ":" +
@@ -312,7 +312,7 @@ String getMuxChannels(MuxChannel* channels, int count) {
  * Example: "0:VL53L5CX:false,1:FRONT:true,..."
  */
 String get_mux1_channels() {
-    return getMuxChannels(mux1_channels, MUX1_NUM_CHANNELS);
+    return get_mux_channels(mux1_channels, MUX1_NUM_CHANNELS);
 }
 
 /**
@@ -321,14 +321,14 @@ String get_mux1_channels() {
  * Example: "0:SCD30:true,1:SHT45:true,..."
  */
 String get_mux2_channels() {
-    return getMuxChannels(mux2_channels, MUX2_NUM_CHANNELS);
+    return get_mux_channels(mux2_channels, MUX2_NUM_CHANNELS);
 }
 
 /**
  * Helper — read a single channel from a mux.
  * Returns: sensor reading, "inactive", or "invalid".
  */
-String getMuxChannelData(QWIICMUX& mux, MuxChannel* channels, int count, int channel) {
+String get_mux_channel_data(QWIICMUX& mux, MuxChannel* channels, int count, int channel) {
     for (int i = 0; i < count; i++) {
         if (channels[i].channel == channel) {
             if (!channels[i].active) return "inactive";
@@ -347,7 +347,7 @@ String getMuxChannelData(QWIICMUX& mux, MuxChannel* channels, int count, int cha
  * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined.
  */
 String get_mux1_channel_data(String param) {
-    return getMuxChannelData(mux1, mux1_channels, MUX1_NUM_CHANNELS, param.toInt());
+    return get_mux_channel_data(mux1, mux1_channels, MUX1_NUM_CHANNELS, param.toInt());
 }
 
 /**
@@ -356,14 +356,14 @@ String get_mux1_channel_data(String param) {
  * Returns: sensor reading, "inactive" if not enabled, "invalid" if not defined.
  */
 String get_mux2_channel_data(String param) {
-    return getMuxChannelData(mux2, mux2_channels, MUX2_NUM_CHANNELS, param.toInt());
+    return get_mux_channel_data(mux2, mux2_channels, MUX2_NUM_CHANNELS, param.toInt());
 }
 
 /**
  * Helper — enable or disable a channel in a mux channel array.
  * Parameter: "channel,state" where state is "true" or "false".
  */
-void setMuxChannel(MuxChannel* channels, int count, String params) {
+void set_mux_channel(MuxChannel* channels, int count, String params) {
     int comma = params.indexOf(',');
     if (comma < 0) return;
     int  channel = params.substring(0, comma).toInt();
@@ -382,7 +382,7 @@ void setMuxChannel(MuxChannel* channels, int count, String params) {
  * Example: Bridge.call("set_mux1_channel", "1,true") — enable front VL53L1X
  */
 void set_mux1_channel(String params) {
-    setMuxChannel(mux1_channels, MUX1_NUM_CHANNELS, params);
+    set_mux_channel(mux1_channels, MUX1_NUM_CHANNELS, params);
 }
 
 /**
@@ -391,7 +391,7 @@ void set_mux1_channel(String params) {
  * Example: Bridge.call("set_mux2_channel", "0,true") — enable SCD30
  */
 void set_mux2_channel(String params) {
-    setMuxChannel(mux2_channels, MUX2_NUM_CHANNELS, params);
+    set_mux_channel(mux2_channels, MUX2_NUM_CHANNELS, params);
 }
 
 /**

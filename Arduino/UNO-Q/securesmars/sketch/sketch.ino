@@ -48,15 +48,15 @@ Adafruit_MotorShield shield = Adafruit_MotorShield();
 ArduinoLEDMatrix matrix;
 
 // ── Motor port assignments ────────────────────────────────────────────────────
-Adafruit_DCMotor *motorFL = shield.getMotor(1); // Front Left
-Adafruit_DCMotor *motorFR = shield.getMotor(2); // Front Right
-Adafruit_DCMotor *motorRL = shield.getMotor(3); // Rear Left
-Adafruit_DCMotor *motorRR = shield.getMotor(4); // Rear Right
+Adafruit_DCMotor *motor_fl = shield.getMotor(1); // Front Left
+Adafruit_DCMotor *motor_fr = shield.getMotor(2); // Front Right
+Adafruit_DCMotor *motor_rl = shield.getMotor(3); // Rear Left
+Adafruit_DCMotor *motor_rr = shield.getMotor(4); // Rear Right
 
 // ── Last known sensor values for LED matrix display ──────────────────────────
-float lastCO2 = 0;
-float lastTempC = 0;
-float lastHumidity = 0;
+float last_co2 = 0;
+float last_temp_c = 0;
+float last_humidity = 0;
 
 // ── Motor control helpers ─────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ float lastHumidity = 0;
  * Set a single motor speed and direction.
  * speed: -255 (full reverse) to +255 (full forward), 0 = stop
  */
-void setMotor(Adafruit_DCMotor *motor, int speed) {
+void set_motor(Adafruit_DCMotor *motor, int speed) {
     if (speed > 0) {
         motor->setSpeed(min(speed, 255));
         motor->run(FORWARD);
@@ -83,10 +83,10 @@ void setMotor(Adafruit_DCMotor *motor, int speed) {
  */
 void set_motor(int motor_id, int speed) {
     switch (motor_id) {
-        case 1: setMotor(motorFL, speed); break;
-        case 2: setMotor(motorFR, speed); break;
-        case 3: setMotor(motorRL, speed); break;
-        case 4: setMotor(motorRR, speed); break;
+        case 1: set_motor(motor_fl, speed); break;
+        case 2: set_motor(motor_fr, speed); break;
+        case 3: set_motor(motor_rl, speed); break;
+        case 4: set_motor(motor_rr, speed); break;
     }
 }
 
@@ -94,10 +94,10 @@ void set_motor(int motor_id, int speed) {
  * Stop and release all four motors.
  */
 void stop_motors() {
-    motorFL->run(RELEASE);
-    motorFR->run(RELEASE);
-    motorRL->run(RELEASE);
-    motorRR->run(RELEASE);
+    motor_fl->run(RELEASE);
+    motor_fr->run(RELEASE);
+    motor_rl->run(RELEASE);
+    motor_rr->run(RELEASE);
 }
 
 /**
@@ -114,18 +114,18 @@ void mecanum_move(int x, int y, int r) {
     int rr = y + x - r;
 
     // Normalize if any motor exceeds max speed
-    int maxVal = max(max(abs(fl), abs(fr)), max(abs(rl), abs(rr)));
-    if (maxVal > 255) {
-        fl = fl * 255 / maxVal;
-        fr = fr * 255 / maxVal;
-        rl = rl * 255 / maxVal;
-        rr = rr * 255 / maxVal;
+    int max_val = max(max(abs(fl), abs(fr)), max(abs(rl), abs(rr)));
+    if (max_val > 255) {
+        fl = fl * 255 / max_val;
+        fr = fr * 255 / max_val;
+        rl = rl * 255 / max_val;
+        rr = rr * 255 / max_val;
     }
 
-    setMotor(motorFL, fl);
-    setMotor(motorFR, fr);
-    setMotor(motorRL, rl);
-    setMotor(motorRR, rr);
+    set_motor(motor_fl, fl);
+    set_motor(motor_fr, fr);
+    set_motor(motor_rl, rl);
+    set_motor(motor_rr, rr);
 }
 
 // ── Bridge wrappers for motor commands ────────────────────────────────────────
@@ -147,18 +147,18 @@ void bridge_mecanum_move(int x, int y, int r) { mecanum_move(x, y, r); }
 
 /**
  * Read SCD30 and return CO2, temperature, humidity as CSV string.
- * Also updates lastCO2, lastTempC, lastHumidity for LED matrix display.
+ * Also updates last_co2, last_temp_c, last_humidity for LED matrix display.
  * Returns "0,0,0" if data not ready.
  */
 String get_scd30_data() {
     if (scd30.dataReady()) {
         scd30.read();
-        lastCO2 = scd30.CO2;
-        lastTempC = scd30.temperature;
-        lastHumidity = scd30.relative_humidity;
-        return String(lastCO2) + "," +
-               String(lastTempC) + "," +
-               String(lastHumidity);
+        last_co2 = scd30.CO2;
+        last_temp_c = scd30.temperature;
+        last_humidity = scd30.relative_humidity;
+        return String(last_co2) + "," +
+               String(last_temp_c) + "," +
+               String(last_humidity);
     }
     return "0,0,0";
 }
@@ -170,13 +170,13 @@ String get_scd30_data() {
  *        cal sys/gyro/accel/mag, temperature
  */
 String get_bno055_data() {
-    sensors_event_t orientationData, angVelocityData, linearAccelData, gravityData, magData, accelData;
-    bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-    bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-    bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-    bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
-    bno.getEvent(&magData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-    bno.getEvent(&accelData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    sensors_event_t orientation_data, ang_velocity_data, linear_accel_data, gravity_data, mag_data, accel_data;
+    bno.getEvent(&orientation_data, Adafruit_BNO055::VECTOR_EULER);
+    bno.getEvent(&ang_velocity_data, Adafruit_BNO055::VECTOR_GYROSCOPE);
+    bno.getEvent(&linear_accel_data, Adafruit_BNO055::VECTOR_LINEARACCEL);
+    bno.getEvent(&gravity_data, Adafruit_BNO055::VECTOR_GRAVITY);
+    bno.getEvent(&mag_data, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+    bno.getEvent(&accel_data, Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
     imu::Quaternion quat = bno.getQuat();
 
@@ -185,24 +185,24 @@ String get_bno055_data() {
 
     int8_t temp = bno.getTemp();
 
-    return String(orientationData.orientation.x) + "," +
-           String(orientationData.orientation.y) + "," +
-           String(orientationData.orientation.z) + "," +
-           String(angVelocityData.gyro.x) + "," +
-           String(angVelocityData.gyro.y) + "," +
-           String(angVelocityData.gyro.z) + "," +
-           String(linearAccelData.acceleration.x) + "," +
-           String(linearAccelData.acceleration.y) + "," +
-           String(linearAccelData.acceleration.z) + "," +
-           String(gravityData.acceleration.x) + "," +
-           String(gravityData.acceleration.y) + "," +
-           String(gravityData.acceleration.z) + "," +
-           String(magData.magnetic.x) + "," +
-           String(magData.magnetic.y) + "," +
-           String(magData.magnetic.z) + "," +
-           String(accelData.acceleration.x) + "," +
-           String(accelData.acceleration.y) + "," +
-           String(accelData.acceleration.z) + "," +
+    return String(orientation_data.orientation.x) + "," +
+           String(orientation_data.orientation.y) + "," +
+           String(orientation_data.orientation.z) + "," +
+           String(ang_velocity_data.gyro.x) + "," +
+           String(ang_velocity_data.gyro.y) + "," +
+           String(ang_velocity_data.gyro.z) + "," +
+           String(linear_accel_data.acceleration.x) + "," +
+           String(linear_accel_data.acceleration.y) + "," +
+           String(linear_accel_data.acceleration.z) + "," +
+           String(gravity_data.acceleration.x) + "," +
+           String(gravity_data.acceleration.y) + "," +
+           String(gravity_data.acceleration.z) + "," +
+           String(mag_data.magnetic.x) + "," +
+           String(mag_data.magnetic.y) + "," +
+           String(mag_data.magnetic.z) + "," +
+           String(accel_data.acceleration.x) + "," +
+           String(accel_data.acceleration.y) + "," +
+           String(accel_data.acceleration.z) + "," +
            String(quat.w(), 4) + "," +
            String(quat.x(), 4) + "," +
            String(quat.y(), 4) + "," +
@@ -220,17 +220,17 @@ String get_bno055_data() {
  * Scroll current sensor readings across the LED matrix.
  * Sequence: Temperature F -> Temperature C -> CO2 ppm -> Humidity %
  */
-void scrollMatrix() {
-    float tempF = (lastTempC * 9.0 / 5.0) + 32.0;
+void scroll_matrix() {
+    float temp_f = (last_temp_c * 9.0 / 5.0) + 32.0;
 
-    String msg = String((int)round(tempF)) + "F " +
-                 String((int)round(lastTempC)) + "C " +
-                 String((int)round(lastCO2)) + "ppm " +
-                 String((int)round(lastHumidity)) + "% ";
+    String msg = String((int)round(temp_f)) + "F " +
+                 String((int)round(last_temp_c)) + "C " +
+                 String((int)round(last_co2)) + "ppm " +
+                 String((int)round(last_humidity)) + "% ";
 
     matrix.beginDraw();
     matrix.stroke(0xFFFFFFFF);
-    matrix.textScrollSpeed(50);
+    matrix.text_scroll_speed(50);
     matrix.textFont(Font_5x7);
     matrix.beginText(0, 1, 0xFFFFFF);
     matrix.println(msg);
@@ -254,9 +254,9 @@ void setup() {
         delay(100);
     }
     scd30.read();
-    lastCO2 = scd30.CO2;
-    lastTempC = scd30.temperature;
-    lastHumidity = scd30.relative_humidity;
+    last_co2 = scd30.CO2;
+    last_temp_c = scd30.temperature;
+    last_humidity = scd30.relative_humidity;
 
     // Initialize BNO055 on QWIIC bus (Wire1), use external crystal
     while (!bno.begin()) {
@@ -289,11 +289,11 @@ void loop() {
     // Update sensor cache for LED matrix display
     if (scd30.dataReady()) {
         scd30.read();
-        lastCO2 = scd30.CO2;
-        lastTempC = scd30.temperature;
-        lastHumidity = scd30.relative_humidity;
+        last_co2 = scd30.CO2;
+        last_temp_c = scd30.temperature;
+        last_humidity = scd30.relative_humidity;
     }
 
     // Scroll current readings on LED matrix
-    scrollMatrix();
+    scroll_matrix();
 }
