@@ -23,9 +23,6 @@
 #define CLICK_TIMELIMIT    10     // Time limit for click in ODR units
 #define CLICK_TIMELATENCY  20     // Latency for double click in ODR units
 #define CLICK_TIMEWINDOW   255    // Window for double click in ODR units
-#define FREEFALL_THRESHOLD 2      // Free fall threshold (~0.35g)
-#define FREEFALL_DURATION  5      // Free fall duration in ODR units
-
 // ── Scroll configuration ──────────────────────────────────────────────────────
 #define SCROLL_SPEED_MS  125  // ms per pixel — 125ms is the sweet spot
 #define CHAR_WIDTH         6  // Font_5x7 character width including 1px spacing
@@ -38,6 +35,7 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include <math.h>
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
 Arduino_LED_Matrix matrix;
@@ -118,13 +116,20 @@ String get_lis3dh_click() {
 }
 
 /**
- * Read LIS3DH free fall detection status.
+ * Detect free fall by checking if total acceleration magnitude is near zero.
+ * In free fall, gravity disappears and all axes read close to 0.
  * Returns: "true" or "false"
  */
 String get_lis3dh_freefall() {
-    uint8_t int_src = lis3dh.readRegister8(LIS3DH_REG_INT1SRC);
+    sensors_event_t event;
+    lis3dh.getEvent(&event);
+    float magnitude = sqrt(
+        event.acceleration.x * event.acceleration.x +
+        event.acceleration.y * event.acceleration.y +
+        event.acceleration.z * event.acceleration.z
+    );
 
-    if (int_src & 0x40) {
+    if (magnitude < 2.0) {
         return "true";
     }
 
@@ -151,7 +156,7 @@ void setup() {
     matrix.clear();
     Bridge.begin();
 
-    while (!lis3dh.begin(LIS3DH_ADDR, &Wire1)) {
+    while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);
     }
 
@@ -161,10 +166,7 @@ void setup() {
     lis3dh.setClick(2, CLICK_THRESHOLD, CLICK_TIMELIMIT,
                     CLICK_TIMELATENCY, CLICK_TIMEWINDOW);
 
-    // Configure free fall detection via INT1
-    lis3dh.writeRegister8(LIS3DH_REG_INT1THS, FREEFALL_THRESHOLD);
-    lis3dh.writeRegister8(LIS3DH_REG_INT1DUR, FREEFALL_DURATION);
-    lis3dh.writeRegister8(LIS3DH_REG_INT1CFG, 0x95);  // Low event on XYZ
+    // Free fall detected via magnitude check in get_lis3dh_freefall()
 
     Bridge.provide("get_lis3dh_data",     get_lis3dh_data);
     Bridge.provide("get_lis3dh_click",    get_lis3dh_click);

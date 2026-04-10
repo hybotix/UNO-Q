@@ -30,6 +30,7 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include <math.h>
 
 // ── Sensor instance ───────────────────────────────────────────────────────────
 Adafruit_LIS3DH lis3dh;
@@ -94,7 +95,7 @@ String get_lis3dh_freefall() {
 void setup() {
     Bridge.begin();
 
-    while (!lis3dh.begin(LIS3DH_ADDR, &Wire1)) {
+    while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);
     }
 
