@@ -159,6 +159,10 @@ create a correctly scaffolded project.
 4. Test on a real UNO Q using the HybX Development System
 5. Open a pull request with a clear description of what changed and why
 
+Pull requests are welcome against any part of the project. All pull
+requests will be reviewed and merged at the sole discretion of the
+project maintainer.
+
 ---
 
 ## Reporting Issues
