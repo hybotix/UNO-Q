@@ -80,8 +80,8 @@ def loop():
 
     # Message 1 — acceleration data
     if x is not None:
-        print(f"X:{fmt(x)} Y:{fmt(y)} Z:{fmt(z)} m/s²")
-        msg1 = f" X:{fmt(x)} Y:{fmt(y)} Z:{fmt(z)} "
+        print(f"X:{x:.4f} Y:{y:.4f} Z:{z:.4f} m/s²")
+        msg1 = f" X:{x:.4f} Y:{y:.4f} Z:{z:.4f} "
 
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg1)
