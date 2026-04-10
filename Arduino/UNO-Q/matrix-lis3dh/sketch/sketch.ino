@@ -39,7 +39,7 @@
 
 // ── Sensor instances ──────────────────────────────────────────────────────────
 Arduino_LED_Matrix matrix;
-Adafruit_LIS3DH    lis3dh;
+Adafruit_LIS3DH    lis3dh = Adafruit_LIS3DH(&Wire1);
 
 // ── Scroll state machine ──────────────────────────────────────────────────────
 static char          matrix_msg[64] = " ... ";

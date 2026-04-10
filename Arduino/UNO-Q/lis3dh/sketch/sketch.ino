@@ -32,7 +32,7 @@
 #include <math.h>
 
 // ── Sensor instance ───────────────────────────────────────────────────────────
-Adafruit_LIS3DH lis3dh;
+Adafruit_LIS3DH lis3dh = Adafruit_LIS3DH(&Wire1);
 
 // ── Bridge functions ──────────────────────────────────────────────────────────
 
