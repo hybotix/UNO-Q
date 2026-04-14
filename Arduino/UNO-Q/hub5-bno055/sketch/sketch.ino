@@ -1,5 +1,5 @@
 /**
- * hub75-bno055 Sketch
+ * hub5-bno055 Sketch
  * Hybrid RobotiX
  *
  * MCU provides sensor data to Python via RouterBridge.
