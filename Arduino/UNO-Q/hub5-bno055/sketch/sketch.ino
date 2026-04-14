@@ -5,7 +5,9 @@
  * MCU provides sensor data to Python via RouterBridge.
  * Python reads all sensors, formats display content, and sends
  * it back to the MCU for display on a 64x32 HUB75 RGB LED matrix panel.
- * Cloned from matrix-bno055 — Arduino_LED_Matrix replaced by HUB75nano.
+ *
+ * Cloned from matrix-bno055.
+ * Arduino_LED_Matrix will be replaced by HUB75nano when display layer is implemented.
  *
  * Sensors (direct QWIIC — no mux):
  *   - SCD30:    CO2 (ppm), temperature (C), humidity (%)
@@ -34,7 +36,7 @@
  *   get_mux_channel_data(ch)    - Read one mux channel: returns value or "inactive"/"invalid"
  *   set_mux_channel(ch,active)  - Enable/disable a mux channel: params "ch,true|false"
  *   calibrate_scd30()           - Calibrate SCD30 temp offset using SHT45: returns "offset:X.XX"
- *   set_matrix_msg(msg)         - Set scroll message: Python sends formatted string to display
+ *   set_matrix_msg(msg)         - Set display message: Python sends formatted string to display
  */
 
 // ── TCA9548A Mux configuration ────────────────────────────────────────────────
