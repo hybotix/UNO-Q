@@ -3,5 +3,5 @@ profiles:
     platforms:
       - platform: arduino:zephyr
     libraries:
-      - SparkFun VL53L5CX Arduino Library (1.1.0)
+      - SparkFun VL53L5CX Arduino Library (1.0.3)
 default_profile: default
