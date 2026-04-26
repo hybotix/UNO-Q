@@ -1,3 +1,0 @@
-name: VL53L5CX ToF Imager
-icon: 📡
-description: Reads 8x8 depth map (64 zones) from the SparkFun Qwiic VL53L5CX Time-of-Flight sensor via QWIIC.

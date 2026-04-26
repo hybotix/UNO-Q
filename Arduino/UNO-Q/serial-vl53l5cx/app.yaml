@@ -1,0 +1,3 @@
+name: VL53L5CX Serial Monitor
+icon: 📡
+description: Reads 8x8 depth map from the SparkFun Qwiic VL53L5CX ToF sensor and prints distance values to the serial monitor at 115200 baud.
