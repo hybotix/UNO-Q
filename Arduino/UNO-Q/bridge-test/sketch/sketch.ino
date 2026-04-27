@@ -2,7 +2,7 @@
 #include <SparkFun_VL53L5CX_Library.h>
 
 SparkFun_VL53L5CX *myImager = nullptr;
-VL53L5CX_ResultsData measurementData;
+VL53L5CX_ResultsData *measurementData = nullptr;
 
 String echo(String value) {
     return value;
@@ -12,6 +12,7 @@ void setup() {
     Bridge.begin();
     Bridge.provide("echo", echo);
     myImager = new SparkFun_VL53L5CX();
+    measurementData = new VL53L5CX_ResultsData();
 }
 
 void loop() {
