@@ -6,7 +6,7 @@
  * VL53L5CX ToF sensor via the Arduino RouterBridge.
  *
  * Bridge functions:
- *   set_resolution(String)  — "16" = 4x4, "64" = 8x8. Returns "16" or "64".
+ *   set_resolution(String)  — "4x4" or "8x8". Returns "4x4" or "8x8".
  *   get_distance_data()     — returns NxN matrix of distances in mm
  *   get_target_status()     — returns NxN matrix of True/False validity
  *
@@ -26,18 +26,22 @@ int currentResolution = 64;  // default 8x8
 
 /**
  * Set sensor resolution.
- * resolution: "16" = 4x4, "64" = 8x8
- * Returns the resolution now active ("16" or "64").
+ * resolution: "4x4" or "8x8"
+ * Returns the resolution now active ("4x4" or "8x8").
  */
 String set_resolution(String resolution) {
-    int res = resolution.toInt();
-    if (res == 16 || res == 64) {
+    if (resolution == "4x4") {
         myImager.stopRanging();
-        myImager.setResolution(res);
-        currentResolution = res;
+        myImager.setResolution(16);
+        currentResolution = 16;
+        myImager.startRanging();
+    } else if (resolution == "8x8") {
+        myImager.stopRanging();
+        myImager.setResolution(64);
+        currentResolution = 64;
         myImager.startRanging();
     }
-    return String(currentResolution);
+    return (currentResolution == 16) ? "4x4" : "8x8";
 }
 
 /**
