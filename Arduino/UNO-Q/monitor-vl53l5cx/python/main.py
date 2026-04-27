@@ -81,6 +81,11 @@ def loop():
             print("ERROR: Bridge timeout — Arduino not responding")
             time.sleep(2.0)
             return
+        except ValueError as e:
+            print(f"ERROR: Bridge error — {e}")
+            print("The sketch on the MCU may be out of date. Run: clean <app>")
+            time.sleep(2.0)
+            return
 
         if status.startswith("init_failed"):
             print("ERROR: Sensor init failed — " + format_error(status))
@@ -119,8 +124,8 @@ def loop():
     try:
         distance = Bridge.call("get_distance_data")
         status   = Bridge.call("get_target_status")
-    except TimeoutError:
-        print("ERROR: Bridge timeout reading sensor data")
+    except (TimeoutError, ValueError) as e:
+        print(f"ERROR: Bridge error reading sensor data — {e}")
         return
 
     if not distance or distance == "0":
