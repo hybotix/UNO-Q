@@ -98,7 +98,7 @@ def loop():
             time.sleep(2.0)
             return
 
-        if status == "initializing":
+        if status in ("initializing", "not_started"):
             elapsed = time.time() - init_start
             if elapsed > SENSOR_INIT_TIMEOUT:
                 print(f"ERROR: Sensor init timeout after {elapsed:.0f}s")
