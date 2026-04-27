@@ -18,20 +18,19 @@
  *
  * The ST ULD returns data transposed from the datasheet zone map.
  * The Python side applies the x/y correction to reflect physical reality.
+ *
+ * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/ and
+ * is auto-discovered by arduino-cli. It is not listed in sketch.yaml.
  */
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
-#include "hybx_vl53l5cx.h"
+#include <hybx_vl53l5cx.h>
 
 hybx_vl53l5cx sensor;   /* 8x8, address 0x29, Wire1 */
 
 static uint8_t currentResolution = 64;
 
-/**
- * Bridge: set_resolution
- * Accepts "4x4" or "8x8". Returns active resolution string.
- */
 String set_resolution(String resolution) {
     if (hybx_sensor_ready) {
         if (resolution == "4x4") {
@@ -45,11 +44,6 @@ String set_resolution(String resolution) {
     return (currentResolution == 16) ? "4x4" : "8x8";
 }
 
-/**
- * Bridge: get_distance_data
- * Returns row-major matrix: rows separated by ";", values by ",".
- * Returns "0" if sensor not ready.
- */
 String get_distance_data() {
     if (!hybx_sensor_ready) {
         return "0";
@@ -66,11 +60,6 @@ String get_distance_data() {
     return result;
 }
 
-/**
- * Bridge: get_target_status
- * Returns row-major matrix of T/F (T = status 5 or 9 = valid).
- * Returns "0" if sensor not ready.
- */
 String get_target_status() {
     if (!hybx_sensor_ready) {
         return "0";
@@ -93,7 +82,6 @@ void setup() {
     Bridge.provide("set_resolution",    set_resolution);
     Bridge.provide("get_distance_data", get_distance_data);
     Bridge.provide("get_target_status", get_target_status);
-
     Wire1.begin();
     sensor.begin();
 }
