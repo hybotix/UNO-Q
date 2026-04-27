@@ -76,7 +76,7 @@ def loop():
             print("Waiting for sensor firmware upload...")
 
         try:
-            status = Bridge.call("get_sensor_status", timeout=15)
+            status = Bridge.call("get_sensor_status", timeout=60)
         except TimeoutError:
             print("ERROR: Bridge timeout — Arduino not responding")
             time.sleep(2.0)
