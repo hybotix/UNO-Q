@@ -14,19 +14,18 @@
  *
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
  *
- * DESIGN NOTE — init sequence following lsm6dsox pattern
- * -------------------------------------------------------
- * Pattern proven by lsm6dsox sketch:
- *   1. Bridge.begin()          — start Bridge thread
- *   2. sensor init (I2C)       — Bridge running, no functions registered yet
- *   3. Bridge.provide(...)     — register functions after init completes
+ * INIT SEQUENCE
+ * -------------
+ * 1. Bridge.begin()
+ * 2. Bridge.provide() for ALL functions including get_sensor_status
+ *    get_sensor_status returns "initializing" until begin() completes
+ * 3. Wire1.begin() + sensor.begin()  (~10s firmware upload)
+ * 4. Bridge.provide() is already done — Python gets "initializing"
+ *    responses during the upload, then "ready" or "init_failed"
  *
- * Python connects after Bridge.begin() and polls get_sensor_status()
- * which returns "initializing" until Bridge.provide() registers it.
- * The 60s timeout in main.py covers the ~10s firmware upload.
- *
- * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/
- * and auto-discovered by arduino-cli via dir: entry in sketch.yaml.
+ * This follows the lsm6dsox pattern but registers functions before
+ * sensor init so Python gets "initializing" instead of "method not
+ * available" during the firmware upload.
  */
 
 #include <Arduino_RouterBridge.h>
@@ -37,8 +36,10 @@ hybx_vl53l5cx sensor;
 
 static uint8_t currentResolution = 64;
 static bool    initFailed        = false;
+static bool    initDone          = false;
 
 String get_sensor_status() {
+    if (!initDone)    return "initializing";
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
@@ -96,27 +97,28 @@ String get_target_status() {
 }
 
 void setup() {
-    /* Step 1: Start the Bridge thread */
+    /* Step 1: Start Bridge */
     Bridge.begin();
 
-    /* Step 2: Sensor init while Bridge is running but no functions
-     * registered yet. Python will get "method not available" until
-     * Bridge.provide() is called — handled by 60s timeout in main.py. */
+    /* Step 2: Register ALL functions immediately — get_sensor_status
+     * returns "initializing" until initDone is set below */
+    Bridge.provide("get_sensor_status",  get_sensor_status);
+    Bridge.provide("set_resolution",     set_resolution);
+    Bridge.provide("get_distance_data",  get_distance_data);
+    Bridge.provide("get_target_status",  get_target_status);
+
+    /* Step 3: Sensor init — Bridge is running and responding with
+     * "initializing" during the ~10s firmware upload */
     Wire1.begin();
     delay(100);
     if (!sensor.begin()) {
         initFailed = true;
     }
-
-    /* Step 3: Register Bridge functions after init completes */
-    Bridge.provide("get_sensor_status",  get_sensor_status);
-    Bridge.provide("set_resolution",     set_resolution);
-    Bridge.provide("get_distance_data",  get_distance_data);
-    Bridge.provide("get_target_status",  get_target_status);
+    initDone = true;
 }
 
 void loop() {
-    if (!initFailed) {
+    if (initDone && !initFailed) {
         sensor.poll();
     }
 }
