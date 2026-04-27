@@ -14,17 +14,16 @@
  *
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
  *
- * DESIGN NOTE — sensor init in setup()
- * -------------------------------------
- * sensor.begin() uploads ~85KB firmware over I2C and blocks for ~10s.
- * It must run in setup() not loop(). The Bridge runs as a Zephyr thread
- * scheduled independently of loop() — HOWEVER, it shares the I2C bus.
- * If begin() runs in loop(), it holds I2C for 10s while the Bridge thread
- * also needs I2C, causing Bridge timeouts.
+ * DESIGN NOTE — init sequence following lsm6dsox pattern
+ * -------------------------------------------------------
+ * Pattern proven by lsm6dsox sketch:
+ *   1. Bridge.begin()          — start Bridge thread
+ *   2. sensor init (I2C)       — Bridge running, no functions registered yet
+ *   3. Bridge.provide(...)     — register functions after init completes
  *
- * Running begin() in setup() means the Bridge starts AFTER firmware upload
- * completes. Python must wait up to ~10s for the first Bridge response —
- * the 60s timeout in main.py handles this correctly.
+ * Python connects after Bridge.begin() and polls get_sensor_status()
+ * which returns "initializing" until Bridge.provide() registers it.
+ * The 60s timeout in main.py covers the ~10s firmware upload.
  *
  * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/
  * and auto-discovered by arduino-cli via dir: entry in sketch.yaml.
@@ -97,19 +96,19 @@ String get_target_status() {
 }
 
 void setup() {
+    /* Step 1: Start the Bridge thread */
+    Bridge.begin();
+
+    /* Step 2: Sensor init while Bridge is running but no functions
+     * registered yet. Python will get "method not available" until
+     * Bridge.provide() is called — handled by 60s timeout in main.py. */
     Wire1.begin();
-
-    /* Allow the VL53L5CX time to power up and stabilize before
-     * attempting firmware upload over I2C. */
     delay(100);
-
-    /* sensor.begin() uploads firmware over I2C — blocks ~10s.
-     * Must run before Bridge.begin() so I2C is free when Bridge starts. */
     if (!sensor.begin()) {
         initFailed = true;
     }
 
-    Bridge.begin();
+    /* Step 3: Register Bridge functions after init completes */
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
     Bridge.provide("get_distance_data",  get_distance_data);
