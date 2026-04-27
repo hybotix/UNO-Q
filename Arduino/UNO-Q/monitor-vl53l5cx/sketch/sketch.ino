@@ -117,9 +117,9 @@ void setup() {
 
     // Register Bridge functions immediately so Python can connect
     // without waiting for sensor initialization.
-    Bridge.provide("set_resolution",    vl53_set_resolution);
     Bridge.provide("get_distance_data", get_distance_data);
     Bridge.provide("get_target_status", get_target_status);
+    Bridge.provide("set_resolution",    vl53_set_resolution);
 }
 
 void loop() {
