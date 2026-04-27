@@ -29,7 +29,6 @@
  */
 
 #include <Arduino_RouterBridge.h>
-#include <Wire.h>
 #include <hybx_vl53l5cx.h>
 
 hybx_vl53l5cx sensor;
@@ -109,8 +108,8 @@ void setup() {
 
     /* Step 3: Sensor init — Bridge is running and responding with
      * "initializing" during the ~10s firmware upload */
-    Wire1.begin();
-    delay(100);
+    /* hybx_vl53l5cx uses Zephyr native i2c_transfer() directly.
+     * No Wire1.begin() needed — i2c4 is enabled in the DTS overlay. */
     if (!sensor.begin()) {
         initFailed = true;
     }
