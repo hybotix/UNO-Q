@@ -4,6 +4,7 @@ profiles:
       - platform: arduino:zephyr
     libraries:
       - Arduino_RouterBridge (0.3.0)
+      - SparkFun VL53L5CX Arduino Library (1.0.3)
       - dependency: Arduino_RPClite (0.2.1)
       - dependency: ArxContainer (0.7.0)
       - dependency: ArxTypeTraits (0.3.2)
