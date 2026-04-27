@@ -5,7 +5,7 @@ Hybrid RobotiX - Dale Weber (N7PKT)
 Reads distance and target status from the VL53L5CX via the Arduino
 RouterBridge and displays them as a 4x4 or 8x8 matrix.
 
-The resolution is set by calling set_resolution() on startup.
+The resolution is set by calling set_resolution() on first loop iteration.
 Change RESOLUTION to 16 for 4x4 or 64 for 8x8.
 """
 
@@ -15,6 +15,8 @@ import time
 # Set to 16 for 4x4 or 64 for 8x8
 RESOLUTION = 64
 WIDTH = 4 if RESOLUTION == 16 else 8
+
+initialized = False
 
 
 def parse_matrix(data: str) -> list:
@@ -38,12 +40,15 @@ def print_status_matrix(matrix: list) -> None:
     print()
 
 
-# Set resolution on startup
-Bridge.call("set_resolution", RESOLUTION)
-time.sleep(0.5)
-
-
 def loop():
+    global initialized
+
+    if not initialized:
+        Bridge.call("set_resolution", RESOLUTION)
+        initialized = True
+        time.sleep(0.5)
+        return
+
     time.sleep(0.1)
 
     distance = Bridge.call("get_distance_data")
