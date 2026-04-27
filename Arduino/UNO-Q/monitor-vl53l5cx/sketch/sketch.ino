@@ -6,13 +6,18 @@
  * sensor via the Arduino RouterBridge.
  *
  * Bridge functions:
- *   get_sensor_status()     -- "ready", "init_failed:<step>:<code>", or "initializing"
+ *   get_sensor_status()     -- "ready", "init_failed:<step>:<code>",
+ *                              "initializing", or "not_started"
  *   set_resolution(String)  -- "4x4" or "8x8". Returns active resolution.
  *   get_distance_data()     -- NxN matrix of distances in mm, or "0"
  *   get_target_status()     -- NxN matrix of T/F validity flags, or "0"
  *
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
  * Sensor firmware upload takes up to 10 seconds at power-on.
+ *
+ * IMPORTANT: vl53.begin() is called from loop() not setup() so the
+ * Bridge remains responsive during the firmware upload. Python polls
+ * get_sensor_status() until "ready" before requesting data.
  *
  * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/
  * and auto-discovered by arduino-cli via dir: entry in sketch.yaml.
@@ -26,15 +31,10 @@ hybx_vl53l5cx sensor;   /* 8x8, address 0x29, Wire1 */
 
 static uint8_t currentResolution = 64;
 static bool    initFailed        = false;
+static bool    initStarted       = false;
 
-/*
- * get_sensor_status — returns one of:
- *   "initializing"           — begin() not yet complete
- *   "ready"                  — ranging, data available
- *   "init_failed:<step>:<code>" — begin() failed; step and ULD code included
- *   "error:<step>:<code>"    — runtime ULD error during poll/read
- */
 String get_sensor_status() {
+    if (!initStarted)      return "not_started";
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
@@ -63,9 +63,7 @@ String set_resolution(String resolution) {
 }
 
 String get_distance_data() {
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (!hybx_sensor_ready) return "0";
     int width = (currentResolution == 16) ? 4 : 8;
     String result = "";
     for (int row = 0; row < width; row++) {
@@ -79,9 +77,7 @@ String get_distance_data() {
 }
 
 String get_target_status() {
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (!hybx_sensor_ready) return "0";
     int width = (currentResolution == 16) ? 4 : 8;
     String result = "";
     for (int row = 0; row < width; row++) {
@@ -96,6 +92,9 @@ String get_target_status() {
 }
 
 void setup() {
+    /* Register Bridge functions immediately — before sensor init.
+     * This keeps the Bridge responsive while the sensor firmware
+     * uploads over I2C (up to 10 s). */
     Bridge.begin();
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
@@ -103,11 +102,17 @@ void setup() {
     Bridge.provide("get_target_status",  get_target_status);
 
     Wire1.begin();
-    if (!sensor.begin()) {
-        initFailed = true;
-    }
 }
 
 void loop() {
+    /* Start sensor init on first loop() call so the Bridge is already
+     * running and can respond to get_sensor_status() during the upload. */
+    if (!initStarted && !initFailed) {
+        initStarted = true;
+        if (!sensor.begin()) {
+            initFailed = true;
+        }
+    }
+
     sensor.poll();
 }
