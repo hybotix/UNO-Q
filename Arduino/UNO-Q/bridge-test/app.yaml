@@ -1,0 +1,3 @@
+name: Bridge Test
+icon: 🔧
+description: Minimal test to verify Bridge.provide() with String parameters works.
