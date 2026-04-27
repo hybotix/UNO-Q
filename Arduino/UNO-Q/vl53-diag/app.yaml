@@ -1,0 +1,3 @@
+name: VL53 Diagnostic
+description: I2C presence check for VL53L5CX
+icon: "🔍"
