@@ -6,15 +6,15 @@ Reads distance and target status from the VL53L5CX via the Arduino
 RouterBridge and displays them as a 4x4 or 8x8 matrix.
 
 The resolution is set by calling set_resolution() on first loop iteration.
-Change RESOLUTION to 16 for 4x4 or 64 for 8x8.
+Change RESOLUTION to "16" for 4x4 or "64" for 8x8.
 """
 
 from arduino.app_utils import *
 import time
 
-# Set to 16 for 4x4 or 64 for 8x8
-RESOLUTION = 64
-WIDTH = 4 if RESOLUTION == 16 else 8
+# Set to "16" for 4x4 or "64" for 8x8
+RESOLUTION = "64"
+WIDTH = 4 if RESOLUTION == "16" else 8
 
 initialized = False
 
