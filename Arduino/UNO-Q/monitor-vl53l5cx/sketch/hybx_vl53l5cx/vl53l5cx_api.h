@@ -67,7 +67,7 @@
 #pragma anon_unions
 #endif
 
-#include "../platform.h"
+#include "platform.h"
 
 /**
  * @brief Current driver version.

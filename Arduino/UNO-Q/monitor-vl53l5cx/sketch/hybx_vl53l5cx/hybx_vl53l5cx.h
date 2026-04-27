@@ -73,7 +73,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "platform.h"
-#include "uld/vl53l5cx_api.h"
+#include "vl53l5cx_api.h"
 
 /* -------------------------------------------------------------------------
  * Public result globals — defined in hybx_vl53l5cx.cpp, BSS allocation.
