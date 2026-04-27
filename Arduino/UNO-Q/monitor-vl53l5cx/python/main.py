@@ -15,7 +15,11 @@ import time
 RESOLUTION = "8x8"
 WIDTH = 4 if RESOLUTION == "4x4" else 8
 
-initialized = False
+# Sensor init timeout — vl53.begin() uploads firmware over I2C (~10 s)
+SENSOR_INIT_TIMEOUT = 30.0
+
+initialized  = False
+init_start   = None
 
 
 def parse_distance_matrix(data: str) -> list:
@@ -45,24 +49,40 @@ def print_status_matrix(matrix: list) -> None:
 
 
 def loop():
-    global initialized
+    global initialized, init_start
 
     if not initialized:
-        # Wait for sensor firmware upload to complete — vl53.begin() blocks
-        # the Bridge for up to 10 s. Poll get_distance_data until we get
-        # something other than "0", then set resolution.
+        if init_start is None:
+            init_start = time.time()
+            print("Waiting for sensor...")
+
         try:
-            data = Bridge.call("get_distance_data", timeout=30)
-            if data == "0" or not data:
-                time.sleep(1.0)
+            status = Bridge.call("get_sensor_status", timeout=15)
+        except TimeoutError:
+            print("Bridge timeout — sensor not responding")
+            time.sleep(2.0)
+            return
+
+        if status == "init_failed":
+            print("Sensor init failed — check QWIIC connection and power")
+            time.sleep(5.0)
+            return
+
+        if status == "initializing":
+            elapsed = time.time() - init_start
+            if elapsed > SENSOR_INIT_TIMEOUT:
+                print(f"Sensor init timeout after {elapsed:.0f}s")
+                time.sleep(5.0)
                 return
+            time.sleep(1.0)
+            return
+
+        if status == "ready":
             result = Bridge.call("set_resolution", RESOLUTION)
             print("Resolution set to: " + result)
             initialized = True
             time.sleep(0.5)
-        except TimeoutError:
-            time.sleep(1.0)
-        return
+            return
 
     time.sleep(0.1)
 

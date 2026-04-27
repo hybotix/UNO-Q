@@ -1,11 +1,12 @@
 /*
  * VL53L5CX Monitor
- * Hybrid RobotiX — Dale Weber (N7PKT)
+ * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
  * Provides distance and target status data from the SparkFun Qwiic
  * VL53L5CX ToF sensor via the Arduino RouterBridge.
  *
  * Bridge functions:
+ *   get_sensor_status()     -- "ready", "init_failed", or "initializing"
  *   set_resolution(String)  -- "4x4" or "8x8". Returns "4x4" or "8x8".
  *   get_distance_data()     -- NxN matrix of distances in mm
  *   get_target_status()     -- NxN matrix of T/F validity flags
@@ -14,13 +15,10 @@
  * Sensor firmware upload takes up to 10 seconds at power-on.
  *
  * Bridge functions are registered before sensor init so the Python side
- * can connect immediately. All functions return "0" until sensor ready.
- *
- * The ST ULD returns data transposed from the datasheet zone map.
- * The Python side applies the x/y correction to reflect physical reality.
+ * can connect immediately. get_sensor_status() reports init state.
  *
  * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/ and
- * is auto-discovered by arduino-cli. It is not listed in sketch.yaml.
+ * is auto-discovered by arduino-cli via dir: entry in sketch.yaml.
  */
 
 #include <Arduino_RouterBridge.h>
@@ -30,6 +28,13 @@
 hybx_vl53l5cx sensor;   /* 8x8, address 0x29, Wire1 */
 
 static uint8_t currentResolution = 64;
+static bool    initFailed = false;
+
+String get_sensor_status() {
+    if (initFailed)       return "init_failed";
+    if (hybx_sensor_ready) return "ready";
+    return "initializing";
+}
 
 String set_resolution(String resolution) {
     if (hybx_sensor_ready) {
@@ -79,11 +84,15 @@ String get_target_status() {
 
 void setup() {
     Bridge.begin();
-    Bridge.provide("set_resolution",    set_resolution);
-    Bridge.provide("get_distance_data", get_distance_data);
-    Bridge.provide("get_target_status", get_target_status);
+    Bridge.provide("get_sensor_status",  get_sensor_status);
+    Bridge.provide("set_resolution",     set_resolution);
+    Bridge.provide("get_distance_data",  get_distance_data);
+    Bridge.provide("get_target_status",  get_target_status);
+
     Wire1.begin();
-    sensor.begin();
+    if (!sensor.begin()) {
+        initFailed = true;
+    }
 }
 
 void loop() {
