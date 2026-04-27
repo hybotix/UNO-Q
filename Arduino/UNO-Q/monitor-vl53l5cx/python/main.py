@@ -1,6 +1,6 @@
 """
 VL53L5CX Monitor Python Application
-Hybrid RobotiX — Dale Weber (N7PKT)
+Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
 Reads distance and target status from the VL53L5CX via the Arduino
 RouterBridge and displays them as a 4x4 or 8x8 matrix.
