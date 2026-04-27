@@ -13,6 +13,10 @@
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
  * Sensor firmware upload takes up to 10 seconds at power-on — please wait.
  *
+ * Bridge functions are registered immediately after Bridge.begin() so the
+ * Python side can connect without waiting for sensor initialization.
+ * All functions return "0" until the sensor is ready.
+ *
  * The ST library returns data transposed from the datasheet zone map.
  * The Python side applies the x/y correction to reflect physical reality.
  */
@@ -23,6 +27,7 @@
 SparkFun_VL53L5CX myImager;
 VL53L5CX_ResultsData measurementData;
 int currentResolution = 64;  // default 8x8
+bool sensorReady = false;
 
 /**
  * Set sensor resolution.
@@ -30,16 +35,18 @@ int currentResolution = 64;  // default 8x8
  * Returns the resolution now active ("4x4" or "8x8").
  */
 String set_resolution(String resolution) {
-    if (resolution == "4x4") {
-        myImager.stopRanging();
-        myImager.setResolution(16);
-        currentResolution = 16;
-        myImager.startRanging();
-    } else if (resolution == "8x8") {
-        myImager.stopRanging();
-        myImager.setResolution(64);
-        currentResolution = 64;
-        myImager.startRanging();
+    if (sensorReady) {
+        if (resolution == "4x4") {
+            myImager.stopRanging();
+            myImager.setResolution(16);
+            currentResolution = 16;
+            myImager.startRanging();
+        } else if (resolution == "8x8") {
+            myImager.stopRanging();
+            myImager.setResolution(64);
+            currentResolution = 64;
+            myImager.startRanging();
+        }
     }
     return (currentResolution == 16) ? "4x4" : "8x8";
 }
@@ -47,10 +54,10 @@ String set_resolution(String resolution) {
 /**
  * Read distance data and return as a row-major matrix string.
  * Rows are separated by ";" and values within each row by ",".
- * Returns "0" if data is not ready.
+ * Returns "0" if data is not ready or sensor not initialized.
  */
 String get_distance_data() {
-    if (!myImager.isDataReady()) {
+    if (!sensorReady || !myImager.isDataReady()) {
         return "0";
     }
     if (!myImager.getRangingData(&measurementData)) {
@@ -77,10 +84,10 @@ String get_distance_data() {
  * Read target status and return as a row-major matrix string.
  * True = valid reading (status 5 or 9), False = invalid.
  * Rows separated by ";", values within row by ",".
- * Returns "0" if data is not ready.
+ * Returns "0" if data is not ready or sensor not initialized.
  */
 String get_target_status() {
-    if (!myImager.isDataReady()) {
+    if (!sensorReady || !myImager.isDataReady()) {
         return "0";
     }
     if (!myImager.getRangingData(&measurementData)) {
@@ -108,19 +115,21 @@ void setup() {
     Bridge.begin();
     Wire1.begin();
 
-    // VL53L5CX firmware upload takes ~10 seconds at power-on
-    while (!myImager.begin(0x29, Wire1)) {
-        delay(100);
-    }
-
-    myImager.setResolution(currentResolution);
-    myImager.setRangingFrequency(15);
-    myImager.startRanging();
-
+    // Register Bridge functions immediately so Python can connect
+    // without waiting for sensor initialization.
     Bridge.provide("set_resolution",    set_resolution);
     Bridge.provide("get_distance_data", get_distance_data);
     Bridge.provide("get_target_status", get_target_status);
 }
 
 void loop() {
+    if (!sensorReady) {
+        if (myImager.begin(0x29, Wire1)) {
+            myImager.setResolution(currentResolution);
+            myImager.setRangingFrequency(15);
+            myImager.startRanging();
+            sensorReady = true;
+        }
+        delay(100);
+    }
 }
