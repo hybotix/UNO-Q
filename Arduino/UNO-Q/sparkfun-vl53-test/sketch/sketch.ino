@@ -23,8 +23,8 @@ void setup() {
     Bridge.provide("get_status", get_status);
 
     Wire1.begin();
-    Wire1.setClock(400000);  /* Fast Mode required for VL53L5CX firmware upload */
-    delay(100);
+    Wire1.setClock(400000);  /* Fast Mode */
+    delay(1000);             /* Allow VL53L5CX internal MCU to fully boot */
 
     if (imager.begin(0x29, Wire1)) {
         initResult = "sparkfun_init_ok";
