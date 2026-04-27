@@ -1,6 +1,6 @@
 """
 VL53L5CX Monitor Python Application
-Hybrid RobotiX - Dale Weber (N7PKT)
+Hybrid RobotiX — Dale Weber (N7PKT)
 
 Reads distance and target status from the VL53L5CX via the Arduino
 RouterBridge and displays them as a 4x4 or 8x8 matrix.
@@ -48,16 +48,29 @@ def loop():
     global initialized
 
     if not initialized:
-        result = Bridge.call("set_resolution", RESOLUTION)
-        print("Resolution set to: " + result)
-        initialized = True
-        time.sleep(0.5)
+        # Wait for sensor firmware upload to complete — vl53.begin() blocks
+        # the Bridge for up to 10 s. Poll get_distance_data until we get
+        # something other than "0", then set resolution.
+        try:
+            data = Bridge.call("get_distance_data", timeout=30)
+            if data == "0" or not data:
+                time.sleep(1.0)
+                return
+            result = Bridge.call("set_resolution", RESOLUTION)
+            print("Resolution set to: " + result)
+            initialized = True
+            time.sleep(0.5)
+        except TimeoutError:
+            time.sleep(1.0)
         return
 
     time.sleep(0.1)
 
-    distance = Bridge.call("get_distance_data")
-    status   = Bridge.call("get_target_status")
+    try:
+        distance = Bridge.call("get_distance_data")
+        status   = Bridge.call("get_target_status")
+    except TimeoutError:
+        return
 
     if not distance or distance == "0":
         return
