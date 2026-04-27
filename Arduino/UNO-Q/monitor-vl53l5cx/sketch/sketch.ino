@@ -14,17 +14,17 @@
  *
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
  *
- * DESIGN NOTE — sensor init and Bridge responsiveness
- * ---------------------------------------------------
- * vl53.begin() uploads ~85KB firmware over I2C and blocks for ~10s.
- * The Arduino RouterBridge runs in its own Zephyr thread and remains
- * responsive during this time as long as we do not call begin() from
- * a context that holds a lock the Bridge needs.
+ * DESIGN NOTE — sensor init in setup()
+ * -------------------------------------
+ * sensor.begin() uploads ~85KB firmware over I2C and blocks for ~10s.
+ * It must run in setup() not loop(). The Bridge runs as a Zephyr thread
+ * scheduled independently of loop() — HOWEVER, it shares the I2C bus.
+ * If begin() runs in loop(), it holds I2C for 10s while the Bridge thread
+ * also needs I2C, causing Bridge timeouts.
  *
- * begin() is called once from loop() via a one-shot flag. loop() only
- * runs when the Bridge thread yields, so the Bridge always gets CPU
- * time between loop() iterations. sensor.poll() is only called after
- * initDone is set.
+ * Running begin() in setup() means the Bridge starts AFTER firmware upload
+ * completes. Python must wait up to ~10s for the first Bridge response —
+ * the 60s timeout in main.py handles this correctly.
  *
  * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/
  * and auto-discovered by arduino-cli via dir: entry in sketch.yaml.
@@ -38,14 +38,8 @@ hybx_vl53l5cx sensor;
 
 static uint8_t currentResolution = 64;
 static bool    initFailed        = false;
-static bool    initDone          = false;
-static bool    initCalled        = false;
 
-/* -------------------------------------------------------------------------
- * Bridge functions
- * -------------------------------------------------------------------------*/
 String get_sensor_status() {
-    if (!initDone) return "initializing";
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
@@ -102,28 +96,23 @@ String get_target_status() {
     return result;
 }
 
-/* -------------------------------------------------------------------------
- * setup / loop
- * -------------------------------------------------------------------------*/
 void setup() {
+    Wire1.begin();
+
+    /* sensor.begin() uploads firmware over I2C — blocks ~10s.
+     * Must run before Bridge.begin() so I2C is free when Bridge starts. */
+    if (!sensor.begin()) {
+        initFailed = true;
+    }
+
     Bridge.begin();
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
     Bridge.provide("get_distance_data",  get_distance_data);
     Bridge.provide("get_target_status",  get_target_status);
-    Wire1.begin();
 }
 
 void loop() {
-    if (!initCalled) {
-        initCalled = true;
-        if (!sensor.begin()) {
-            initFailed = true;
-        }
-        initDone = true;
-        return;
-    }
-
     if (!initFailed) {
         sensor.poll();
     }
