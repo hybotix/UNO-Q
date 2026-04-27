@@ -34,7 +34,7 @@ bool sensorReady = false;
  * resolution: "4x4" or "8x8"
  * Returns the resolution now active ("4x4" or "8x8").
  */
-String set_resolution(String resolution) {
+String vl53_set_resolution(String resolution) {
     if (sensorReady) {
         if (resolution == "4x4") {
             myImager.stopRanging();
@@ -117,7 +117,7 @@ void setup() {
 
     // Register Bridge functions immediately so Python can connect
     // without waiting for sensor initialization.
-    Bridge.provide("set_resolution",    set_resolution);
+    Bridge.provide("set_resolution",    vl53_set_resolution);
     Bridge.provide("get_distance_data", get_distance_data);
     Bridge.provide("get_target_status", get_target_status);
 }
