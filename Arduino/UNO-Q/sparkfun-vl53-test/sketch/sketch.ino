@@ -19,18 +19,17 @@ String get_status() {
 }
 
 void setup() {
-    Bridge.begin();
-    Bridge.provide("get_status", get_status);
-
     Wire1.begin();
-    Wire1.setClock(400000);  /* Fast Mode */
-    delay(1000);             /* Allow VL53L5CX internal MCU to fully boot */
+    delay(1000);
 
     if (imager.begin(0x29, Wire1)) {
         initResult = "sparkfun_init_ok";
     } else {
         initResult = "sparkfun_init_failed";
     }
+
+    Bridge.begin();
+    Bridge.provide("get_status", get_status);
 }
 
 void loop() {}
