@@ -1,7 +1,6 @@
 #include <Arduino_RouterBridge.h>
-#include <SparkFun_VL53L5CX_Library.h>
 
-SparkFun_VL53L5CX *myImager = nullptr;
+int *testAlloc = nullptr;
 
 String echo(String value) {
     return value;
@@ -10,7 +9,7 @@ String echo(String value) {
 void setup() {
     Bridge.begin();
     Bridge.provide("echo", echo);
-    myImager = new SparkFun_VL53L5CX();
+    testAlloc = new int(42);
 }
 
 void loop() {
