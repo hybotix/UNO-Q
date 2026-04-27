@@ -230,7 +230,7 @@ void scroll_matrix() {
 
     matrix.beginDraw();
     matrix.stroke(0xFFFFFFFF);
-    matrix.text_scroll_speed(50);
+    matrix.textScrollSpeed(50);
     matrix.textFont(Font_5x7);
     matrix.beginText(0, 1, 0xFFFFFF);
     matrix.println(msg);
