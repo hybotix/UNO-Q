@@ -19,16 +19,21 @@ WIDTH = 4 if RESOLUTION == 16 else 8
 initialized = False
 
 
-def parse_matrix(data: str) -> list:
-    """Parse a row-major matrix string (rows=';', cols=',') into a 2D list."""
-    return [row.split(",") for row in data.split(";")]
+def parse_distance_matrix(data: str) -> list:
+    """Parse row-major matrix string into a 2D list of int."""
+    return [[int(v) for v in row.split(",")] for row in data.split(";")]
+
+
+def parse_status_matrix(data: str) -> list:
+    """Parse row-major matrix string into a 2D list of bool."""
+    return [[v == "T" for v in row.split(",")] for row in data.split(";")]
 
 
 def print_distance_matrix(matrix: list) -> None:
     """Print the distance matrix with mm values."""
     print("── Distance (mm) ──")
     for row in matrix:
-        print("  " + "\t".join(f"{int(v):5d}" for v in row))
+        print("  " + "\t".join(f"{v:5d}" for v in row))
     print()
 
 
@@ -36,7 +41,7 @@ def print_status_matrix(matrix: list) -> None:
     """Print the target status matrix as True/False."""
     print("── Target Status ──")
     for row in matrix:
-        print("  " + "\t".join("True " if v == "T" else "False" for v in row))
+        print("  " + "\t".join(str(v) for v in row))
     print()
 
 
@@ -44,7 +49,8 @@ def loop():
     global initialized
 
     if not initialized:
-        Bridge.call("set_resolution", RESOLUTION)
+        result = Bridge.call("set_resolution", RESOLUTION)
+        print("Resolution set to: " + result)
         initialized = True
         time.sleep(0.5)
         return
@@ -59,8 +65,8 @@ def loop():
     if not status or status == "0":
         return
 
-    print_distance_matrix(parse_matrix(distance))
-    print_status_matrix(parse_matrix(status))
+    print_distance_matrix(parse_distance_matrix(distance))
+    print_status_matrix(parse_status_matrix(status))
 
 
 App.run(user_loop=loop)
