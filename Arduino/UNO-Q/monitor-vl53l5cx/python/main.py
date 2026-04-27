@@ -128,8 +128,13 @@ def loop():
     if not status or status == "0":
         return
 
-    print_distance_matrix(parse_distance_matrix(distance))
-    print_status_matrix(parse_status_matrix(status))
+    try:
+        print_distance_matrix(parse_distance_matrix(distance))
+        print_status_matrix(parse_status_matrix(status))
+    except (ValueError, IndexError) as e:
+        print(f"ERROR: Failed to parse sensor data: {e}")
+        print(f"  distance='{distance}'")
+        print(f"  status='{status}'")
 
 
 App.run(user_loop=loop)
