@@ -23,6 +23,7 @@ void setup() {
     Bridge.provide("get_status", get_status);
 
     Wire1.begin();
+    Wire1.setClock(400000);  /* Fast Mode required for VL53L5CX firmware upload */
     delay(100);
 
     if (imager.begin(0x29, Wire1)) {
