@@ -99,6 +99,10 @@ String get_target_status() {
 void setup() {
     Wire1.begin();
 
+    /* Allow the VL53L5CX time to power up and stabilize before
+     * attempting firmware upload over I2C. */
+    delay(100);
+
     /* sensor.begin() uploads firmware over I2C — blocks ~10s.
      * Must run before Bridge.begin() so I2C is free when Bridge starts. */
     if (!sensor.begin()) {
