@@ -83,9 +83,9 @@ def loop():
             return
         except ValueError as e:
             print(f"ERROR: Bridge error — {e}")
-            print("The sketch on the MCU may be out of date. Run: clean <app>")
-            time.sleep(2.0)
-            return
+            print("The sketch on the MCU is out of date. Run: clean <app>")
+            # This is a permanent failure until reflash — stop retrying
+            raise SystemExit(1)
 
         if status.startswith("init_failed"):
             print("ERROR: Sensor init failed — " + format_error(status))
