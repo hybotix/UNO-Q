@@ -7,17 +7,20 @@
  *
  * Bridge functions:
  *   get_sensor_status()     -- "ready", "init_failed:<step>:<code>",
- *                              "initializing", or "not_started"
+ *                              or "initializing"
  *   set_resolution(String)  -- "4x4" or "8x8". Returns active resolution.
  *   get_distance_data()     -- NxN matrix of distances in mm, or "0"
  *   get_target_status()     -- NxN matrix of T/F validity flags, or "0"
  *
  * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
- * Sensor firmware upload takes up to 10 seconds at power-on.
  *
- * IMPORTANT: vl53.begin() is called from loop() not setup() so the
- * Bridge remains responsive during the firmware upload. Python polls
- * get_sensor_status() until "ready" before requesting data.
+ * DESIGN NOTE — Bridge responsiveness during sensor init
+ * ------------------------------------------------------
+ * vl53.begin() uploads sensor firmware over I2C (~10 s) and blocks
+ * the calling thread. To keep the Bridge responsive during this time,
+ * sensor init runs in a dedicated Zephyr thread. The main thread runs
+ * only Bridge.begin() + Bridge.provide() in setup() and sensor.poll()
+ * in loop(). The init thread sets initDone when complete.
  *
  * hybx_vl53l5cx is installed in ~/Arduino/libraries/hybx_vl53l5cx/
  * and auto-discovered by arduino-cli via dir: entry in sketch.yaml.
@@ -25,16 +28,40 @@
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
+#include <zephyr/kernel.h>
 #include <hybx_vl53l5cx.h>
 
-hybx_vl53l5cx sensor;   /* 8x8, address 0x29, Wire1 */
+hybx_vl53l5cx sensor;
 
 static uint8_t currentResolution = 64;
 static bool    initFailed        = false;
-static bool    initStarted       = false;
+static bool    initDone          = false;
 
+/* -------------------------------------------------------------------------
+ * Zephyr thread for sensor init — runs concurrently with Bridge/loop()
+ * -------------------------------------------------------------------------*/
+#define INIT_STACK_SIZE 2048
+#define INIT_PRIORITY   5
+
+K_THREAD_STACK_DEFINE(init_stack, INIT_STACK_SIZE);
+static struct k_thread init_thread;
+
+static void sensor_init_thread(void *p1, void *p2, void *p3)
+{
+    ARG_UNUSED(p1); ARG_UNUSED(p2); ARG_UNUSED(p3);
+    if (!sensor.begin()) {
+        initFailed = true;
+    }
+    initDone = true;
+}
+
+/* -------------------------------------------------------------------------
+ * Bridge functions
+ * -------------------------------------------------------------------------*/
 String get_sensor_status() {
-    if (!initStarted)      return "not_started";
+    if (!initDone) {
+        return "initializing";
+    }
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
@@ -91,10 +118,10 @@ String get_target_status() {
     return result;
 }
 
+/* -------------------------------------------------------------------------
+ * setup / loop
+ * -------------------------------------------------------------------------*/
 void setup() {
-    /* Register Bridge functions immediately — before sensor init.
-     * This keeps the Bridge responsive while the sensor firmware
-     * uploads over I2C (up to 10 s). */
     Bridge.begin();
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
@@ -102,17 +129,17 @@ void setup() {
     Bridge.provide("get_target_status",  get_target_status);
 
     Wire1.begin();
+
+    /* Launch sensor init in its own thread so Bridge stays responsive */
+    k_thread_create(&init_thread, init_stack,
+                    K_THREAD_STACK_SIZEOF(init_stack),
+                    sensor_init_thread,
+                    NULL, NULL, NULL,
+                    INIT_PRIORITY, 0, K_NO_WAIT);
 }
 
 void loop() {
-    /* Start sensor init on first loop() call so the Bridge is already
-     * running and can respond to get_sensor_status() during the upload. */
-    if (!initStarted && !initFailed) {
-        initStarted = true;
-        if (!sensor.begin()) {
-            initFailed = true;
-        }
+    if (initDone && !initFailed) {
+        sensor.poll();
     }
-
-    sensor.poll();
 }
