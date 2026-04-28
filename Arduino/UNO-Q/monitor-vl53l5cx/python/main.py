@@ -16,7 +16,7 @@ RESOLUTION = "8x8"
 WIDTH = 4 if RESOLUTION == "4x4" else 8
 
 # Maximum time to wait for sensor firmware upload (~10 s typical)
-SENSOR_INIT_TIMEOUT = 30.0
+SENSOR_INIT_TIMEOUT = 120.0
 
 # Error step names for human-readable reporting
 ERROR_STEPS = {
@@ -76,7 +76,7 @@ def loop():
             print("Waiting for sensor firmware upload...")
 
         try:
-            status = Bridge.call("get_sensor_status", timeout=60)
+            status = Bridge.call("get_sensor_status", timeout=120)
         except TimeoutError:
             print("ERROR: Bridge timeout — Arduino not responding")
             time.sleep(2.0)
