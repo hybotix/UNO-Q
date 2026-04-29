@@ -44,14 +44,13 @@ String get_sensor_status() {
                ":" + String(hybx_last_error) +
                ":poll" + String(hybx_init_step);
     }
-    if (hybx_sensor_ready) {
-        if (hybx_last_error_step != 0) {
-            return "error:" + String(hybx_last_error_step) +
-                   ":" + String(hybx_last_error);
-        }
-        return "ready";
+    /* initDone && !initFailed — begin() succeeded, ranging is running.
+     * Report any runtime poll errors, otherwise ready. */
+    if (hybx_last_error_step != 0) {
+        return "error:" + String(hybx_last_error_step) +
+               ":" + String(hybx_last_error);
     }
-    return "initializing";
+    return "ready";
 }
 
 String set_resolution(String resolution) {
