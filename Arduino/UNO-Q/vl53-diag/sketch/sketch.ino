@@ -2,8 +2,9 @@
  * VL53L5CX I2C Diagnostic
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Checks if VL53L5CX is present on Wire1 at 0x29 and reports
- * the result via Bridge. Does NOT attempt firmware upload.
+ * Tests Wire1 + Bridge interaction.
+ * Wire1.begin() is called BEFORE Bridge.begin() based on sparkfun-vl53-test
+ * pattern which is known to work.
  */
 
 #include <Arduino_RouterBridge.h>
@@ -16,11 +17,12 @@ String get_diag() {
 }
 
 void setup() {
-    Bridge.begin();
-    Bridge.provide("get_diag", get_diag);
-
+    /* Wire1 MUST be initialized before Bridge.begin() */
     Wire1.begin();
     delay(500);
+
+    Bridge.begin();
+    Bridge.provide("get_diag", get_diag);
 
     /* Try a simple I2C probe — just check if 0x29 ACKs */
     Wire1.beginTransmission(0x29);
