@@ -37,11 +37,14 @@ init_start  = None
 
 
 def format_error(status: str) -> str:
-    """Format 'init_failed:step:code' or 'error:step:code' for display."""
+    """Format 'init_failed:step:code[:pollN]' or 'error:step:code' for display."""
     parts = status.split(":")
-    if len(parts) == 3:
+    if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
-        return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
+        msg = f"{parts[0]}: {step_name} (ULD code {parts[2]})"
+        if len(parts) >= 4:
+            msg += f" at {parts[3]}"
+        return msg
     return status
 
 

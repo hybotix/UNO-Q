@@ -41,7 +41,8 @@ String get_sensor_status() {
     if (!initDone)    return "initializing";
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
-               ":" + String(hybx_last_error);
+               ":" + String(hybx_last_error) +
+               ":poll" + String(hybx_init_step);
     }
     if (hybx_sensor_ready) {
         if (hybx_last_error_step != 0) {
