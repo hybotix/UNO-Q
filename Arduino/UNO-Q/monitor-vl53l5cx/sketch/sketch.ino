@@ -56,12 +56,15 @@ String get_sensor_status() {
 
 String set_resolution(String resolution) {
     if (hybx_sensor_ready) {
-        if (resolution == "4x4") {
-            sensor.setResolution(16);
-            currentResolution = 16;
-        } else if (resolution == "8x8") {
-            sensor.setResolution(64);
-            currentResolution = 64;
+        uint8_t requested = (resolution == "4x4") ? 16 : 64;
+        if (requested != currentResolution) {
+            if (resolution == "4x4") {
+                sensor.setResolution(16);
+                currentResolution = 16;
+            } else if (resolution == "8x8") {
+                sensor.setResolution(64);
+                currentResolution = 64;
+            }
         }
     }
     return (currentResolution == 16) ? "4x4" : "8x8";
