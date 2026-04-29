@@ -2,9 +2,16 @@
  * VL53L5CX I2C Diagnostic
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Tests Wire1 + Bridge interaction.
- * Wire1.begin() is called BEFORE Bridge.begin() based on sparkfun-vl53-test
- * pattern which is known to work.
+ * Tests Wire1 communication with VL53L5CX on QWIIC bus while Bridge runs.
+ * Does NOT call Wire1.begin() explicitly — matrix-bno055 shows that
+ * calling Wire1.begin() after Bridge.begin() hangs the MCU.
+ * Sensor libraries initialize Wire1 internally; we do the same here.
+ *
+ * Tests:
+ *   1. I2C probe at 0x29 (VL53L5CX default address)
+ *   2. Page select write (reg 0x7FFF = 0x00)
+ *   3. Device ID read (reg 0x0000, expect 0xF0)
+ *   4. Revision ID read (reg 0x0001, expect 0x02)
  */
 
 #include <Arduino_RouterBridge.h>
@@ -16,23 +23,70 @@ String get_diag() {
     return diagResult;
 }
 
-void setup() {
-    /* Wire1 MUST be initialized before Bridge.begin() */
-    Wire1.begin();
-    delay(500);
+static uint8_t vl53_write_byte(uint16_t reg, uint8_t value) {
+    Wire1.beginTransmission(0x29);
+    Wire1.write((uint8_t)(reg >> 8));
+    Wire1.write((uint8_t)(reg & 0xFF));
+    Wire1.write(value);
+    return Wire1.endTransmission();
+}
 
+static uint8_t vl53_read_byte(uint16_t reg, uint8_t &value) {
+    Wire1.beginTransmission(0x29);
+    Wire1.write((uint8_t)(reg >> 8));
+    Wire1.write((uint8_t)(reg & 0xFF));
+    uint8_t err = Wire1.endTransmission(false);
+    if (err != 0) return err;
+    Wire1.requestFrom((uint8_t)0x29, (uint8_t)1);
+    if (!Wire1.available()) return 4;
+    value = Wire1.read();
+    return 0;
+}
+
+void setup() {
     Bridge.begin();
     Bridge.provide("get_diag", get_diag);
 
-    /* Try a simple I2C probe — just check if 0x29 ACKs */
+    /* Test 1: probe */
     Wire1.beginTransmission(0x29);
-    uint8_t error = Wire1.endTransmission();
-
-    if (error == 0) {
-        diagResult = "found:0x29 ACK";
-    } else {
-        diagResult = "not_found:error=" + String(error);
+    uint8_t err = Wire1.endTransmission();
+    if (err != 0) {
+        diagResult = "fail:probe:err=" + String(err);
+        return;
     }
+
+    /* Test 2: select page 0x00 */
+    err = vl53_write_byte(0x7FFF, 0x00);
+    if (err != 0) {
+        diagResult = "fail:page_select:err=" + String(err);
+        return;
+    }
+
+    /* Test 3: read device ID (expect 0xF0) */
+    uint8_t device_id = 0;
+    err = vl53_read_byte(0x0000, device_id);
+    if (err != 0) {
+        diagResult = "fail:read_device_id:err=" + String(err);
+        return;
+    }
+    if (device_id != 0xF0) {
+        diagResult = "fail:bad_device_id:got=0x" + String(device_id, HEX);
+        return;
+    }
+
+    /* Test 4: read revision ID (expect 0x02) */
+    uint8_t revision_id = 0;
+    err = vl53_read_byte(0x0001, revision_id);
+    if (err != 0) {
+        diagResult = "fail:read_revision_id:err=" + String(err);
+        return;
+    }
+    if (revision_id != 0x02) {
+        diagResult = "fail:bad_revision_id:got=0x" + String(revision_id, HEX);
+        return;
+    }
+
+    diagResult = "pass:0x29_ACK+device_id=0xF0+revision_id=0x02";
 }
 
 void loop() {}
