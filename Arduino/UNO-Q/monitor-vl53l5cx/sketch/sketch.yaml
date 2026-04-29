@@ -9,5 +9,6 @@ profiles:
       - dependency: ArxTypeTraits (0.3.2)
       - dependency: DebugLog (0.8.4)
       - dependency: MsgPack (0.4.2)
+      - SparkFun VL53L5CX Arduino Library (1.0.3)
       - dir: /home/arduino/Arduino/libraries/hybx_vl53l5cx
 default_profile: default
