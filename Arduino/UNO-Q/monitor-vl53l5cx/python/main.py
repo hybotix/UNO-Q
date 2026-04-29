@@ -133,6 +133,9 @@ def loop():
 
     if not distance or distance == "0":
         return
+    if distance.startswith("error:"):
+        print("ERROR: Sensor runtime error — " + format_error(distance))
+        return
     if not status or status == "0":
         return
 

@@ -70,7 +70,13 @@ String set_resolution(String resolution) {
 }
 
 String get_distance_data() {
-    if (!hybx_sensor_ready) return "0";
+    if (!hybx_sensor_ready) {
+        if (hybx_last_error_step != 0) {
+            return "error:" + String(hybx_last_error_step) +
+                   ":" + String(hybx_last_error);
+        }
+        return "0";
+    }
     int width = (currentResolution == 16) ? 4 : 8;
     String result = "";
     for (int row = 0; row < width; row++) {
