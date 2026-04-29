@@ -117,8 +117,8 @@ void setup() {
 
     /* Step 3: Sensor init — Bridge is running and responding with
      * "initializing" during the ~10s firmware upload */
-    /* hybx_vl53l5cx uses Zephyr native i2c_transfer() directly.
-     * No Wire1.begin() needed — i2c4 is enabled in the DTS overlay. */
+    /* hybx_vl53l5cx uses Wire1 directly.
+     * Wire1.begin() must NOT be called — it hangs the MCU after Bridge.begin(). */
     if (!sensor.begin()) {
         initFailed = true;
     }
