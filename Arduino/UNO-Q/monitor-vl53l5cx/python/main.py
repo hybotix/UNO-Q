@@ -63,7 +63,7 @@ def print_confidence(dist, stat, signal, sigma):
         for c in range(8):
             valid = stat[r][c]
             conf  = confidence(valid, signal[r][c], sigma[r][c])
-            vals.append(f"{conf:5.1f}")
+            vals.append(f"{conf:6.2f}")
         print("  " + "  ".join(vals))
     print()
 

@@ -183,7 +183,7 @@ def loop():
             mean_conf = sum(confs) / len(confs) if confs else 0.0
             print(f"  Frame {len(samples) // len(CENTER_ZONES):2d}/{SAMPLE_COUNT}  "
                   f"center: {[f'{v}mm' for v in vals]}  "
-                  f"conf: {mean_conf:.1f}%")
+                  f"conf: {mean_conf:.2f}%")
 
         time.sleep(0.1)
 
