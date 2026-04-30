@@ -30,16 +30,6 @@ static bool          beginCalled       = false;
 static bool          initFailed        = false;
 static bool          initDone          = false;
 
-String begin_sensor() {
-    if (beginCalled) return "already_started";
-    beginCalled = true;
-    if (!sensor.begin()) {
-        initFailed = true;
-    }
-    initDone = true;
-    return get_sensor_status();
-}
-
 String get_sensor_status() {
     if (!initDone)  return beginCalled ? "uploading" : "idle";
     if (initFailed) {
@@ -51,6 +41,16 @@ String get_sensor_status() {
                ":" + String(hybx_last_error);
     }
     return "ready";
+}
+
+String begin_sensor() {
+    if (beginCalled) return "already_started";
+    beginCalled = true;
+    if (!sensor.begin()) {
+        initFailed = true;
+    }
+    initDone = true;
+    return get_sensor_status();
 }
 
 String set_resolution(String resolution) {
