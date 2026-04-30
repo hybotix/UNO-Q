@@ -2,51 +2,50 @@
  * VL53L5CX Monitor
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Provides distance and target status data from the VL53L5CX ToF
- * sensor via the Arduino RouterBridge.
+ * Reads 8x8 (or 4x4) depth map from SparkFun Qwiic VL53L5CX ToF sensor
+ * and exposes it via the Arduino RouterBridge.
+ *
+ * CONFIRMED WORKING PATTERN:
+ *   1. Wire1.begin() BEFORE Bridge.begin()
+ *   2. Bridge.begin() + Bridge.provide() in setup()
+ *   3. begin_sensor() triggered from Linux via Bridge call
+ *   4. Python polls get_sensor_status() until "ready"
+ *   5. Python polls get_distance_data() / get_target_status()
  *
  * Bridge functions:
- *   get_sensor_status()     -- "ready", "init_failed:<step>:<code>",
- *                              or "initializing"
+ *   begin_sensor()          -- trigger firmware upload + start ranging
+ *   get_sensor_status()     -- "idle", "uploading", "ready", "init_failed:step:code"
  *   set_resolution(String)  -- "4x4" or "8x8". Returns active resolution.
- *   get_distance_data()     -- NxN matrix of distances in mm, or "0"
- *   get_target_status()     -- NxN matrix of T/F validity flags, or "0"
- *
- * Sensor connected to QWIIC bus (Wire1) on the Arduino UNO Q.
- *
- * INIT SEQUENCE
- * -------------
- * 1. Bridge.begin()
- * 2. Bridge.provide() for ALL functions including get_sensor_status
- *    get_sensor_status returns "initializing" until begin() completes
- * 3. Wire1.begin() + sensor.begin()  (~10s firmware upload)
- * 4. Bridge.provide() is already done — Python gets "initializing"
- *    responses during the upload, then "ready" or "init_failed"
- *
- * This follows the lsm6dsox pattern but registers functions before
- * sensor init so Python gets "initializing" instead of "method not
- * available" during the firmware upload.
+ *   get_distance_data()     -- NxN CSV matrix of distances in mm, or "0"
+ *   get_target_status()     -- NxN T/F validity matrix, or "0"
  */
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
 #include <hybx_vl53l5cx.h>
 
-hybx_vl53l5cx sensor;
+static hybx_vl53l5cx sensor;
+static uint8_t       currentResolution = 64;
+static bool          beginCalled       = false;
+static bool          initFailed        = false;
+static bool          initDone          = false;
 
-static uint8_t currentResolution = 64;
-static bool    initFailed        = false;
-static bool    initDone          = false;
+String begin_sensor() {
+    if (beginCalled) return "already_started";
+    beginCalled = true;
+    if (!sensor.begin()) {
+        initFailed = true;
+    }
+    initDone = true;
+    return get_sensor_status();
+}
 
 String get_sensor_status() {
-    if (!initDone)    return "initializing";
+    if (!initDone)  return beginCalled ? "uploading" : "idle";
     if (initFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
-               ":" + String(hybx_last_error) +
-               ":poll" + String(hybx_init_step);
+               ":" + String(hybx_last_error);
     }
-    /* initDone && !initFailed — begin() succeeded, ranging is running.
-     * Report any runtime poll errors, otherwise ready. */
     if (hybx_last_error_step != 0) {
         return "error:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
@@ -55,7 +54,7 @@ String get_sensor_status() {
 }
 
 String set_resolution(String resolution) {
-    if (hybx_sensor_ready) {
+    if (initDone && !initFailed) {
         uint8_t requested = (resolution == "4x4") ? 16 : 64;
         if (requested != currentResolution) {
             if (resolution == "4x4") {
@@ -106,28 +105,13 @@ String get_target_status() {
 }
 
 void setup() {
-    /* Wire1 MUST be initialized before Bridge.begin().
-     * Wire1.begin() after Bridge.begin() hangs the MCU. */
     Wire1.begin();
-
-    /* Step 1: Start Bridge */
     Bridge.begin();
-
-    /* Step 2: Register ALL functions immediately — get_sensor_status
-     * returns "initializing" until initDone is set below */
+    Bridge.provide("begin_sensor",       begin_sensor);
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
     Bridge.provide("get_distance_data",  get_distance_data);
     Bridge.provide("get_target_status",  get_target_status);
-
-    /* Step 3: Sensor init — Bridge is running and responding with
-     * "initializing" during the ~10s firmware upload */
-    /* hybx_vl53l5cx uses Wire1 directly.
-     * Wire1.begin() must NOT be called — it hangs the MCU after Bridge.begin(). */
-    if (!sensor.begin()) {
-        initFailed = true;
-    }
-    initDone = true;
 }
 
 void loop() {
