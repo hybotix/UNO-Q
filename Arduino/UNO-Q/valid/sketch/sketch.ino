@@ -69,19 +69,6 @@ String get_target_status() {
     return result;
 }
 
-void setup() {
-    Wire1.begin();
-    Bridge.begin();
-    Bridge.provide("begin_sensor",      begin_sensor);
-    Bridge.provide("get_sensor_status", get_sensor_status);
-    Bridge.provide("get_distance_data", get_distance_data);
-    Bridge.provide("get_target_status", get_target_status);
-}
-
-void loop() {
-    if (initDone && !initFailed) sensor.poll();
-}
-
 String get_signal_data() {
     if (!hybx_sensor_ready) return "0";
     String result = "";
@@ -107,3 +94,20 @@ String get_sigma_data() {
     }
     return result;
 }
+
+void setup() {
+    Wire1.begin();
+    Bridge.begin();
+    Bridge.provide("begin_sensor",      begin_sensor);
+    Bridge.provide("get_sensor_status", get_sensor_status);
+    Bridge.provide("get_distance_data", get_distance_data);
+    Bridge.provide("get_target_status", get_target_status);
+    Bridge.provide("get_signal_data",   get_signal_data);
+    Bridge.provide("get_sigma_data",    get_sigma_data);
+}
+
+void loop() {
+    if (initDone && !initFailed) sensor.poll();
+}
+
+
