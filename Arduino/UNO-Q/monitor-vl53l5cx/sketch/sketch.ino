@@ -106,6 +106,10 @@ String get_target_status() {
 }
 
 void setup() {
+    /* Wire1 MUST be initialized before Bridge.begin().
+     * Wire1.begin() after Bridge.begin() hangs the MCU. */
+    Wire1.begin();
+
     /* Step 1: Start Bridge */
     Bridge.begin();
 
