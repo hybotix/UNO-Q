@@ -1,9 +1,12 @@
 /*
- * VL53L5CX I2C Diagnostic — step 4
+ * VL53L5CX I2C Diagnostic — step 5
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Wire.h in sketch (not library). Wire1.begin() called BEFORE Bridge.begin().
- * Testing if this ordering works now that Wire.h is in the sketch.
+ * Back to the exact pattern that worked in step 2:
+ * - Wire.h in sketch
+ * - Bridge.begin() first
+ * - NO Wire1.begin()
+ * - Wire1 used directly
  */
 
 #include <Arduino_RouterBridge.h>
@@ -16,7 +19,6 @@ String get_diag() {
 }
 
 void setup() {
-    Wire1.begin();
     Bridge.begin();
     Bridge.provide("get_diag", get_diag);
 
