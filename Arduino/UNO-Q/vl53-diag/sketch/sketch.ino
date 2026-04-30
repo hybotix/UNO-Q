@@ -2,9 +2,9 @@
  * VL53L5CX I2C Diagnostic — step 3
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Tests Wire1 with Bridge using forward declaration instead of #include <Wire.h>.
- * Including Wire.h in a library auto-initializes Wire1 before setup() which
- * hangs the MCU. Forward declaration avoids this.
+ * Wire.h included in the SKETCH (not a library) — this is the correct
+ * pattern. Including Wire.h in a library auto-inits Wire1 before setup()
+ * which hangs the MCU with Bridge running.
  *
  * Tests:
  *   1. I2C probe at 0x29
@@ -14,10 +14,7 @@
  */
 
 #include <Arduino_RouterBridge.h>
-
-/* Forward-declare Wire1 — do NOT #include <Wire.h> */
-class TwoWire;
-extern TwoWire Wire1;
+#include <Wire.h>
 
 static String diagResult = "not_run";
 

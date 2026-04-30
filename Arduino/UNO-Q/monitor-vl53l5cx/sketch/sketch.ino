@@ -29,6 +29,7 @@
  */
 
 #include <Arduino_RouterBridge.h>
+#include <Wire.h>
 #include <hybx_vl53l5cx.h>
 
 hybx_vl53l5cx sensor;
