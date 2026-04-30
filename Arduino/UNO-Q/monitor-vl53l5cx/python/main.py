@@ -2,34 +2,70 @@
 VL53L5CX Monitor Python Application
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Reads distance and target status from the VL53L5CX via the Arduino
-RouterBridge and displays them as a 4x4 or 8x8 matrix.
+Reads distance, target status, signal, sigma from the VL53L5CX and
+displays them as an 8x8 matrix with per-zone confidence values.
 
-Change RESOLUTION to "4x4" or "8x8".
+Confidence formula:
+  - target_status not 5 or 9 → 0.00%
+  - signal_score = min(signal_per_spad / SIGNAL_MAX, 1.0)
+  - sigma_score  = max(0, 1 - range_sigma_mm / SIGMA_MAX)
+  - confidence   = (signal_score * 0.6 + sigma_score * 0.4) * 99.99
 """
 
 from arduino.app_utils import *
 import time
 
-# Set to "4x4" or "8x8"
 RESOLUTION = "8x8"
 WIDTH      = 4 if RESOLUTION == "4x4" else 8
 
-# Error step names for human-readable reporting
+# Confidence scaling constants (tuned for VL53L5CX at 400kHz, 8x8)
+SIGNAL_MAX = 8000.0   # kcps/SPAD — typical max for good returns
+SIGMA_MAX  = 30.0     # mm — anything above this is poor
+
 ERROR_STEPS = {
-    "0": "none",
-    "1": "vl53l5cx_init",
-    "2": "vl53l5cx_set_resolution",
-    "3": "vl53l5cx_set_ranging_frequency_hz",
-    "4": "vl53l5cx_start_ranging",
-    "5": "vl53l5cx_stop_ranging",
-    "6": "vl53l5cx_check_data_ready",
+    "0": "none", "1": "vl53l5cx_init", "2": "vl53l5cx_set_resolution",
+    "3": "vl53l5cx_set_ranging_frequency_hz", "4": "vl53l5cx_start_ranging",
+    "5": "vl53l5cx_stop_ranging", "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
-    "8": "invalid_resolution",
-    "9": "not_initialized",
 }
 
 initialized = False
+
+
+def parse_int_matrix(data: str) -> list:
+    return [[int(v) for v in row.split(",")] for row in data.split(";")]
+
+
+def parse_bool_matrix(data: str) -> list:
+    return [[v == "T" for v in row.split(",")] for row in data.split(";")]
+
+
+def confidence(status: bool, signal: int, sigma: int) -> float:
+    if not status:
+        return 0.0
+    sig_score = min(signal / SIGNAL_MAX, 1.0)
+    sig_score = max(sig_score, 0.0)
+    sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
+    return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+
+
+def print_distance(dist):
+    print("── Distance (mm) ──")
+    for row in dist:
+        print("  " + "  ".join(f"{v:5d}" for v in row))
+    print()
+
+
+def print_confidence(dist, stat, signal, sigma):
+    print("── Confidence (%) ──")
+    for r in range(8):
+        vals = []
+        for c in range(8):
+            valid = stat[r][c]
+            conf  = confidence(valid, signal[r][c], sigma[r][c])
+            vals.append(f"{conf:5.1f}")
+        print("  " + "  ".join(vals))
+    print()
 
 
 def format_error(status: str) -> str:
@@ -40,28 +76,6 @@ def format_error(status: str) -> str:
     return status
 
 
-def parse_distance_matrix(data: str) -> list:
-    return [[int(v) for v in row.split(",")] for row in data.split(";")]
-
-
-def parse_status_matrix(data: str) -> list:
-    return [[v == "T" for v in row.split(",")] for row in data.split(";")]
-
-
-def print_distance_matrix(matrix: list) -> None:
-    print("── Distance (mm) ──")
-    for row in matrix:
-        print("  " + "  ".join(f"{v:5d}" for v in row))
-    print()
-
-
-def print_status_matrix(matrix: list) -> None:
-    print("── Target Status ──")
-    for row in matrix:
-        print("  " + "  ".join(f"{'True' if v else 'False':5}" for v in row))
-    print()
-
-
 def loop():
     global initialized
 
@@ -70,8 +84,7 @@ def loop():
             print("Triggering sensor firmware upload...")
             result = Bridge.call("begin_sensor", timeout=120)
             if result.startswith("init_failed"):
-                print("ERROR: Sensor init failed — " + format_error(result))
-                print("Check QWIIC connection and sensor power.")
+                print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
             if result == "ready":
@@ -79,7 +92,7 @@ def loop():
                 print("Sensor ready. Resolution: " + res)
                 initialized = True
             else:
-                print("ERROR: Unexpected result: " + result)
+                print("ERROR: " + result)
                 time.sleep(2.0)
         except Exception as e:
             print("ERROR: " + str(e))
@@ -89,25 +102,29 @@ def loop():
     time.sleep(0.1)
 
     try:
-        distance = Bridge.call("get_distance_data")
-        status   = Bridge.call("get_target_status")
+        dist_raw   = Bridge.call("get_distance_data")
+        stat_raw   = Bridge.call("get_target_status")
+        signal_raw = Bridge.call("get_signal_data")
+        sigma_raw  = Bridge.call("get_sigma_data")
     except Exception as e:
         print(f"ERROR: {e}")
         return
 
-    if not distance or distance == "0":
+    if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
         return
-    if distance.startswith("error:"):
-        print("ERROR: " + format_error(distance))
-        return
-    if not status or status == "0":
+    if dist_raw.startswith("error:"):
+        print("ERROR: " + format_error(dist_raw))
         return
 
     try:
-        print_distance_matrix(parse_distance_matrix(distance))
-        print_status_matrix(parse_status_matrix(status))
+        dist   = parse_int_matrix(dist_raw)
+        stat   = parse_bool_matrix(stat_raw)
+        signal = parse_int_matrix(signal_raw)
+        sigma  = parse_int_matrix(sigma_raw)
+        print_distance(dist)
+        print_confidence(dist, stat, signal, sigma)
     except Exception as e:
-        print(f"ERROR parsing data: {e}")
+        print(f"ERROR parsing: {e}")
 
 
 App.run(user_loop=loop)

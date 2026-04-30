@@ -20,6 +20,18 @@ from arduino.app_utils import *
 import time
 import statistics
 
+# ── Confidence ────────────────────────────────────────────────────────────────
+SIGNAL_MAX = 8000.0
+SIGMA_MAX  = 30.0
+
+def confidence(status: bool, signal: int, sigma: int) -> float:
+    if not status:
+        return 0.0
+    sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
+    sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
+    return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+
+
 # ── Config ────────────────────────────────────────────────────────────────────
 SAMPLE_COUNT  = 20       # frames to collect per validation
 TOLERANCE_PCT = 10.0     # acceptable error ±%
@@ -146,24 +158,32 @@ def loop():
     # ── Collect ───────────────────────────────────────────────────────────────
     if phase == "collect":
         try:
-            dist_raw = Bridge.call("get_distance_data")
-            stat_raw = Bridge.call("get_target_status")
+            dist_raw   = Bridge.call("get_distance_data")
+            stat_raw   = Bridge.call("get_target_status")
+            signal_raw = Bridge.call("get_signal_data")
+            sigma_raw  = Bridge.call("get_sigma_data")
         except Exception as e:
             print(f"  WARNING: {e}")
             time.sleep(0.5)
             return
 
-        if dist_raw == "0" or stat_raw == "0":
+        if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
             time.sleep(0.1)
             return
 
-        dist = parse_matrix(dist_raw)
-        stat = parse_status(stat_raw)
-        vals = center_values(dist, stat)
+        dist   = parse_matrix(dist_raw)
+        stat   = parse_status(stat_raw)
+        signal = parse_matrix(signal_raw)
+        sigma  = parse_matrix(sigma_raw)
+        vals   = center_values(dist, stat)
+        confs  = [confidence(stat[r][c], signal[r][c], sigma[r][c])
+                  for r, c in CENTER_ZONES if stat[r][c]]
         if vals:
             samples.extend(vals)
+            mean_conf = sum(confs) / len(confs) if confs else 0.0
             print(f"  Frame {len(samples) // len(CENTER_ZONES):2d}/{SAMPLE_COUNT}  "
-                  f"center zones: {[f'{v}mm' for v in vals]}")
+                  f"center: {[f'{v}mm' for v in vals]}  "
+                  f"conf: {mean_conf:.1f}%")
 
         time.sleep(0.1)
 

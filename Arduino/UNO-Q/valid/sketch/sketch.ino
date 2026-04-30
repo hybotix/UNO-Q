@@ -81,3 +81,29 @@ void setup() {
 void loop() {
     if (initDone && !initFailed) sensor.poll();
 }
+
+String get_signal_data() {
+    if (!hybx_sensor_ready) return "0";
+    String result = "";
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            result += String(hybx_signal_per_spad[row * 8 + col]);
+            if (col < 7) result += ",";
+        }
+        if (row < 7) result += ";";
+    }
+    return result;
+}
+
+String get_sigma_data() {
+    if (!hybx_sensor_ready) return "0";
+    String result = "";
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            result += String(hybx_range_sigma_mm[row * 8 + col]);
+            if (col < 7) result += ",";
+        }
+        if (row < 7) result += ";";
+    }
+    return result;
+}
