@@ -1,34 +1,36 @@
 /*
- * VL53L5CX I2C Diagnostic — step 11 (thread isolation test)
+ * VL53L5CX I2C Diagnostic — step 12 (firmware upload with fixed WrMulti)
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Does the Bridge timeout when a Zephyr thread is just sleeping?
- * If yes: the thread itself causes the timeout.
- * If no: it's specifically Wire1 operations in the thread.
+ * WrMulti now correctly sends address+data in single transaction.
+ * sensor.begin() runs in Zephyr thread so Bridge stays responsive.
  */
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
+#include <hybx_vl53l5cx.h>
 #include <zephyr/kernel.h>
 
-static String diagResult = "thread_running";
+static String diagResult = "uploading";
+static hybx_vl53l5cx sensor;
 
 String get_diag() {
     return diagResult;
 }
 
-#define SENSOR_STACK_SIZE 4096
+#define SENSOR_STACK_SIZE 8192
 #define SENSOR_PRIORITY   5
 K_THREAD_STACK_DEFINE(sensor_stack, SENSOR_STACK_SIZE);
 static struct k_thread sensor_thread_data;
 
 static void sensor_thread(void *, void *, void *) {
-    /* Just sleep — no Wire1 calls */
-    for (int i = 0; i < 10; i++) {
-        k_msleep(1000);
-        diagResult = "sleeping:" + String(i);
+    if (sensor.begin()) {
+        diagResult = "pass:firmware_uploaded+ranging_started";
+    } else {
+        diagResult = "fail:begin:step=" + String(hybx_last_error_step) +
+                     ":code=" + String(hybx_last_error) +
+                     ":poll=" + String(hybx_init_step);
     }
-    diagResult = "done:no_wire1_calls";
 }
 
 void setup() {
