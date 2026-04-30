@@ -1,37 +1,34 @@
 /*
- * VL53L5CX I2C Diagnostic — step 10 (threaded begin)
+ * VL53L5CX I2C Diagnostic — step 11 (thread isolation test)
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Runs sensor.begin() in a Zephyr thread so loop() is never blocked
- * and the Bridge can always respond.
+ * Does the Bridge timeout when a Zephyr thread is just sleeping?
+ * If yes: the thread itself causes the timeout.
+ * If no: it's specifically Wire1 operations in the thread.
  */
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
-#include <hybx_vl53l5cx.h>
 #include <zephyr/kernel.h>
 
-static String diagResult = "uploading";
-static hybx_vl53l5cx sensor;
+static String diagResult = "thread_running";
 
 String get_diag() {
     return diagResult;
 }
 
-/* Zephyr thread stack and data */
 #define SENSOR_STACK_SIZE 4096
 #define SENSOR_PRIORITY   5
 K_THREAD_STACK_DEFINE(sensor_stack, SENSOR_STACK_SIZE);
 static struct k_thread sensor_thread_data;
 
 static void sensor_thread(void *, void *, void *) {
-    if (sensor.begin()) {
-        diagResult = "pass:firmware_uploaded+ranging_started";
-    } else {
-        diagResult = "fail:begin:step=" + String(hybx_last_error_step) +
-                     ":code=" + String(hybx_last_error) +
-                     ":poll=" + String(hybx_init_step);
+    /* Just sleep — no Wire1 calls */
+    for (int i = 0; i < 10; i++) {
+        k_msleep(1000);
+        diagResult = "sleeping:" + String(i);
     }
+    diagResult = "done:no_wire1_calls";
 }
 
 void setup() {
@@ -39,7 +36,6 @@ void setup() {
     Bridge.begin();
     Bridge.provide("get_diag", get_diag);
 
-    /* Start sensor init in a separate Zephyr thread */
     k_thread_create(&sensor_thread_data, sensor_stack,
                     K_THREAD_STACK_SIZEOF(sensor_stack),
                     sensor_thread, NULL, NULL, NULL,
