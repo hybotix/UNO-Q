@@ -2,8 +2,8 @@
 ei-c — Edge Impulse Raw Data Collector
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Collects raw unlabeled 8x8 distance frames from the VL53L5CX and
-writes them to a CSV file for later labeling on the Mac.
+Collects 500 raw 8x8 distance frames from the VL53L5CX and writes
+them to a CSV file with an empty label column for later labeling.
 
 Usage:
     start ei-c
@@ -12,10 +12,16 @@ Usage:
 Output:
     ~/data/ei-c/ei-c_<TIMESTAMP>.csv
 
-CSV format (raw, unlabeled):
-    d00,d01,...,d77
-    <distance values>
+CSV format:
+    d00,d01,...,d77,label
+    <distance values>,
     ...
+
+Notes:
+    - Exactly 500 frames are collected then the app stops cleanly
+    - The label column is always empty — labeling happens on the Mac
+    - Raw distance data is never modified
+    - Progress is printed every 50 frames
 
 Orientation (raw data — never modified):
     Row 0 = top of FOV,    Row 7 = bottom of FOV
@@ -29,8 +35,10 @@ import csv
 from datetime import datetime
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-RESOLUTION = "8x8"
-OUTPUT_DIR = os.path.expanduser("~/data/ei-c")
+RESOLUTION   = "8x8"
+OUTPUT_DIR   = os.path.expanduser("~/data/ei-c")
+FRAME_TARGET = 500
+PROGRESS_INT = 50
 
 ERROR_STEPS = {
     "0": "none", "1": "vl53l5cx_init", "2": "vl53l5cx_set_resolution",
@@ -45,6 +53,7 @@ csv_path    = None
 csv_file    = None
 csv_writer  = None
 frame_count = 0
+done        = False
 
 
 def parse_int_matrix(data: str) -> list:
@@ -65,7 +74,7 @@ def open_csv() -> tuple:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path      = os.path.join(OUTPUT_DIR, f"ei-c_{timestamp}.csv")
     f         = open(path, "w", newline="")
-    header    = [f"d{r}{c}" for r in range(8) for c in range(8)]
+    header    = [f"d{r}{c}" for r in range(8) for c in range(8)] + ["label"]
     writer    = csv.writer(f)
     writer.writerow(header)
     f.flush()
@@ -73,23 +82,26 @@ def open_csv() -> tuple:
 
 
 def loop():
-    global initialized, csv_path, csv_file, csv_writer, frame_count
+    global initialized, csv_path, csv_file, csv_writer, frame_count, done
+
+    if done:
+        time.sleep(1.0)
+        return
 
     # ── One-time setup ─────────────────────────────────────────────────────────
     if not initialized:
 
-        # ── Open CSV ───────────────────────────────────────────────────────────
         if csv_file is None:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
                 print(f"Output: {csv_path}")
+                print(f"Target: {FRAME_TARGET} frames")
                 print()
             except Exception as e:
                 print(f"ERROR: Could not open output file: {e}")
                 time.sleep(5.0)
                 return
 
-        # ── Init sensor ────────────────────────────────────────────────────────
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
@@ -100,7 +112,7 @@ def loop():
             if result == "ready":
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"Sensor ready. Resolution: {res}")
-                print("Collecting raw frames — Ctrl+C to stop.")
+                print(f"Collecting {FRAME_TARGET} frames...")
                 print()
                 initialized = True
             else:
@@ -133,31 +145,32 @@ def loop():
         print(f"ERROR: could not parse frame: {e}")
         return
 
-    # ── Write raw frame to CSV — data is NEVER modified ────────────────────────
+    # ── Write raw frame + empty label — data is NEVER modified ─────────────────
     try:
-        row = [dist[r][c] for r in range(8) for c in range(8)]
+        row = [dist[r][c] for r in range(8) for c in range(8)] + [""]
         csv_writer.writerow(row)
         csv_file.flush()
         frame_count += 1
 
-        if frame_count % 10 == 0:
-            print(f"  Collected {frame_count} frames → {csv_path}")
+        if frame_count % PROGRESS_INT == 0:
+            remaining = FRAME_TARGET - frame_count
+            print(f"  {frame_count}/{FRAME_TARGET} frames collected "
+                  f"({remaining} remaining)")
 
     except Exception as e:
         print(f"ERROR: could not write frame: {e}")
+        return
 
-
-def on_stop():
-    """Close CSV cleanly on stop."""
-    if csv_file:
+    # ── Check if target reached ────────────────────────────────────────────────
+    if frame_count >= FRAME_TARGET:
         csv_file.close()
+        done = True
         print()
-        print(f"Collection complete.")
-        print(f"  Frames collected: {frame_count}")
-        print(f"  Output file:      {csv_path}")
+        print(f"Collection complete — {frame_count} frames collected.")
+        print(f"Output file: {csv_path}")
         print()
         print(f"Copy to Mac with:")
         print(f"  scp arduino@uno-q.local:{csv_path} ./")
 
 
-App.run(user_loop=loop, on_stop=on_stop)
+App.run(user_loop=loop)

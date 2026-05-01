@@ -1,28 +1,33 @@
 #!/usr/bin/env python3
 """
-visualize.py — Interactive Frame Labeler
+visualize.py — Interactive Frame Labeler / Relabeler
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Reads a raw unlabeled CSV collected by ei-c. Shows each frame as a
-2D heatmap from the sensor's forward-facing perspective (Y axis / columns
-flipped so robot left appears on right, robot right appears on left).
+Reads any ei-c CSV — labeled, unlabeled, or partially labeled.
+Shows each frame as a 2D heatmap from the sensor's forward-facing
+perspective (columns flipped for display only — raw data never touched).
 
-You are prompted for a label for each frame. The raw distance data is
-written to the output CSV UNCHANGED — only the display is flipped.
+  - Empty label   → prompt for label, write it into that row
+  - Existing label → show it, ask to keep (Enter) or type a new one
+
+Updates the input file in place when done.
 
 Usage:
-    python3 visualize.py <input_csv>
-
-Output:
-    <input_csv>_labeled.csv  — Edge Impulse format with label column
+    python3 visualize.py <csv_file>
 
 Controls:
-    UP / DOWN / LEFT / RIGHT / CENTER  — label this frame and advance
-    S                                   — skip this frame (not written)
-    Q                                   — quit and save progress
+    Type label + Enter    — apply label and advance to next frame
+    Enter (no input)      — keep existing label and advance
+    S + Enter             — skip this frame (label stays unchanged)
+    Q + Enter             — quit and save all progress
 
-Valid labels:
+Valid labels (max 10 characters):
     UP, DOWN, LEFT, RIGHT, CENTER
+    (or any custom label up to 10 characters)
+
+Display:
+    Columns are flipped (np.fliplr) so you see the sensor's forward view.
+    Raw data written to file is NEVER modified — only the label column changes.
 
 Dependencies:
     pip3 install matplotlib numpy pandas
@@ -37,13 +42,14 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
-VALID_LABELS = {"UP", "DOWN", "LEFT", "RIGHT", "CENTER"}
-VMIN         = 0
-VMAX         = 4000   # mm
+MAX_LABEL_LEN = 10
+VMIN          = 0
+VMAX          = 4000   # mm
+VALID_LABELS  = {"UP", "DOWN", "LEFT", "RIGHT", "CENTER"}
 
 # ── Load input CSV ─────────────────────────────────────────────────────────────
 if len(sys.argv) < 2:
-    print("Usage: python3 visualize.py <input_csv>")
+    print("Usage: python3 visualize.py <csv_file>")
     sys.exit(1)
 
 input_path = sys.argv[1]
@@ -52,14 +58,9 @@ if not os.path.exists(input_path):
     print(f"ERROR: File not found: {input_path}")
     sys.exit(1)
 
-base, ext    = os.path.splitext(input_path)
-output_path  = f"{base}_labeled.csv"
+print(f"Loading: {input_path}")
+df = pd.read_csv(input_path, dtype=str)   # read all as str to preserve empty labels
 
-print(f"Input:  {input_path}")
-print(f"Output: {output_path}")
-print()
-
-df        = pd.read_csv(input_path)
 dist_cols = [f"d{r}{c}" for r in range(8) for c in range(8)]
 missing   = [c for c in dist_cols if c not in df.columns]
 
@@ -67,53 +68,57 @@ if missing:
     print(f"ERROR: Missing columns: {missing[:5]}...")
     sys.exit(1)
 
-frames    = df[dist_cols].values  # shape: (n_frames, 64) — raw, never modified
-n_frames  = len(frames)
+if "label" not in df.columns:
+    df["label"] = ""
 
-print(f"Frames loaded: {n_frames}")
+n_frames      = len(df)
+labeled_count = df["label"].apply(lambda x: str(x).strip() != "").sum()
+
+print(f"Frames:  {n_frames}")
+print(f"Labeled: {labeled_count}  Unlabeled: {n_frames - labeled_count}")
 print()
 print("Controls:")
-print("  Type label + Enter: UP, DOWN, LEFT, RIGHT, CENTER")
-print("  S + Enter          : skip this frame")
-print("  Q + Enter          : quit and save progress")
+print("  Type label + Enter  — apply label and advance")
+print("  Enter alone         — keep existing label and advance")
+print("  S + Enter           — skip (no change)")
+print("  Q + Enter           — quit and save")
 print()
-
-# ── Open output CSV ────────────────────────────────────────────────────────────
-out_file   = open(output_path, "w", newline="")
-out_writer = csv.writer(out_file)
-out_writer.writerow(dist_cols + ["label"])
 
 # ── Build figure ───────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(7, 7))
 plt.ion()
 
-labeled_count = 0
+changed_count = 0
 skipped_count = 0
 
 
-def draw_frame(idx, raw_row):
+def draw_frame(idx):
     """
-    Display frame as 2D heatmap with Y axis (columns) flipped.
-    raw_row is the original 64-value flat array — display only is transformed.
+    Display frame with columns flipped (Y axis) for sensor forward view.
+    Raw data in df is never modified — only frame_display is flipped.
     """
     ax.clear()
 
-    # Reshape to 8x8 — raw data, never modified
-    frame_raw = raw_row.reshape(8, 8)
+    # Get raw distance values — never modified
+    raw_vals = df[dist_cols].iloc[idx].astype(int).values
+    frame_raw = raw_vals.reshape(8, 8)
 
-    # Flip columns for display — shows sensor view from front of robot
-    # raw data is NOT changed — only this display variable is flipped
+    # Flip columns for display only
     frame_display = np.fliplr(frame_raw)
+
+    current_label = str(df.at[idx, "label"]).strip()
+    label_str     = f"[{current_label}]" if current_label else "[unlabeled]"
 
     ax.imshow(frame_display, cmap="RdYlGn_r", vmin=VMIN, vmax=VMAX,
               interpolation="nearest")
 
     ax.set_title(
-        f"Frame {idx + 1} / {n_frames}\n"
-        f"Labeled: {labeled_count}  Skipped: {skipped_count}  "
-        f"Remaining: {n_frames - idx - 1}",
+        f"Frame {idx + 1} / {n_frames}    {label_str}\n"
+        f"Labeled: {labeled_count}  Changed: {changed_count}  "
+        f"Skipped: {skipped_count}",
         fontsize=11, fontweight="bold"
     )
+
     ax.set_xlabel("← Robot RIGHT          Robot LEFT →  (display flipped)")
     ax.set_ylabel("Row (↓ robot down)")
 
@@ -135,27 +140,41 @@ def draw_frame(idx, raw_row):
     fig.canvas.flush_events()
 
 
+def save_csv():
+    """Write updated dataframe back to the input file in place."""
+    df.to_csv(input_path, index=False)
+    print(f"Saved: {input_path}")
+
+
 # ── Main labeling loop ─────────────────────────────────────────────────────────
 for idx in range(n_frames):
-    raw_row = frames[idx]   # original flat 64-value row — never modified
-    draw_frame(idx, raw_row)
+    draw_frame(idx)
+
+    current_label = str(df.at[idx, "label"]).strip()
+    has_label     = current_label != "" and current_label != "nan"
+
+    if has_label:
+        prompt = (f"Frame {idx + 1}/{n_frames} "
+                  f"[{current_label}] — Enter=keep, new label, S=skip, Q=quit: ")
+    else:
+        prompt = (f"Frame {idx + 1}/{n_frames} "
+                  f"[unlabeled] — Label, S=skip, Q=quit: ")
 
     while True:
         try:
-            response = input(
-                f"Frame {idx + 1}/{n_frames} — "
-                f"Label (UP/DOWN/LEFT/RIGHT/CENTER/S=skip/Q=quit): "
-            ).strip().upper()
+            response = input(prompt).strip().upper()
         except (EOFError, KeyboardInterrupt):
             print("\nInterrupted — saving progress.")
-            response = "Q"
+            save_csv()
+            plt.close()
+            sys.exit(0)
 
         if response == "Q":
-            out_file.close()
+            save_csv()
             plt.close()
             print()
-            print(f"Saved {labeled_count} labeled frames to: {output_path}")
-            print(f"Skipped {skipped_count} frames.")
+            print(f"Progress saved.")
+            print(f"  Changed: {changed_count}  Skipped: {skipped_count}")
             sys.exit(0)
 
         elif response == "S":
@@ -163,23 +182,35 @@ for idx in range(n_frames):
             print(f"  Skipped frame {idx + 1}.")
             break
 
-        elif response in VALID_LABELS:
-            # Write raw data unchanged + label to output CSV
-            out_writer.writerow(list(raw_row) + [response])
-            out_file.flush()
-            labeled_count += 1
-            print(f"  Labeled [{response}] — frame {idx + 1}.")
-            break
+        elif response == "":
+            # Keep existing label — only valid if frame already has one
+            if has_label:
+                print(f"  Kept [{current_label}].")
+                break
+            else:
+                print("  No existing label — please enter a label, S to skip, Q to quit.")
+
+        elif len(response) > MAX_LABEL_LEN:
+            print(f"  Label too long ({len(response)} chars, max {MAX_LABEL_LEN}). Try again.")
 
         else:
-            print(f"  Invalid input '{response}'. "
-                  f"Valid: UP, DOWN, LEFT, RIGHT, CENTER, S, Q")
+            # Apply new label — raw distance data is NEVER modified
+            old_label = current_label
+            df.at[idx, "label"] = response
+            if has_label:
+                changed_count += 1
+                print(f"  Relabeled [{old_label}] → [{response}].")
+            else:
+                labeled_count += 1
+                print(f"  Labeled [{response}].")
+            break
 
 # ── All frames done ────────────────────────────────────────────────────────────
-out_file.close()
+save_csv()
 plt.close()
 print()
 print(f"All frames processed.")
 print(f"  Labeled:  {labeled_count}")
+print(f"  Changed:  {changed_count}")
 print(f"  Skipped:  {skipped_count}")
-print(f"  Output:   {output_path}")
+print(f"  Saved to: {input_path}")
