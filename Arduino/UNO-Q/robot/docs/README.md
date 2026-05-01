@@ -97,7 +97,42 @@ silently ignore an error response.
 
 ---
 
-## Wiring
+## Physical Layout
+
+SMARs modular chassis with layered design:
+
+```
+┌─────────────────────────────┐
+│  UNO Q                      │  ← Top layer
+│  VL53L5CX (front-facing)    │
+│  BNO055                     │
+└─────────────┬───────────────┘
+              │ USB Serial
+┌─────────────▼───────────────┐
+│  Pimoroni Motor 2040        │  ← Middle layer
+└─────────────────────────────┘
+┌─────────────────────────────┐
+│  4x N20 motors w/ encoders  │  ← Bottom layer
+│  LiPo battery pack          │
+│  Buck converter (→ 5V)      │
+└─────────────────────────────┘
+```
+
+## Power Design
+
+Single LiPo battery powers everything:
+
+| Component | Supply |
+|-----------|--------|
+| Motor 2040 + N20 motors | LiPo direct (2S = 7.4V) |
+| UNO Q | Buck converter → 5V from LiPo |
+
+- One battery to charge
+- Buck converter steps LiPo down to 5V for UNO Q
+- Motor 2040 has built-in regulator powering the RP2040 from motor supply
+- Short right-angle USB-C cable between Motor 2040 and UNO Q
+
+
 
 ### VL53L5CX
 | Signal | UNO Q Pin |
