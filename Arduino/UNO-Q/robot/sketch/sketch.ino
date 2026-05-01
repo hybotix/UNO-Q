@@ -35,20 +35,20 @@
  *   Stop:         ALL=RELEASE
  *
  * Bridge functions exposed to Python:
- *   begin_sensor()          -- upload VL53L5CX firmware and start ranging
- *   get_sensor_status()     -- "idle"|"uploading"|"ready"|"init_failed:step:code"
- *   set_resolution(String)  -- "4x4" or "8x8". Returns active resolution string.
- *   get_distance_data()     -- NxN CSV distance matrix, rows separated by ";"
- *   get_target_status()     -- NxN T/F validity matrix, rows separated by ";"
- *   get_signal_data()       -- 8x8 CSV signal_per_spad matrix
- *   get_sigma_data()        -- 8x8 CSV range_sigma_mm matrix
- *   begin_imu()             -- initialize BNO055, returns "ready"|"init_failed"
- *   get_imu_status()        -- "idle"|"ready"|"init_failed"
- *   get_heading()           -- Euler X heading 0.0-360.0 as String, or "0" if not ready
- *   drive(String)           -- "forward"|"reverse"|"left"|"right"|
- *                              "rotate_cw"|"rotate_ccw"|"stop"
- *   set_speed(String)       -- set drive/strafe speed 0-255, returns "ok"
- *   set_turn_speed(String)  -- set rotation speed 0-255, returns "ok"
+ *   begin_sensor()           -- upload VL53L5CX firmware and start ranging
+ *   get_sensor_status()      -- "idle"|"uploading"|"ready"|"init_failed:step:code"
+ *   set_resolution(String)   -- "4x4" or "8x8". Returns active resolution string.
+ *   get_distance_data()      -- NxN CSV distance matrix, rows separated by ";"
+ *   get_target_status()      -- NxN T/F validity matrix, rows separated by ";"
+ *   get_signal_data()        -- 8x8 CSV signal_per_spad matrix
+ *   get_sigma_data()         -- 8x8 CSV range_sigma_mm matrix
+ *   begin_imu()              -- initialize BNO055, returns "ready"|"init_failed"
+ *   get_imu_status()         -- "idle"|"ready"|"init_failed"
+ *   get_heading()            -- Euler X heading 0.0-360.0 as String, or "0" if not ready
+ *   drive(String)            -- "forward"|"reverse"|"left"|"right"|
+ *                               "rotate_cw"|"rotate_ccw"|"stop"
+ *   set_speed(String)        -- set drive/strafe speed 0-255, returns "ok"
+ *   set_turn_speed(String)   -- set rotation speed 0-255, returns "ok"
  */
 
 #include <Arduino_RouterBridge.h>
@@ -102,13 +102,15 @@ static bool            imuInitFailed = false;  // true if bno.begin() failed
 
 /*
  * applyDirection() — applies the per-motor inversion flag.
- * FORWARD ↔ BACKWARD are swapped when invert is true.
+ * FORWARD <-> BACKWARD are swapped when invert is true.
  * RELEASE and BRAKE pass through unchanged.
  */
 static uint8_t applyDirection(uint8_t dir, bool invert) {
     if (!invert) return dir;
+
     if (dir == FORWARD)  return BACKWARD;
     if (dir == BACKWARD) return FORWARD;
+
     return dir;
 }
 
@@ -161,12 +163,14 @@ String drive(String command) {
         setMotor(motorFR, FORWARD,  INVERT_M2, driveSpeed);
         setMotor(motorRL, FORWARD,  INVERT_M3, driveSpeed);
         setMotor(motorRR, FORWARD,  INVERT_M4, driveSpeed);
+
     } else if (command == "reverse") {
         // All four wheels backward — straight reverse
         setMotor(motorFL, BACKWARD, INVERT_M1, driveSpeed);
         setMotor(motorFR, BACKWARD, INVERT_M2, driveSpeed);
         setMotor(motorRL, BACKWARD, INVERT_M3, driveSpeed);
         setMotor(motorRR, BACKWARD, INVERT_M4, driveSpeed);
+
     } else if (command == "left") {
         // Strafe left: FL/RR spin backward, FR/RL spin forward
         // Roller forces cancel longitudinally, add laterally left
@@ -174,29 +178,35 @@ String drive(String command) {
         setMotor(motorFR, FORWARD,  INVERT_M2, driveSpeed);
         setMotor(motorRL, FORWARD,  INVERT_M3, driveSpeed);
         setMotor(motorRR, BACKWARD, INVERT_M4, driveSpeed);
+
     } else if (command == "right") {
         // Strafe right: FL/RR spin forward, FR/RL spin backward
         setMotor(motorFL, FORWARD,  INVERT_M1, driveSpeed);
         setMotor(motorFR, BACKWARD, INVERT_M2, driveSpeed);
         setMotor(motorRL, BACKWARD, INVERT_M3, driveSpeed);
         setMotor(motorRR, FORWARD,  INVERT_M4, driveSpeed);
+
     } else if (command == "rotate_cw") {
         // Rotate clockwise in place: left side forward, right side backward
         setMotor(motorFL, FORWARD,  INVERT_M1, turnSpeed);
         setMotor(motorFR, BACKWARD, INVERT_M2, turnSpeed);
         setMotor(motorRL, FORWARD,  INVERT_M3, turnSpeed);
         setMotor(motorRR, BACKWARD, INVERT_M4, turnSpeed);
+
     } else if (command == "rotate_ccw") {
         // Rotate counter-clockwise: left side backward, right side forward
         setMotor(motorFL, BACKWARD, INVERT_M1, turnSpeed);
         setMotor(motorFR, FORWARD,  INVERT_M2, turnSpeed);
         setMotor(motorRL, BACKWARD, INVERT_M3, turnSpeed);
         setMotor(motorRR, FORWARD,  INVERT_M4, turnSpeed);
+
     } else if (command == "stop") {
         stopAll();
+
     } else {
         return "error:unknown_command:" + command;
     }
+
     return "ok";
 }
 
@@ -206,7 +216,9 @@ String drive(String command) {
  */
 String set_speed(String val) {
     int v = val.toInt();
+
     if (v < 0 || v > 255) return "error:out_of_range";
+
     driveSpeed = (uint8_t)v;
     return "ok";
 }
@@ -217,7 +229,9 @@ String set_speed(String val) {
  */
 String set_turn_speed(String val) {
     int v = val.toInt();
+
     if (v < 0 || v > 255) return "error:out_of_range";
+
     turnSpeed = (uint8_t)v;
     return "ok";
 }
@@ -229,23 +243,26 @@ String set_turn_speed(String val) {
  * Called by Python before and after begin_sensor() to track progress.
  *
  * Returns:
- *   "idle"                     — begin_sensor() not yet called
- *   "uploading"                — begin_sensor() called, firmware uploading
- *   "ready"                    — sensor initialized and ranging
- *   "init_failed:step:code"    — initialization failed (step and ULD code)
- *   "error:step:code"          — runtime ranging error
+ *   "idle"                  — begin_sensor() not yet called
+ *   "uploading"             — begin_sensor() called, firmware uploading
+ *   "ready"                 — sensor initialized and ranging
+ *   "init_failed:step:code" — initialization failed (step and ULD code)
+ *   "error:step:code"       — runtime ranging error
  */
 String get_sensor_status() {
     if (!sensorInitDone) return sensorBeginCalled ? "uploading" : "idle";
+
     if (sensorInitFailed) {
         return "init_failed:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
     }
+
     if (hybx_last_error_step != 0) {
         // Runtime error after successful init
         return "error:" + String(hybx_last_error_step) +
                ":" + String(hybx_last_error);
     }
+
     return "ready";
 }
 
@@ -257,10 +274,13 @@ String get_sensor_status() {
  */
 String begin_sensor() {
     if (sensorBeginCalled) return "already_started";
+
     sensorBeginCalled = true;
+
     if (!sensor.begin()) {
         sensorInitFailed = true;
     }
+
     sensorInitDone = true;
     return get_sensor_status();
 }
@@ -273,16 +293,19 @@ String begin_sensor() {
 String set_resolution(String resolution) {
     if (sensorInitDone && !sensorInitFailed) {
         uint8_t requested = (resolution == "4x4") ? 16 : 64;
+
         if (requested != currentResolution) {
             if (resolution == "4x4") {
                 sensor.setResolution(16);
                 currentResolution = 16;
+
             } else if (resolution == "8x8") {
                 sensor.setResolution(64);
                 currentResolution = 64;
             }
         }
     }
+
     return (currentResolution == 16) ? "4x4" : "8x8";
 }
 
@@ -300,8 +323,10 @@ String get_distance_data() {
         }
         return "0";  // frame not yet available
     }
+
     int width = (currentResolution == 16) ? 4 : 8;
     String result = "";
+
     for (int row = 0; row < width; row++) {
         for (int col = 0; col < width; col++) {
             result += String(hybx_distance_mm[row][col]);
@@ -309,6 +334,7 @@ String get_distance_data() {
         }
         if (row < width - 1) result += ";";
     }
+
     return result;
 }
 
@@ -320,8 +346,10 @@ String get_distance_data() {
  */
 String get_target_status() {
     if (!hybx_sensor_ready) return "0";
+
     int width = (currentResolution == 16) ? 4 : 8;
     String result = "";
+
     for (int row = 0; row < width; row++) {
         for (int col = 0; col < width; col++) {
             // ST status codes 5 (valid) and 9 (wrap-around valid) are good reads
@@ -331,6 +359,7 @@ String get_target_status() {
         }
         if (row < width - 1) result += ";";
     }
+
     return result;
 }
 
@@ -342,7 +371,9 @@ String get_target_status() {
  */
 String get_signal_data() {
     if (!hybx_sensor_ready) return "0";
+
     String result = "";
+
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             result += String(hybx_signal_per_spad[row][col]);
@@ -350,18 +381,21 @@ String get_signal_data() {
         }
         if (row < 7) result += ";";
     }
+
     return result;
 }
 
 /*
  * get_sigma_data() — return range_sigma_mm values for all 8x8 zones.
- * Lower values indicate more precise readings (mm of standard deviation).
+ * Lower values indicate more precise readings (mm standard deviation).
  * Always 8x8 regardless of resolution setting.
  * Returns "0" if no frame is ready.
  */
 String get_sigma_data() {
     if (!hybx_sensor_ready) return "0";
+
     String result = "";
+
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
             result += String(hybx_range_sigma_mm[row][col]);
@@ -369,6 +403,7 @@ String get_sigma_data() {
         }
         if (row < 7) result += ";";
     }
+
     return result;
 }
 
@@ -381,9 +416,11 @@ String get_sigma_data() {
  */
 String begin_imu() {
     if (imuInitDone) return imuInitFailed ? "init_failed" : "ready";
+
     if (!bno.begin()) {
         imuInitFailed = true;  // no BNO055 found or I2C fault
     }
+
     imuInitDone = true;
     return imuInitFailed ? "init_failed" : "ready";
 }
@@ -394,6 +431,7 @@ String begin_imu() {
  */
 String get_imu_status() {
     if (!imuInitDone) return "idle";
+
     return imuInitFailed ? "init_failed" : "ready";
 }
 
@@ -404,9 +442,11 @@ String get_imu_status() {
  */
 String get_heading() {
     if (!imuInitDone || imuInitFailed) return "0";
+
     sensors_event_t event;
     // VECTOR_EULER: X = heading (yaw), Y = roll, Z = pitch
     bno.getEvent(&event, Adafruit_BNO055::VECTOR_EULER);
+
     return String(event.orientation.x, 2);  // 2 decimal places
 }
 
@@ -416,8 +456,8 @@ void setup() {
     // Wire1 must be started before Bridge.begin() — Bridge uses I2C internally
     Wire1.begin();
 
-    // Initialize motor shield and get motor objects
-    // All motors are stopped immediately after initialization
+    // Initialize motor shield and get motor objects.
+    // All motors are stopped immediately after initialization.
     shield.begin();
     motorFL = shield.getMotor(1);  // M1 — Front Left
     motorFR = shield.getMotor(2);  // M2 — Front Right
