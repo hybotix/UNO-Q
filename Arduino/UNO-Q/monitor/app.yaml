@@ -1,3 +1,3 @@
-name: VL53L5CX Monitor
+name: monitor
 icon: 📡
 description: Reads 8x8 depth map from the SparkFun Qwiic VL53L5CX ToF sensor via RouterBridge and displays distance values as a formatted 8x8 grid.
