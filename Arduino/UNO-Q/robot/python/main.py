@@ -1,9 +1,15 @@
 """
-Robot Python Application
+HybX UNO Q Robot — Python Application
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Mecanum-wheel robot with VL53L5CX ToF obstacle detection and
-BNO055 IMU-guided scan-and-recover navigation.
+An autonomous Mecanum-wheel robot built on the Arduino UNO Q and the
+HybX Development System. This file contains all navigation logic, running
+on the Linux side and commanding the sketch via the Arduino RouterBridge.
+
+The robot uses a SparkFun VL53L5CX 8x8 ToF sensor for forward obstacle
+detection, an Adafruit BNO055 IMU for absolute heading, and an Adafruit
+Motor Shield V2 driving four Mecanum wheels in an X-pattern configuration
+for full holonomic motion (forward, reverse, strafe, and rotate).
 
 Architecture:
   All navigation logic runs here on the Linux side. The Arduino sketch
