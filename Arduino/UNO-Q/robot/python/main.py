@@ -209,7 +209,8 @@ def get_heading() -> float:
     try:
         raw = Bridge.call("get_heading")
         return float(raw)
-    except Exception:
+    except Exception as e:
+        print(f"ERROR: get_heading() failed: {e}")
         return -1.0
 
 
@@ -323,7 +324,8 @@ def handle_forward():
     data = get_sensor_data()
 
     if data is None:
-        # Sensor not ready yet — wait briefly before retrying
+        # Sensor not ready or read failed — stop motors until data returns
+        drive("stop")
         time.sleep(0.05)
         return
 
@@ -363,7 +365,13 @@ def handle_obstacle():
     time.sleep(0.1)  # brief settle before reading heading
 
     # Record heading at scan start — scan measures rotation from this point
-    scan_start_hdg = get_heading()
+    hdg = get_heading()
+
+    if hdg < 0:
+        print("WARNING: IMU read failed before scan start — using 0.0 degrees as reference.")
+        hdg = 0.0
+
+    scan_start_hdg = hdg
     scan_degrees   = 0.0
     clear_heading  = None
     print(f"Starting scan from heading {scan_start_hdg:.1f} degrees")
@@ -398,7 +406,9 @@ def handle_scanning():
     current_hdg = get_heading()
 
     if current_hdg < 0:
-        print("ERROR: IMU read failed during scan — retrying.")
+        # Stop motors while IMU is unavailable — do not continue rotating blind
+        drive("stop")
+        print("ERROR: IMU read failed during scan — stopping motors, retrying.")
         time.sleep(0.1)
         return
 
@@ -410,7 +420,10 @@ def handle_scanning():
     # Check sensor at this heading for a clear path
     data = get_sensor_data()
 
-    if data is not None:
+    if data is None:
+        # Sensor read failed at this heading — log and continue scanning
+        print(f"WARNING: sensor read failed at {scan_degrees:.1f} degrees — skipping this heading.")
+    else:
         dist, stat, signal, sigma = data
 
         if is_path_clear(dist, stat):
@@ -444,7 +457,9 @@ def handle_recovering():
     current_hdg = get_heading()
 
     if current_hdg < 0:
-        print("ERROR: IMU read failed during recovery — retrying.")
+        # Stop motors while IMU is unavailable — do not continue turning blind
+        drive("stop")
+        print("ERROR: IMU read failed during recovery — stopping motors, retrying.")
         time.sleep(0.1)
         return
 
@@ -486,8 +501,15 @@ def handle_full_block():
     time.sleep(2.0)  # pause before retrying — environment may have changed
     print("Retrying scan after full block...")
 
+    # Read heading for scan reference — if IMU fails, use 0.0 as fallback
+    hdg = get_heading()
+
+    if hdg < 0:
+        print("WARNING: IMU read failed before retry scan — using 0.0 degrees as reference.")
+        hdg = 0.0
+
     # Reset scan state and start fresh from current heading
-    scan_start_hdg = get_heading()
+    scan_start_hdg = hdg
     scan_degrees   = 0.0
     clear_heading  = None
     state = STATE_SCANNING
