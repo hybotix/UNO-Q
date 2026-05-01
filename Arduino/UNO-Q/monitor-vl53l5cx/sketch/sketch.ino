@@ -81,7 +81,7 @@ String get_distance_data() {
     String result = "";
     for (int row = 0; row < width; row++) {
         for (int col = 0; col < width; col++) {
-            result += String(hybx_distance_mm[row * width + col]);
+            result += String(hybx_distance_mm[row][col]);
             if (col < width - 1) result += ",";
         }
         if (row < width - 1) result += ";";
@@ -95,7 +95,7 @@ String get_target_status() {
     String result = "";
     for (int row = 0; row < width; row++) {
         for (int col = 0; col < width; col++) {
-            uint8_t st = hybx_target_status[row * width + col];
+            uint8_t st = hybx_target_status[row][col];
             result += (st == 5 || st == 9) ? "T" : "F";
             if (col < width - 1) result += ",";
         }
@@ -109,7 +109,7 @@ String get_signal_data() {
     String result = "";
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            result += String(hybx_signal_per_spad[row * 8 + col]);
+            result += String(hybx_signal_per_spad[row][col]);
             if (col < 7) result += ",";
         }
         if (row < 7) result += ";";
@@ -122,7 +122,7 @@ String get_sigma_data() {
     String result = "";
     for (int row = 0; row < 8; row++) {
         for (int col = 0; col < 8; col++) {
-            result += String(hybx_range_sigma_mm[row * 8 + col]);
+            result += String(hybx_range_sigma_mm[row][col]);
             if (col < 7) result += ",";
         }
         if (row < 7) result += ";";
