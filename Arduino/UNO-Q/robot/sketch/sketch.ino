@@ -17,7 +17,21 @@
  * for precision heading control until a clear path is found, then turns to
  * that heading and resumes forward navigation.
  *
- * Hardware:
+ * VL53L5CX Zone Layout (8x8, physically verified):
+ *
+ *   Orientation: SparkFun logo at TOP, lens facing FORWARD.
+ *   Left/right defined from BEHIND the sensor looking forward
+ *   (same direction the robot travels).
+ *
+ *   [0][0] upper-left    [0][7] upper-right   ← row 0 = TOP
+ *   [4][3] center-left   [4][4] center-right  ← obstacle detection zone
+ *   [7][0] lower-left    [7][7] lower-right   ← row 7 = BOTTOM
+ *
+ *   col 0 = robot LEFT    col 7 = robot RIGHT
+ *   col 3-4 = robot CENTER (forward path, used for obstacle detection)
+ *
+ *   Verified by hand test on SparkFun large VL53L5CX breakout (SEN-18642).
+ *
  *   - Adafruit Motor Shield V2 (I2C 0x60) — M1=FL, M2=FR, M3=RL, M4=RR
  *   - SparkFun VL53L5CX large breakout (Wire1) — forward-facing, 8x8 mode
  *   - Adafruit BNO055 (Wire1, 0x28) — absolute heading via Euler angles

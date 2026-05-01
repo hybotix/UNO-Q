@@ -28,6 +28,20 @@ State machine:
   All zones in CENTER_COLS (columns 3 and 4) across FORWARD_ROWS (rows 0-4)
   must have valid target_status AND distance > OBSTACLE_MM.
 
+VL53L5CX zone layout (8x8, physically verified):
+  Orientation: SparkFun logo at TOP, lens facing FORWARD.
+  Left/right defined from BEHIND the sensor looking forward
+  (same direction the robot travels).
+
+  [0][0] upper-left    [0][7] upper-right   row 0 = TOP of FOV
+  [4][3] center-left   [4][4] center-right  obstacle detection zone
+  [7][0] lower-left    [7][7] lower-right   row 7 = BOTTOM of FOV
+
+  col 0 = robot LEFT    col 7 = robot RIGHT
+  col 3-4 = robot CENTER (forward path)
+
+  Verified by hand test on SparkFun large VL53L5CX breakout (SEN-18642).
+
 Tunable constants (top of file):
   OBSTACLE_MM    -- distance threshold to trigger obstacle response (mm)
   BACKUP_MS      -- reverse duration on obstacle detect (ms, ~5cm at speed 128)
