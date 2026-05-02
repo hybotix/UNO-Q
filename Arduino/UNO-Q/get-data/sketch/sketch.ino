@@ -13,6 +13,7 @@
  *   5. Python polls get_distance_data() / get_target_status()
  *
  * Bridge functions:
+ *   end_sensor()            -- stop ranging cleanly (always call before exit)
  *   begin_sensor()          -- trigger firmware upload + start ranging
  *   get_sensor_status()     -- "idle", "uploading", "ready", "init_failed:step:code"
  *   set_resolution(String)  -- "4x4" or "8x8". Returns active resolution.
@@ -29,6 +30,14 @@ static uint8_t       currentResolution = 64;
 static bool          beginCalled       = false;
 static bool          initFailed        = false;
 static bool          initDone          = false;
+
+String end_sensor() {
+    sensor.stop();
+    beginCalled = false;
+    initDone    = false;
+    initFailed  = false;
+    return "stopped";
+}
 
 String get_sensor_status() {
     if (!initDone)  return beginCalled ? "uploading" : "idle";
@@ -133,6 +142,7 @@ String get_sigma_data() {
 void setup() {
     Wire1.begin();
     Bridge.begin();
+    Bridge.provide("end_sensor",         end_sensor);
     Bridge.provide("begin_sensor",       begin_sensor);
     Bridge.provide("get_sensor_status",  get_sensor_status);
     Bridge.provide("set_resolution",     set_resolution);
