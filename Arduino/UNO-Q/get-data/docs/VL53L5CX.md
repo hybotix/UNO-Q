@@ -133,7 +133,37 @@ The primary porting challenge is the ~86KB firmware upload — on the UNO Q this
 
 ---
 
-## Tools Built
+## History with the VL53L5CX
+
+- First used on a Pimoroni Trilobot (Raspberry Pi 4). The RPi 4 handled the firmware upload reliably. That experience — and the code from it — informed the current UNO Q implementation.
+- The original SparkFun VL53L5CX breakout used in HSP development was DOA. SparkFun replaced it via RMA (order #000229585). The replacement is the unit currently in use.
+- The sensor was also damaged in a hardware incident during development (SCD-30 was damaged in the same incident).
+
+---
+
+## Planned Uses
+
+### Small UNO Q Robot
+- Obstacle detection and avoidance
+- Object position classification (the current work)
+- Navigation planning via spatial depth map
+
+### My Chairiet Distributed Computing Platform (HSP)
+- Dual VL53L5CX deployment planned
+- Proximity sensing for accessibility — detecting obstacles at wheelchair height
+- Part of the Hybrid RobotiX Standardized Sensor Platform (HSP) that deploys identically across My Chairiet, the scout robot, and portable units
+- Data published via Mosquitto MQTT on the Headrest Pi 5
+
+### Environment Mapping
+- The 8x8 depth map updated at 15Hz provides enough data for basic indoor environment mapping
+- Combined with IMU (BNO055/LSM6DSOX) for odometry — foundation for SLAM
+- Does not require high resolution for small robot indoor navigation
+
+### Complement with VL53L1X
+- VL53L5CX (wide FOV, spatial) + VL53L1X (single zone, long range up to 4m) complement each other
+- VL53L5CX for spatial awareness, VL53L1X for precise long-range targeting
+
+---
 
 | Tool | Description |
 |------|-------------|
