@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-visualizer-v1.0.2.py
+visualizer-v1.0.1.py
 VL53L5CX Data Visualizer
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
@@ -19,10 +19,10 @@ Features:
   - Writes to temp file, renames to original on save
 
 Controls:
-  Enter    — skip frame (leave blank) and advance
   A        — accept suggested label and advance
+  S        — save and quit
   B        — go back one frame
-  Q        — quit and save
+  Q        — quit without saving
   <text>   — override with custom label and advance
 """
 
@@ -229,7 +229,7 @@ def display_frame(row: dict, current: int, total: int, suggestion: str):
         print(f"  {dist_row}    {conf_row}")
 
     print()
-    print(f"  A)ccept '{suggestion}'  B)ack  Q)uit  or type label (Enter=skip): ", end="", flush=True)
+    print(f"  A)ccept '{suggestion}'  S)ave+quit  B)ack  Q)uit  or type label: ", end="", flush=True)
 
 
 # ── Save ───────────────────────────────────────────────────────────────────────
@@ -255,9 +255,9 @@ def main():
     print("  Hybrid RobotiX — HybX Development System")
     print("═" * 60)
     print()
-    print("  Enter                     Skip frame (default)")
-    print("  A)ccept suggested label   B)ack one frame")
-    print("  Q)uit and save            <text> + Enter = custom label")
+    print("  A)ccept suggested label   S)ave and quit")
+    print("  B)ack one frame           Q)uit without saving")
+    print("  <text> + Enter            Override with custom label")
     print()
 
     # File selection
@@ -304,6 +304,11 @@ def main():
             key = entry.upper()
 
             if key == "Q":
+                # Quit without saving
+                print("\n  Quit without saving.")
+                sys.exit(0)
+            elif key == "S":
+                # Save and quit
                 break
             elif key == "B":
                 if current > 0:
@@ -314,14 +319,14 @@ def main():
                 row["label"] = suggestion
                 rows[current] = row
                 current += 1
-            elif entry == "":
-                # Enter with no input — skip
-                row["label"] = ""
+            elif entry:
+                # Any text — use as label
+                row["label"] = entry[:10]
                 rows[current] = row
                 current += 1
             else:
-                # Any other text — custom label
-                row["label"] = entry[:10]
+                # Empty Enter — skip frame, leave blank
+                row["label"] = ""
                 rows[current] = row
                 current += 1
 
