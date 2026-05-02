@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 visualizer.py
 VL53L5CX Data Visualizer
@@ -37,7 +38,7 @@ from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
-APP_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_DIR  = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(APP_DIR, "data")
 
 # ── Grid dimensions ────────────────────────────────────────────────────────────
