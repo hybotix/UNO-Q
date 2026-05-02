@@ -39,7 +39,7 @@ SIGMA_MAX  = 30.0
 
 # ── Size constants ─────────────────────────────────────────────────────────────
 
-BYTES_PER_FRAME = 793   # measured: timestamp+64dist+64conf+label+separators
+BYTES_PER_FRAME = 729   # worst case: 13+64*4+64*5+10+129 (all max values)
 HEADER_BYTES    = 200   # one-time CSV header row
 LABEL_WIDTH     = 10    # reserved label field width
 
