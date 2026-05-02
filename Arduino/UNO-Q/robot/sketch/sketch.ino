@@ -81,7 +81,7 @@
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
-#include <hybx_vl53l5cx.h>
+#include <hybx_vl53l5cx_unoq.h>
 #include <Adafruit_MotorShield.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
@@ -113,7 +113,7 @@ static Adafruit_DCMotor    *motorRR = nullptr;  // M4 — Rear Right
 // ── VL53L5CX state ───────────────────────────────────────────────────────────
 // Firmware upload happens once via begin_sensor() from Python.
 // currentResolution tracks 16 (4x4) or 64 (8x8) zones.
-static hybx_vl53l5cx sensor;
+static hybx_vl53l5cx_unoq sensor;
 static uint8_t       currentResolution = 64;    // default 8x8
 static bool          sensorBeginCalled = false;  // prevent double-init
 static bool          sensorInitFailed  = false;  // true if begin() failed

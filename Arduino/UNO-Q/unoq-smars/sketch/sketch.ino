@@ -22,9 +22,9 @@
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
-#include <hybx_vl53l5cx.h>
+#include <hybx_vl53l5cx_unoq.h>
 
-static hybx_vl53l5cx sensor;
+static hybx_vl53l5cx_unoq sensor;
 static uint8_t       currentResolution = 64;
 static bool          beginCalled       = false;
 static bool          initFailed        = false;

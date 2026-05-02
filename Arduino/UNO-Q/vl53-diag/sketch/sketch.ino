@@ -2,7 +2,7 @@
  * VL53L5CX I2C Diagnostic
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
- * Confirms the VL53L5CX is working correctly with the hybx_vl53l5cx
+ * Confirms the VL53L5CX is working correctly with the hybx_vl53l5cx_unoq
  * library and RouterBridge on the Arduino UNO Q.
  *
  * CONFIRMED WORKING PATTERN (derived from this diagnostic):
@@ -18,11 +18,11 @@
 
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
-#include <hybx_vl53l5cx.h>
+#include <hybx_vl53l5cx_unoq.h>
 
 static String         diagResult  = "idle";
 static bool           beginCalled = false;
-static hybx_vl53l5cx sensor;
+static hybx_vl53l5cx_unoq sensor;
 
 String get_diag() {
     return diagResult;
