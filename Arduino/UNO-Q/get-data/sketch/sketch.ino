@@ -130,6 +130,14 @@ String get_sigma_data() {
     return result;
 }
 
+String end_sensor() {
+    sensor.stop();
+    beginCalled = false;
+    initDone    = false;
+    initFailed  = false;
+    return "stopped";
+}
+
 void setup() {
     Wire1.begin();
     Bridge.begin();
