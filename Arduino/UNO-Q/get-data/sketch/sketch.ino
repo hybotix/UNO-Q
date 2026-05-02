@@ -140,6 +140,7 @@ void setup() {
     Bridge.provide("get_target_status",  get_target_status);
     Bridge.provide("get_signal_data",    get_signal_data);
     Bridge.provide("get_sigma_data",     get_sigma_data);
+    Bridge.provide("end_sensor",         end_sensor);
 }
 
 void loop() {
