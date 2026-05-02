@@ -192,3 +192,49 @@ Single LiPo battery powers everything:
   replaced by the Motor 2040 + N20 encoder motors from Pimoroni
 - Encoder odometry is a planned enhancement for accurate positioning
 - Current sensing will be used for stall detection and safety cutoff
+
+---
+
+## Future Enhancements
+
+### Pan/Tilt Platform (VL53L5CX)
+The VL53L5CX will eventually mount on a pan/tilt servo platform driven
+by an Adafruit PCA9685 PWM Servo Driver (Wire1, 0x40). When added:
+- Scanning will pan the sensor instead of rotating the whole robot
+- Absolute look direction = pan_angle + BNO055_heading
+- Bridge functions to add: set_pan(deg), set_tilt(deg), get_pan(), get_tilt()
+
+### Motor Encoder Odometry
+Motors have encoders. When integrated:
+- Replace time-based backup (BACKUP_MS) with distance-based odometry
+- Replace time-based rotation with encoder-counted turns
+- Hookup point in code: handle_obstacle() in robot/python/main.py
+- GET_ENCODERS command already defined in Motor 2040 command interface
+
+---
+
+## ML Inferencing
+
+### Edge Impulse (active)
+Primary ML platform. Account active. Data collection via ei-c project.
+- Input: VL53L5CX 8x8 depth map (64 features per frame)
+- Classes: UP, DOWN, LEFT, RIGHT, CENTER (expandable)
+- Goal: obstacle classification and spatial awareness for navigation
+
+### Google LiteRT
+Google's evolution of TensorFlow Lite. To be evaluated alongside Edge Impulse.
+- May be better suited for My Chairiet Basket Pi 5 / Hailo-10H
+- Key question: does Hailo-10H support LiteRT models natively?
+
+---
+
+## Navigation State Machine
+
+```
+INIT → FORWARD → OBSTACLE → SCANNING → RECOVERING → FULL_BLOCK
+                                ↑_____________________________|
+```
+
+All navigation logic runs on the Linux side (Python). The Arduino sketch
+handles hardware I/O only via Bridge functions. No navigation logic lives
+on the MCU — this separation must be preserved.
