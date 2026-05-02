@@ -16,7 +16,7 @@ Usage: Place a flat target (e.g. book, board) perpendicular to the
 sensor at the prompted distance. Hold steady during sampling.
 """
 
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 import statistics
 

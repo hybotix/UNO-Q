@@ -1,4 +1,4 @@
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 
 def loop():

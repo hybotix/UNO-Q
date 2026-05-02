@@ -1,4 +1,4 @@
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 
 # Scroll timing constants — must match sketch

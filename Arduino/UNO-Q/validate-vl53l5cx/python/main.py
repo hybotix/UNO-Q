@@ -11,7 +11,7 @@ Tolerance:      +/- 50 mm
 Frames:         10 per test point
 """
 
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 import statistics
 

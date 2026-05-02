@@ -59,7 +59,7 @@ rotation in handle_scanning() with pan servo sweeps. The scan state and
 clear-path detection logic remain unchanged.
 """
 
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 
 # ── Tunable constants ─────────────────────────────────────────────────────────

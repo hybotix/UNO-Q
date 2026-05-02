@@ -12,7 +12,7 @@ Confidence formula:
   - confidence   = (signal_score * 0.6 + sigma_score * 0.4) * 99.99
 """
 
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 
 RESOLUTION = "8x8"

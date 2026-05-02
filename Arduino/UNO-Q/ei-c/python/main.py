@@ -32,7 +32,7 @@ Orientation (raw data — never modified):
     Col 0 = robot left,    Col 7 = robot right
 """
 
-from arduino.app_utils import *
+from hybx_app import Bridge, App
 import time
 import os
 import sys
