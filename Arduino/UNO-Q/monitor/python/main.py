@@ -87,7 +87,7 @@ def loop():
                 print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
-            if result == "ready":
+            if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print("Sensor ready. Resolution: " + res)
                 initialized = True

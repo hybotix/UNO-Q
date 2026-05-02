@@ -287,7 +287,7 @@ def handle_init():
                 time.sleep(5.0)
                 return
 
-            if result == "ready":
+            if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"VL53L5CX ready. Resolution: {res}")
                 sensor_ready = True
@@ -307,7 +307,7 @@ def handle_init():
         try:
             result = Bridge.call("begin_imu")
 
-            if result == "ready":
+            if result in ("ready", "already_started"):
                 print("BNO055 ready.")
                 imu_ready = True
             else:
