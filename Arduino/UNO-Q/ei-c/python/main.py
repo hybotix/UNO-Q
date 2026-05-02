@@ -2,8 +2,11 @@
 ei-c — Edge Impulse Raw Data Collector
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Collects 500 raw 8x8 distance frames from the VL53L5CX and writes
-them to a CSV file with an empty label column for later labeling.
+Collects raw 8x8 distance frames from the VL53L5CX and writes them
+to a CSV file with an empty label column for later labeling on the Mac.
+
+At startup, prompts for the number of frames to collect, shows the
+estimated disk space required, and asks for confirmation before starting.
 
 Usage:
     start ei-c
@@ -18,7 +21,7 @@ CSV format:
     ...
 
 Notes:
-    - Exactly 500 frames are collected then the app stops cleanly
+    - Frame count is chosen interactively at startup
     - The label column is always empty — labeling happens on the Mac
     - Raw distance data is never modified
     - Progress is printed every 50 frames
@@ -35,10 +38,16 @@ import csv
 from datetime import datetime
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-RESOLUTION   = "8x8"
-OUTPUT_DIR   = os.path.expanduser("~/data/ei-c")
-FRAME_TARGET = 500
-PROGRESS_INT = 50
+RESOLUTION    = "8x8"
+OUTPUT_DIR    = os.path.expanduser("~/data/ei-c")
+PROGRESS_INT  = 50
+
+# Disk space estimate constants
+# 64 values x ~5 chars + comma = ~320 chars per frame
+# + 10 char label field + newline = ~332 chars per frame
+# + ~215 char header row
+BYTES_PER_FRAME  = 332
+BYTES_HEADER     = 215
 
 ERROR_STEPS = {
     "0": "none", "1": "vl53l5cx_init", "2": "vl53l5cx_set_resolution",
@@ -48,12 +57,14 @@ ERROR_STEPS = {
 }
 
 # ── State ──────────────────────────────────────────────────────────────────────
-initialized = False
-csv_path    = None
-csv_file    = None
-csv_writer  = None
-frame_count = 0
-done        = False
+initialized  = False
+csv_path     = None
+csv_file     = None
+csv_writer   = None
+frame_count  = 0
+frame_target = 0
+done         = False
+confirmed    = False
 
 
 def parse_int_matrix(data: str) -> list:
@@ -66,6 +77,68 @@ def format_error(status: str) -> str:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
     return status
+
+
+def format_size(n_bytes: int) -> str:
+    """Format byte count as human-readable string."""
+    if n_bytes < 1024:
+        return f"{n_bytes} bytes"
+    elif n_bytes < 1024 * 1024:
+        return f"{n_bytes / 1024:.1f} KB"
+    else:
+        return f"{n_bytes / (1024 * 1024):.2f} MB"
+
+
+def prompt_frame_count() -> int:
+    """
+    Prompt the user for the number of frames to collect.
+    Shows estimated disk space and asks for confirmation.
+    Returns the confirmed frame count, or 0 if cancelled.
+    """
+    print()
+    print("=== ei-c — Edge Impulse Data Collector ===")
+    print()
+
+    while True:
+        try:
+            response = input("How many frames to collect? [500]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            return 0
+
+        if response == "":
+            n = 500
+        else:
+            try:
+                n = int(response)
+                if n <= 0:
+                    print("  ERROR: Frame count must be greater than zero.")
+                    continue
+            except ValueError:
+                print(f"  ERROR: '{response}' is not a valid number.")
+                continue
+
+        # Calculate estimated disk space
+        estimated = BYTES_HEADER + (n * BYTES_PER_FRAME)
+        print()
+        print(f"  Frames:         {n}")
+        print(f"  Estimated size: {format_size(estimated)}")
+        print(f"  Output dir:     {OUTPUT_DIR}")
+        print()
+
+        try:
+            confirm = input("Continue? [Y/n]: ").strip().upper()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            return 0
+
+        if confirm in ("", "Y", "YES"):
+            return n
+        elif confirm in ("N", "NO"):
+            print("  Cancelled.")
+            return 0
+        else:
+            print("  Please enter Y or N.")
 
 
 def open_csv() -> tuple:
@@ -82,7 +155,8 @@ def open_csv() -> tuple:
 
 
 def loop():
-    global initialized, csv_path, csv_file, csv_writer, frame_count, done
+    global initialized, csv_path, csv_file, csv_writer
+    global frame_count, frame_target, done, confirmed
 
     if done:
         time.sleep(1.0)
@@ -91,17 +165,28 @@ def loop():
     # ── One-time setup ─────────────────────────────────────────────────────────
     if not initialized:
 
+        # ── Prompt for frame count ─────────────────────────────────────────────
+        if not confirmed:
+            n = prompt_frame_count()
+            if n == 0:
+                done = True
+                print("Collection cancelled.")
+                return
+            frame_target = n
+            confirmed    = True
+
+        # ── Open CSV ───────────────────────────────────────────────────────────
         if csv_file is None:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
                 print(f"Output: {csv_path}")
-                print(f"Target: {FRAME_TARGET} frames")
                 print()
             except Exception as e:
                 print(f"ERROR: Could not open output file: {e}")
                 time.sleep(5.0)
                 return
 
+        # ── Init sensor ────────────────────────────────────────────────────────
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
@@ -112,7 +197,7 @@ def loop():
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"Sensor ready. Resolution: {res}")
-                print(f"Collecting {FRAME_TARGET} frames...")
+                print(f"Collecting {frame_target} frames...")
                 print()
                 initialized = True
             else:
@@ -153,8 +238,8 @@ def loop():
         frame_count += 1
 
         if frame_count % PROGRESS_INT == 0:
-            remaining = FRAME_TARGET - frame_count
-            print(f"  {frame_count}/{FRAME_TARGET} frames collected "
+            remaining = frame_target - frame_count
+            print(f"  {frame_count}/{frame_target} frames collected "
                   f"({remaining} remaining)")
 
     except Exception as e:
@@ -162,7 +247,7 @@ def loop():
         return
 
     # ── Check if target reached ────────────────────────────────────────────────
-    if frame_count >= FRAME_TARGET:
+    if frame_count >= frame_target:
         csv_file.close()
         done = True
         print()
