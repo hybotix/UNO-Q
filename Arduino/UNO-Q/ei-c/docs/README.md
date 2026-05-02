@@ -1,5 +1,5 @@
 # ei-c
-Hybrid RobotiX — HybX Development System
+Hybrid RobotiX — San Diego, CA
 
 ## Purpose
 Edge Impulse data collector for the VL53L5CX 8x8 ToF depth map sensor.

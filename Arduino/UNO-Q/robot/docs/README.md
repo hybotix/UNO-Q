@@ -1,5 +1,5 @@
 # robot
-Hybrid RobotiX — HybX Development System
+Hybrid RobotiX — San Diego, CA
 
 ## Hardware
 

@@ -1,5 +1,5 @@
 # validate-vl53l5cx
-Hybrid RobotiX — HybX Development System
+Hybrid RobotiX — San Diego, CA
 
 ## Hardware
 <!-- List sensors, actuators, and other hardware used by this project -->
