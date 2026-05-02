@@ -1,36 +1,63 @@
 """
-VL53L5CX Monitor Python Application
+main.py
+VL53L5CX Interactive Data Collector
 Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
 
-Reads distance, target status, signal, sigma from the VL53L5CX and
-displays them as an 8x8 matrix with per-zone confidence values.
+Collects labeled 8x8 depth map frames from the VL53L5CX sensor
+and writes them as Edge Impulse-compatible CSV files.
 
-Confidence formula:
-  - target_status not 5 or 9 → 0.00%
-  - signal_score = min(signal_per_spad / SIGNAL_MAX, 1.0)
-  - sigma_score  = max(0, 1 - range_sigma_mm / SIGMA_MAX)
-  - confidence   = (signal_score * 0.6 + sigma_score * 0.4) * 99.99
+CSV format per row:
+    timestamp,d_0_0,...,d_7_7,c_0_0,...,c_7_7,label
+
+    - timestamp : milliseconds since epoch
+    - d_x_y     : distance in mm (64 values, row-major)
+    - c_x_y     : confidence % (64 values, row-major)
+    - label     : empty — fill in with the visualizer
+
+Data directory: <app>/data/
+Filename:       YYYYMMDD_HHMMSS.csv
 """
 
-from hybx_app import Bridge, App
+from hybx_app import Bridge, BridgeError
+import os
+import sys
 import time
+import shutil
+from datetime import datetime
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+
+APP_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(APP_DIR, "data")
+
+# ── Sensor constants ───────────────────────────────────────────────────────────
 
 RESOLUTION = "8x8"
-WIDTH      = 4 if RESOLUTION == "4x4" else 8
+WIDTH      = 8
+SIGNAL_MAX = 8000.0
+SIGMA_MAX  = 30.0
 
-# Confidence scaling constants (tuned for VL53L5CX at 400kHz, 8x8)
-SIGNAL_MAX = 8000.0   # kcps/SPAD — typical max for good returns
-SIGMA_MAX  = 30.0     # mm — anything above this is poor
+# ── Size constants ─────────────────────────────────────────────────────────────
+
+BYTES_PER_FRAME = 793   # measured: timestamp+64dist+64conf+label+separators
+HEADER_BYTES    = 200   # one-time CSV header row
+LABEL_WIDTH     = 10    # reserved label field width
+
+# ── Error step map ─────────────────────────────────────────────────────────────
 
 ERROR_STEPS = {
-    "0": "none", "1": "vl53l5cx_init", "2": "vl53l5cx_set_resolution",
-    "3": "vl53l5cx_set_ranging_frequency_hz", "4": "vl53l5cx_start_ranging",
-    "5": "vl53l5cx_stop_ranging", "6": "vl53l5cx_check_data_ready",
+    "0": "none",
+    "1": "vl53l5cx_init",
+    "2": "vl53l5cx_set_resolution",
+    "3": "vl53l5cx_set_ranging_frequency_hz",
+    "4": "vl53l5cx_start_ranging",
+    "5": "vl53l5cx_stop_ranging",
+    "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
 }
 
-initialized = False
 
+# ── Parsing ────────────────────────────────────────────────────────────────────
 
 def parse_int_matrix(data: str) -> list:
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
@@ -43,29 +70,9 @@ def parse_bool_matrix(data: str) -> list:
 def confidence(status: bool, signal: int, sigma: int) -> float:
     if not status:
         return 0.0
-    sig_score = min(signal / SIGNAL_MAX, 1.0)
-    sig_score = max(sig_score, 0.0)
+    sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
     sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
     return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
-
-
-def print_distance(dist):
-    print("── Distance (mm) ──")
-    for row in dist:
-        print("  " + "  ".join(f"{v:5d}" for v in row))
-    print()
-
-
-def print_confidence(dist, stat, signal, sigma):
-    print("── Confidence (%) ──")
-    for r in range(8):
-        vals = []
-        for c in range(8):
-            valid = stat[r][c]
-            conf  = confidence(valid, signal[r][c], sigma[r][c])
-            vals.append(f"{conf:6.2f}")
-        print("  " + "  ".join(vals))
-    print()
 
 
 def format_error(status: str) -> str:
@@ -76,55 +83,234 @@ def format_error(status: str) -> str:
     return status
 
 
-def loop():
-    global initialized
+# ── Storage ────────────────────────────────────────────────────────────────────
 
-    if not initialized:
-        try:
-            print("Triggering sensor firmware upload...")
-            result = Bridge.call("begin_sensor", timeout=120)
-            if result.startswith("init_failed"):
-                print("ERROR: " + format_error(result))
-                time.sleep(5.0)
-                return
-            if result in ("ready", "already_started"):
-                res = Bridge.call("set_resolution", RESOLUTION)
-                print("Sensor ready. Resolution: " + res)
-                initialized = True
-            else:
-                print("ERROR: " + result)
-                time.sleep(2.0)
-        except Exception as e:
-            print("ERROR: " + str(e))
-            time.sleep(2.0)
-        return
+def get_free_bytes() -> int:
+    """Return free bytes available in the data directory."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    stat = shutil.disk_usage(DATA_DIR)
+    return stat.free
 
-    time.sleep(0.1)
 
+def format_size(n: int) -> str:
+    """Human-readable size string."""
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 ** 2:
+        return f"{n/1024:.1f} KB"
+    if n < 1024 ** 3:
+        return f"{n/1024**2:.1f} MB"
+    return f"{n/1024**3:.2f} GB"
+
+
+def estimate_size(frames: int) -> int:
+    return HEADER_BYTES + frames * BYTES_PER_FRAME
+
+
+# ── CSV ────────────────────────────────────────────────────────────────────────
+
+CSV_HEADER = (
+    "timestamp,"
+    + ",".join(f"d_{r}_{c}" for r in range(8) for c in range(8))
+    + ","
+    + ",".join(f"c_{r}_{c}" for r in range(8) for c in range(8))
+    + ",label\n"
+)
+
+
+def make_filename() -> str:
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return os.path.join(DATA_DIR, f"{ts}.csv")
+
+
+def make_row(dist: list, stat: list, signal: list, sigma: list) -> str:
+    ts = int(time.time() * 1000)
+
+    dist_vals = [str(dist[r][c]) for r in range(8) for c in range(8)]
+    conf_vals = [
+        f"{confidence(stat[r][c], signal[r][c], sigma[r][c]):.2f}"
+        for r in range(8) for c in range(8)
+    ]
+
+    return (
+        str(ts)
+        + ","
+        + ",".join(dist_vals)
+        + ","
+        + ",".join(conf_vals)
+        + ","   # label — empty, filled in by visualizer
+        + "\n"
+    )
+
+
+# ── Sensor init ────────────────────────────────────────────────────────────────
+
+def init_sensor():
+    """Initialize the VL53L5CX. Blocks until ready or fails."""
+    print()
+    print("Initializing VL53L5CX...")
+    print("  (Firmware upload in progress — this takes up to 120 seconds)")
+
+    try:
+        result = Bridge.call("begin_sensor", timeout=120)
+    except BridgeError as e:
+        print(f"  ERROR: {e}")
+        sys.exit(1)
+
+    if result.startswith("init_failed"):
+        print(f"  ERROR: {format_error(result)}")
+        sys.exit(1)
+
+    if result not in ("ready", "already_started"):
+        print(f"  ERROR: unexpected status: {result}")
+        sys.exit(1)
+
+    res = Bridge.call("set_resolution", RESOLUTION)
+    print(f"  Sensor ready. Resolution: {res}")
+    print()
+
+
+# ── Frame fetch ────────────────────────────────────────────────────────────────
+
+def fetch_frame() -> tuple | None:
+    """
+    Fetch one complete frame from the sensor.
+    Returns (dist, stat, signal, sigma) matrices or None if not ready.
+    """
     try:
         dist_raw   = Bridge.call("get_distance_data")
         stat_raw   = Bridge.call("get_target_status")
         signal_raw = Bridge.call("get_signal_data")
         sigma_raw  = Bridge.call("get_sigma_data")
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return
+    except BridgeError as e:
+        print(f"  ERROR: {e}")
+        return None
 
     if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
-        return
+        return None
     if dist_raw.startswith("error:"):
-        print("ERROR: " + format_error(dist_raw))
-        return
+        print(f"  ERROR: {format_error(dist_raw)}")
+        return None
 
     try:
         dist   = parse_int_matrix(dist_raw)
         stat   = parse_bool_matrix(stat_raw)
         signal = parse_int_matrix(signal_raw)
         sigma  = parse_int_matrix(sigma_raw)
-        print_distance(dist)
-        print_confidence(dist, stat, signal, sigma)
+        return dist, stat, signal, sigma
     except Exception as e:
-        print(f"ERROR parsing: {e}")
+        print(f"  ERROR parsing frame: {e}")
+        return None
 
 
-App.run(user_loop=loop)
+# ── Interactive setup ──────────────────────────────────────────────────────────
+
+def prompt_frames() -> int:
+    """Prompt for frame count and confirm storage fits. Returns approved count."""
+    free = get_free_bytes()
+
+    print(f"Storage available: {format_size(free)}")
+    print(f"Bytes per frame:   {BYTES_PER_FRAME}")
+    print(f"Max frames:        {(free - HEADER_BYTES) // BYTES_PER_FRAME:,}")
+    print()
+
+    while True:
+        raw = input("How many frames? ").strip()
+        if not raw.isdigit() or int(raw) < 1:
+            print("  Please enter a positive integer.")
+            continue
+
+        frames    = int(raw)
+        estimated = estimate_size(frames)
+        fits      = estimated <= free
+
+        print()
+        print(f"  Frames requested:  {frames:,}")
+        print(f"  Estimated size:    {format_size(estimated)}")
+        print(f"  Available:         {format_size(free)}")
+        print(f"  Fits:              {'YES' if fits else 'NO — not enough space'}")
+        print()
+
+        if not fits:
+            print("  Not enough space. Please enter a smaller frame count.")
+            print()
+            continue
+
+        while True:
+            choice = input("  Continue or retry? [c/r] ").strip().lower()
+            if choice in ("c", "continue"):
+                return frames
+            if choice in ("r", "retry"):
+                print()
+                break
+            print("  Please enter 'c' to continue or 'r' to retry.")
+
+
+# ── Collection ─────────────────────────────────────────────────────────────────
+
+def collect(frames: int):
+    """Collect exactly N frames and write to CSV."""
+    filename = make_filename()
+    print()
+    print(f"Collecting {frames:,} frames...")
+    print(f"File: {filename}")
+    print()
+
+    collected = 0
+    skipped   = 0
+
+    with open(filename, "w") as f:
+        f.write(CSV_HEADER)
+
+        while collected < frames:
+            frame = fetch_frame()
+            if frame is None:
+                skipped += 1
+                time.sleep(0.05)
+                continue
+
+            dist, stat, signal, sigma = frame
+            f.write(make_row(dist, stat, signal, sigma))
+            collected += 1
+
+            # Progress every 10% or every 10 frames, whichever is more frequent
+            interval = max(1, min(frames // 10, 10))
+            if collected % interval == 0 or collected == frames:
+                pct = collected / frames * 100
+                print(f"  {collected:>{len(str(frames))}}/{frames}  ({pct:.0f}%)"
+                      + (f"  [{skipped} skipped]" if skipped else ""))
+
+    size = os.path.getsize(filename)
+    print()
+    print(f"Done.")
+    print(f"  Frames collected: {collected:,}")
+    if skipped:
+        print(f"  Frames skipped:   {skipped:,}")
+    print(f"  File size:        {format_size(size)}")
+    print(f"  File:             {filename}")
+
+
+# ── Main ───────────────────────────────────────────────────────────────────────
+
+def main():
+    print("═" * 60)
+    print("  VL53L5CX Data Collector")
+    print("  Hybrid RobotiX — HybX Development System")
+    print("═" * 60)
+
+    # Phase 1 — Initialize sensor
+    init_sensor()
+
+    # Phase 2 — Interactive setup
+    frames = prompt_frames()
+
+    # Phase 3 — Collect
+    collect(frames)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nAborted.")
+        sys.exit(0)
