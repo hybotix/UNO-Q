@@ -1,3 +1,0 @@
-name: sparky
-icon: 📏
-description: Validates VL53L5CX ranging accuracy at user-specified distances. Prompts for target placement and reports pass/fail with statistics.
