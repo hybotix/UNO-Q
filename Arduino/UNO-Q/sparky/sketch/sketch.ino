@@ -1,17 +1,8 @@
-/*
  * VL53L5CX Validation
  * Hybrid RobotiX — Dale Weber <hybotix@hybridrobotix.io>
  *
  * Validates VL53L5CX ranging accuracy at user-specified distances.
  * Python drives the validation — sketch just provides sensor data.
- *
- * Bridge functions:
- *   begin_sensor()        -- trigger firmware upload + start ranging
- *   get_sensor_status()   -- "idle", "uploading", "ready", "init_failed:step:code"
- *   get_distance_data()   -- 8x8 CSV distance matrix in mm, or "0"
- *   get_target_status()   -- 8x8 T/F validity matrix, or "0"
- */
-
 #include <Arduino_RouterBridge.h>
 #include <Wire.h>
 #include <hybx_vl53l5cx_unoq.h>
