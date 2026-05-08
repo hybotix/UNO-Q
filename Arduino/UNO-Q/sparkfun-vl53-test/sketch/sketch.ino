@@ -32,4 +32,6 @@ void setup() {
     Bridge.provide("get_status", get_status);
 }
 
-void loop() {}
+void loop() {
+    delay(10);
+}

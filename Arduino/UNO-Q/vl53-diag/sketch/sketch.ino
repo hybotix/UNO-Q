@@ -22,22 +22,26 @@
 
 static String         diagResult  = "idle";
 static bool           beginCalled = false;
-static hybx_vl53l5cx sensor;
+static hybx_vl53l5cx  sensor;
 
 String get_diag() {
     return diagResult;
 }
 
 String begin_sensor() {
-    if (beginCalled) return "already_started";
+    if (beginCalled) {
+        return "already_started";
+    }
+
     beginCalled = true;
     diagResult  = "uploading";
+
     if (sensor.begin()) {
         diagResult = "pass:firmware_uploaded+ranging_started";
     } else {
-        diagResult = "fail:step=" + String(hybx_last_error_step) +
-                     ":code=" + String(hybx_last_error);
+        diagResult = "fail:step=" + String(hybx_last_error_step) + ":code=" + String(hybx_last_error);
     }
+
     return diagResult;
 }
 
@@ -48,4 +52,6 @@ void setup() {
     Bridge.provide("begin_sensor", begin_sensor);
 }
 
-void loop() {}
+void loop() {
+    delay(10);
+}
