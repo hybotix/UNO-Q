@@ -127,7 +127,6 @@ void scroll_tick() {
     if (scroll_x < -msg_pixel_width) {
         scroll_x = 12;
     }
-
 }
 
 String get_scd30_data() {
@@ -270,7 +269,6 @@ void set_mux_channel_helper(MuxChannel* channels, int count, String params) {
             return;
         }
     }
-
 }
 
 void set_mux1_channel(String params) {

@@ -67,7 +67,6 @@ void scroll_tick() {
     if (scroll_x < -msg_pixel_width) {
         scroll_x = 12;
     }
-
 }
 
 String get_lis3dh_data() {

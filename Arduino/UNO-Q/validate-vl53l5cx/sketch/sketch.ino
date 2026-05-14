@@ -117,5 +117,4 @@ void loop() {
     if (initDone && !initFailed) {
         sensor.poll();
     }
-
 }
