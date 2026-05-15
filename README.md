@@ -14,11 +14,11 @@ Arduino UNO Q application repository for the HybX Development System. Contains a
 | `hub5-bno055` | Displays sensor readings on a 64×32 HUB75 RGB LED matrix panel |
 | `lis3dh` | LIS3DH accelerometer data via QWIIC |
 | `lsm6dsox` | LSM6DSOX IMU data via QWIIC |
-| `matrix-app` | Scrolls SCD30 sensor readings on the UNO Q built-in LED matrix |
-| `matrix-bno055` | Scrolls SCD30 and BNO055 readings on the built-in LED matrix |
+| `matrix-app` | Scrolls SCD41 sensor readings on the UNO Q built-in LED matrix |
+| `matrix-bno055` | Scrolls SCD41 and BNO055 readings on the built-in LED matrix |
 | `matrix-bno055-mux` | Multi-sensor readings via TCA9548A mux on the built-in LED matrix |
 | `matrix-lis3dh` | LIS3DH readings on the built-in LED matrix |
-| `scd30` | SCD30 CO2, temperature, and humidity via QWIIC |
+| `scd41` | SCD41 CO2, temperature, and humidity via QWIIC |
 | `securesmars` | Full SecureSMARS robot — sensors, Mecanum drive, LED matrix display |
 
 ---
@@ -70,7 +70,7 @@ build ~/Arduino/UNO-Q/matrix-bno055/sketch/
 - STM32U585 MCU for real-time control
 
 **Sensors (QWIIC on Wire1):**
-- Adafruit SCD30 — CO2, temperature, humidity
+- Adafruit SCD41 — CO2, temperature, humidity
 - Adafruit SHT45 — high-precision temperature and humidity
 - Adafruit BNO055 — 9-DoF absolute orientation IMU
 - Adafruit AS7343 — 14-channel spectral/color sensor

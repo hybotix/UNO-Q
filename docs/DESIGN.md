@@ -110,7 +110,7 @@ Each app lives in `~/Arduino/<app-name>/` with two components:
 
 Each app runs in a Docker container managed by `arduino-app-cli`. The container:
 - Mounts the app directory at `/app`
-- Mounts `$HOME` for persistent file storage (e.g. `~/.scd30-calibrated`)
+- Mounts `$HOME` for persistent file storage (e.g. `~/.scd41-calibrated`)
 - Is always nuked and rebuilt on `start`/`restart` to prevent stale cache
 
 The `$HOME` mount is applied by the Development System's `start` command via a patch to the generated `app-compose.yaml`.
@@ -180,7 +180,7 @@ Managed by UNO Q MCU. Organized into logical groups for efficient iteration.
 
 | Ch | Sensor | Library | Measures | Status |
 |----|--------|---------|----------|--------|
-| 0 | Adafruit SCD30 | Adafruit SCD30 (1.0.11) | CO2 (ppm), temperature (°C), humidity (%) | Connected |
+| 0 | Adafruit SCD41 | Adafruit SCD41 (1.0.11) | CO2 (ppm), temperature (°C), humidity (%) | Connected |
 | 1 | Adafruit SHT45 ×2 | Adafruit SHT4x Library (1.0.5) | Temperature (°C), humidity (%) — primary reference | Connected |
 | 2 | Adafruit SGP41 | Adafruit SGP41 (1.0.1) | VOC raw, NOx raw | Ordered |
 | 3 | Adafruit BME688 | — | Temperature, humidity, pressure, VOC | Ordered |
@@ -200,9 +200,9 @@ Ch 5–6  Light / color           14-channel spectral, RGB+proximity+lux
 Ch 7    Orientation             9-DoF IMU
 ```
 
-### 4.4 SCD30 Calibration
+### 4.4 SCD41 Calibration
 
-The SCD30 self-heats, causing elevated temperature readings. On first startup, the SHT45 is used to calculate a temperature offset that is applied to the SCD30 and stored in its non-volatile memory. A flag file (`~/.scd30-calibrated`) prevents recalibration on subsequent starts.
+The SCD41 self-heats, causing elevated temperature readings. On first startup, the SHT45 is used to calculate a temperature offset that is applied to the SCD41 and stored in its non-volatile memory. A flag file (`~/.scd41-calibrated`) prevents recalibration on subsequent starts.
 
 When the BME688 arrives, calibration will fuse SHT45 + BME688 for a more accurate reference.
 
@@ -214,7 +214,7 @@ When the BME688 arrives, calibration will fuse SHT45 + BME688 for a more accurat
 
 Direct QWIIC — no mux. Used for active development and testing.
 
-**Sensors:** SCD30, SHT45, BNO055, AS7343 (pending), APDS9999 (pending), SGP41 (pending)
+**Sensors:** SCD41, SHT45, BNO055, AS7343 (pending), APDS9999 (pending), SGP41 (pending)
 
 **Display:** 3 scrolling LED matrix messages:
 1. Temperature (°F/°C), humidity (%), CO2 (ppm)
@@ -249,7 +249,7 @@ See the [HybX Development System known issues](https://github.com/hybotix/HybX-D
 ### Near Term
 - Receive and connect: SGP41, BME688, ENS161, AS7343, APDS9999
 - Activate sensors one by one as they arrive
-- Update SCD30 calibration to fuse SHT45 + BME688
+- Update SCD41 calibration to fuse SHT45 + BME688
 - Resolve Docker mDNS issue for securesmars MQTT app
 - Complete mux1 distance sensor hardware (VL53L5CX RMA + 4× VL53L1X)
 

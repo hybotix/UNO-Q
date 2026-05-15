@@ -34,7 +34,7 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
-#include <Adafruit_SCD4x.h>
+#include <SensirionI2cScd4x.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 #include <Adafruit_AS7343.h>
@@ -58,7 +58,7 @@ MuxChannel mux_channels[MUX_NUM_CHANNELS] = {
 };
 
 Arduino_LED_Matrix matrix;
-Adafruit_SCD4x     scd41;
+SensirionI2cScd4x scd41;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 Adafruit_AS7343    as7343;
@@ -99,15 +99,25 @@ void scroll_tick() {
 }
 
 String get_scd41_data() {
-    uint16_t co2;
-    float    temperature;
-    float    humidity;
+    uint16_t co2         = 0;
+    float    temperature = 0.0;
+    float    humidity    = 0.0;
+    bool     data_ready  = false;
+    uint16_t error;
 
-    if (scd41.readMeasurement(co2, temperature, humidity)) {
-        return String(co2) + "," + String(temperature) + "," + String(humidity);
+    error = scd41.getDataReadyStatus(data_ready);
+
+    if (error || !data_ready) {
+        return "0,0,0";
     }
 
-    return "0,0,0";
+    error = scd41.readMeasurement(co2, temperature, humidity);
+
+    if (error || co2 == 0) {
+        return "0,0,0";
+    }
+
+    return String(co2) + "," + String(temperature) + "," + String(humidity);
 }
 
 String get_sht45_data() {
@@ -254,7 +264,7 @@ void setup() {
 
     Wire1.begin();
 
-    scd41.begin(&Wire1);
+    scd41.begin(Wire1, SCD41_I2C_ADDR_62);
     scd41.startPeriodicMeasurement();
 
     bno.begin();

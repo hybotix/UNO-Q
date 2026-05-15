@@ -10,7 +10,7 @@
  * Arduino_LED_Matrix will be replaced by HUB75nano when display layer is implemented.
  *
  * Sensors (direct QWIIC — no mux):
- *   - SCD30:    CO2 (ppm), temperature (C), humidity (%)
+ *   - SCD41:    CO2 (ppm), temperature (C), humidity (%)
  *   - SHT45:    Temperature (C), humidity (%) — primary temp/humidity source
  *   - BNO055:   9-DoF orientation — heading, pitch, roll + full IMU data
  *   - AS7343:   14-channel spectral/color sensor
@@ -25,7 +25,7 @@
  *   Ch 4: VL53L1X — long range right distance
  *
  * Bridge functions exposed to Python:
- *   get_scd30_data()            - Read SCD30: returns "co2,temp_c,humidity"
+ *   get_scd41_data()            - Read SCD41: returns "co2,temp_c,humidity"
  *   get_sht45_data()            - Read SHT45: returns "temp_c,humidity"
  *   get_bno055_data()           - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()           - Read AS7343: returns 14 spectral channel counts CSV
@@ -35,7 +35,6 @@
  *   get_mux_channels()          - List all channels: returns "ch:name:active,..."
  *   get_mux_channel_data(ch)    - Read one mux channel: returns value or "inactive"/"invalid"
  *   set_mux_channel(ch,active)  - Enable/disable a mux channel: params "ch,true|false"
- *   calibrate_scd30()           - Calibrate SCD30 temp offset using SHT45
  *   set_matrix_msg(msg)         - Set display message
  */
 
@@ -53,7 +52,7 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
-#include <Adafruit_SCD30.h>
+#include <SensirionI2cScd4x.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 #include <Adafruit_AS7343.h>
@@ -77,7 +76,7 @@ MuxChannel mux_channels[MUX_NUM_CHANNELS] = {
 };
 
 Arduino_LED_Matrix matrix;
-Adafruit_SCD30     scd30;
+SensirionI2cScd4x scd41;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 Adafruit_AS7343    as7343;
@@ -117,13 +116,26 @@ void scroll_tick() {
     }
 }
 
-String get_scd30_data() {
-    if (scd30.dataReady()) {
-        scd30.read();
-        return String(scd30.CO2) + "," + String(scd30.temperature) + "," + String(scd30.relative_humidity);
+String get_scd41_data() {
+    uint16_t co2         = 0;
+    float    temperature = 0.0;
+    float    humidity    = 0.0;
+    bool     data_ready  = false;
+    uint16_t error;
+
+    error = scd41.getDataReadyStatus(data_ready);
+
+    if (error || !data_ready) {
+        return "0,0,0";
     }
 
-    return "0,0,0";
+    error = scd41.readMeasurement(co2, temperature, humidity);
+
+    if (error || co2 == 0) {
+        return "0,0,0";
+    }
+
+    return String(co2) + "," + String(temperature) + "," + String(humidity);
 }
 
 String get_sht45_data() {
@@ -231,42 +243,6 @@ void set_matrix_msg(String msg) {
     }
 }
 
-String calibrate_scd30() {
-    float scd30_temp_sum = 0;
-    float sht45_temp_sum = 0;
-    int   samples        = 0;
-    float scd30_avg;
-    float sht45_avg;
-    float offset;
-
-    while (samples < 5) {
-        while (!scd30.dataReady()) {
-            delay(100);
-        }
-
-        scd30.read();
-
-        sensors_event_t humidity_event, temp_event;
-        sht45.getEvent(&humidity_event, &temp_event);
-
-        scd30_temp_sum += scd30.temperature;
-        sht45_temp_sum += temp_event.temperature;
-        samples++;
-        delay(500);
-    }
-
-    scd30_avg = scd30_temp_sum / samples;
-    sht45_avg = sht45_temp_sum / samples;
-    offset    = scd30_avg - sht45_avg;
-
-    if (offset > 0.5 && offset < 20.0) {
-        scd30.setTemperatureOffset(offset);
-        return "offset:" + String(offset, 2);
-    }
-
-    return "skipped";
-}
-
 String get_as7343_data() {
     uint16_t readings[14];
     String   result = "";
@@ -305,9 +281,8 @@ void setup() {
     matrix.clear();
     Bridge.begin();
 
-    while (!scd30.begin(0x61, &Wire1)) {
-        delay(100);
-    }
+    scd41.begin(Wire1, SCD41_I2C_ADDR_62);
+    scd41.startPeriodicMeasurement();
 
     while (!bno.begin()) {
         delay(100);
@@ -316,7 +291,7 @@ void setup() {
     bno.setExtCrystalUse(true);
     sht45.begin(&Wire1);
 
-    Bridge.provide("get_scd30_data",         get_scd30_data);
+    Bridge.provide("get_scd41_data",         get_scd41_data);
     Bridge.provide("get_sht45_data",         get_sht45_data);
     Bridge.provide("get_bno055_data",        get_bno055_data);
     Bridge.provide("get_as7343_data",        get_as7343_data);
@@ -326,7 +301,6 @@ void setup() {
     Bridge.provide("get_mux_channels",       get_mux_channels);
     Bridge.provide("get_mux_channel_data",   get_mux_channel_data);
     Bridge.provide("set_mux_channel",        set_mux_channel);
-    Bridge.provide("calibrate_scd30",        calibrate_scd30);
     Bridge.provide("set_matrix_msg",         set_matrix_msg);
     update_scroll_metrics();
 }

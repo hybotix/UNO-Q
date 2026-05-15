@@ -35,7 +35,6 @@ def compass_point(heading):
     pass
 
 SCROLLING_ENABLED = True
-CALIBRATION_FILE  = "~/.scd30-calibrated"
 ```
 
 ```cpp
@@ -267,7 +266,7 @@ def fmt(value, decimals=1):
 ```python
 # CORRECT
 def loop():
-    result = Bridge.call("get_scd30_data")
+    result = Bridge.call("get_scd41_data")
 
     if result:
         co2, temp, humidity = result.split(",")
@@ -280,7 +279,7 @@ App.run(user_loop=loop)
 # WRONG
 def loop():
 
-    result = Bridge.call("get_scd30_data")
+    result = Bridge.call("get_scd41_data")
     if result:
 
         co2, temp, humidity = result.split(",")

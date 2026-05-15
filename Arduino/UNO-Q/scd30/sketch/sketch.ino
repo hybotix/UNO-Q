@@ -1,25 +1,37 @@
 #include <Arduino_RouterBridge.h>
-#include <Adafruit_SCD30.h>
+#include <SensirionI2cScd4x.h>
 
-Adafruit_SCD30 scd30;
+Adafruit_SCD41 scd41;
 
-String get_scd30_data() {
-    if (scd30.dataReady()) {
-        scd30.read();
-        return String(scd30.CO2) + "," + String(scd30.temperature) + "," + String(scd30.relative_humidity);
+String get_scd41_data() {
+    uint16_t co2         = 0;
+    float    temperature = 0.0;
+    float    humidity    = 0.0;
+    bool     data_ready  = false;
+    uint16_t error;
+
+    error = scd41.getDataReadyStatus(data_ready);
+
+    if (error || !data_ready) {
+        return "0,0,0";
     }
 
-    return "0,0,0";
+    error = scd41.readMeasurement(co2, temperature, humidity);
+
+    if (error || co2 == 0) {
+        return "0,0,0";
+    }
+
+    return String(co2) + "," + String(temperature) + "," + String(humidity);
 }
 
 void setup() {
     Bridge.begin();
 
-    while (!scd30.begin(0x61, &Wire1)) {
-        delay(100);
-    }
+    scd41.begin(Wire1, SCD41_I2C_ADDR_62);
+    scd41.startPeriodicMeasurement();
 
-    Bridge.provide("get_scd30_data", get_scd30_data);
+    Bridge.provide("get_scd41_data", get_scd41_data);
 }
 
 void loop() {

@@ -6,7 +6,7 @@
  * Python reads sensor data, formats message, sends to matrix.
  *
  * Bridge functions:
- *   get_scd30_data()       - SCD30 CSV data (MCU -> Python)
+ *   get_scd41_data()       - SCD41 CSV data (MCU -> Python)
  *   set_matrix_msg(String) - Display string (Python -> MCU)
  */
 
@@ -16,12 +16,12 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
-#include <Adafruit_SCD30.h>
+#include <SensirionI2cScd4x.h>
 #include <Wire.h>
 #include <zephyr/kernel.h>
 
 Arduino_LED_Matrix matrix;
-Adafruit_SCD30     scd30;
+SensirionI2cScd4x scd41;
 
 static char          matrix_msg[64]  = " ... ";
 static int           scroll_x        = 12;
@@ -54,13 +54,26 @@ void scroll_tick() {
     }
 }
 
-String get_scd30_data() {
-    if (scd30.dataReady()) {
-        scd30.read();
-        return String(scd30.CO2) + "," + String(scd30.temperature) + "," + String(scd30.relative_humidity);
+String get_scd41_data() {
+    uint16_t co2         = 0;
+    float    temperature = 0.0;
+    float    humidity    = 0.0;
+    bool     data_ready  = false;
+    uint16_t error;
+
+    error = scd41.getDataReadyStatus(data_ready);
+
+    if (error || !data_ready) {
+        return "0,0,0";
     }
 
-    return "0,0,0";
+    error = scd41.readMeasurement(co2, temperature, humidity);
+
+    if (error || co2 == 0) {
+        return "0,0,0";
+    }
+
+    return String(co2) + "," + String(temperature) + "," + String(humidity);
 }
 
 void set_matrix_msg(String msg) {
@@ -75,11 +88,10 @@ void setup() {
     matrix.clear();
     Bridge.begin();
 
-    while (!scd30.begin(0x61, &Wire1)) {
-        delay(100);
-    }
+    scd41.begin(Wire1, SCD41_I2C_ADDR_62);
+    scd41.startPeriodicMeasurement();
 
-    Bridge.provide("get_scd30_data", get_scd30_data);
+    Bridge.provide("get_scd41_data", get_scd41_data);
     Bridge.provide("set_matrix_msg", set_matrix_msg);
     update_scroll_metrics();
 }

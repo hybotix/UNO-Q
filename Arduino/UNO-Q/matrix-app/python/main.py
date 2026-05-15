@@ -18,7 +18,7 @@ def loop():
         time.sleep(5)
         started = True
 
-    scd_data = Bridge.call("get_scd30_data")
+    scd_data = Bridge.call("get_scd41_data")
 
     if scd_data and scd_data != "0,0,0":
         co2, temp_c, humidity = scd_data.split(",")
@@ -35,7 +35,7 @@ def loop():
         # Wait exactly long enough for the full message to scroll once
         time.sleep(scroll_duration(msg))
     else:
-        print("SCD30: no data")
+        print("SCD41: no data")
         time.sleep(5)
 
 App.run(user_loop=loop)

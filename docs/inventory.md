@@ -24,7 +24,7 @@ Last updated: March 31, 2026
 
 | Sensor | Qty | Notes |
 |--------|-----|-------|
-| Adafruit SCD30 (CO2/temp/humidity) | 1 | Working — scd30-app example in this repo |
+| Sensirion SCD41 (CO2/temp/humidity) | 1 | Working — scd41-app example in this repo |
 | Adafruit BNO055 (9-DoF absolute orientation) | 1 | Planned for SecureSMARS |
 | Adafruit LSM6DSOX (6-DoF IMU accel/gyro) | 2 | Working — imu-app example in this repo |
 | Adafruit SHT45 (high accuracy temp/humidity) | 2 | QWIIC compatible |

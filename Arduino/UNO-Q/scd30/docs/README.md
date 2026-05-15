@@ -1,4 +1,4 @@
-# scd30
+# scd41
 Hybrid RobotiX — San Diego, CA
 
 ## Hardware
