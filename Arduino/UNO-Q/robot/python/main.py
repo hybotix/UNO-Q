@@ -330,13 +330,13 @@ def handle_forward():
 
     data = get_sensor_data()
 
-    if data is None:
+    if data:
+        dist, stat, signal, sigma = data
+    else:
         # Sensor not ready or read failed — stop motors until data returns
         drive("stop")
         time.sleep(0.05)
         return
-
-    dist, stat, signal, sigma = data
 
     if is_path_clear(dist, stat):
         # Path is clear — keep driving forward
@@ -425,10 +425,7 @@ def handle_scanning():
     # Check sensor at this heading for a clear path
     data = get_sensor_data()
 
-    if data is None:
-        # Sensor read failed at this heading — log and continue scanning
-        print(f"WARNING: sensor read failed at {scan_degrees:.1f} degrees — skipping this heading.")
-    else:
+    if data:
         dist, stat, signal, sigma = data
 
         if is_path_clear(dist, stat):
@@ -437,6 +434,9 @@ def handle_scanning():
             print(f"Clear path found at heading {clear_heading:.1f} degrees")
             state = STATE_RECOVERING
             return
+    else:
+        # Sensor read failed at this heading — log and continue scanning
+        print(f"WARNING: sensor read failed at {scan_degrees:.1f} degrees — skipping this heading.")
 
     # Full 360 degrees scanned with no clear heading found
     if scan_degrees >= 355.0:

@@ -101,32 +101,30 @@ def scroll_as7343(spectral):
     - NIR:     near-infrared channels
     Call this from loop() when AS7343 is connected.
     """
-    if spectral is None:
-        return
+    if spectral:
+        # Message 3a — visible spectrum highlights
+        blue  = spectral["F3_450nm"]
+        green = spectral["F5_515nm"]
+        red   = spectral["F8_630nm"]
+        clear = spectral["CLEAR"]
+        print(f"Visible: B={blue} G={green} R={red} Clear={clear}")
+        msg3a = f" B:{blue} G:{green} R:{red} Clr:{clear} "
 
-    # Message 3a — visible spectrum highlights
-    blue  = spectral["F3_450nm"]
-    green = spectral["F5_515nm"]
-    red   = spectral["F8_630nm"]
-    clear = spectral["CLEAR"]
-    print(f"Visible: B={blue} G={green} R={red} Clear={clear}")
-    msg3a = f" B:{blue} G:{green} R:{red} Clr:{clear} "
+        if SCROLLING_ENABLED:
+            Bridge.call("set_matrix_msg", msg3a)
+            time.sleep(scroll_duration(msg3a))
 
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", msg3a)
-        time.sleep(scroll_duration(msg3a))
+        # Message 3b — NIR channels
+        nir910  = spectral["F10_910nm"]
+        nir940  = spectral["F11_940nm"]
+        nir1000 = spectral["F12_1000nm"]
+        nir     = spectral["NIR"]
+        print(f"NIR: 910={nir910} 940={nir940} 1000={nir1000} NIR={nir}")
+        msg3b = f" 910:{nir910} 940:{nir940} NIR:{nir} "
 
-    # Message 3b — NIR channels
-    nir910  = spectral["F10_910nm"]
-    nir940  = spectral["F11_940nm"]
-    nir1000 = spectral["F12_1000nm"]
-    nir     = spectral["NIR"]
-    print(f"NIR: 910={nir910} 940={nir940} 1000={nir1000} NIR={nir}")
-    msg3b = f" 910:{nir910} 940:{nir940} NIR:{nir} "
-
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", msg3b)
-        time.sleep(scroll_duration(msg3b))
+        if SCROLLING_ENABLED:
+            Bridge.call("set_matrix_msg", msg3b)
+            time.sleep(scroll_duration(msg3b))
 
 def parse_apds9999(data):
     """

@@ -37,9 +37,7 @@ def tilt_description(x, y, z):
 def loop():
     global started
 
-    if started:
-        pass
-    else:
+    if not started:
         time.sleep(5)
         started = True
 

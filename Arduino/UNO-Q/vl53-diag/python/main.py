@@ -6,9 +6,7 @@ started = False
 def loop():
     global started
     try:
-        if started:
-            pass
-        else:
+        if not started:
             print("Triggering firmware upload...")
             # begin_sensor() blocks the Bridge during upload — use long timeout
             result = Bridge.call("begin_sensor", timeout=120)
