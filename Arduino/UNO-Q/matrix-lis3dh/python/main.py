@@ -80,7 +80,7 @@ def loop():
             time.sleep(scroll_duration(msg))
 
     # Message 1 — acceleration data
-    if x is not None:
+    if x:
         print(f"X:{x:.4f} Y:{y:.4f} Z:{z:.4f} m/s²")
         msg1 = f" X:{x:.4f} Y:{y:.4f} Z:{z:.4f} "
 
@@ -89,7 +89,7 @@ def loop():
             time.sleep(scroll_duration(msg1))
 
     # Message 2 — tilt description
-    if x is not None:
+    if x:
         tilt = tilt_description(x, y, z)
         print(f"Tilt: {tilt}")
         msg2 = f" {tilt} "

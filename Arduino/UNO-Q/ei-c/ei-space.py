@@ -56,7 +56,7 @@ def estimate(n_frames: int):
     print(f"  Output directory : {OUTPUT_DIR}")
     print()
 
-    if free is not None:
+    if free:
         print(f"  Disk free        : {format_size(free)}")
         print(f"  Disk used        : {used_pct:.1f}%")
         print()

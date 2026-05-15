@@ -256,14 +256,14 @@ def loop():
 
     # Message 1 — environmental data
     # Use *** for any unavailable readings — always display something
-    if temp_c is not None:
+    if temp_c:
         temp_f     = (temp_c * 9.0 / 5.0) + 32.0
         temp_str   = f"{fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C)"
     else:
         temp_str   = "***\u00b0F(***\u00b0C)"
 
-    humidity_str = f"{fmt(humidity)}%" if humidity is not None else "***%"
-    co2_str      = f"{co2:.0f} ppm"   if co2      is not None else "*** ppm"
+    humidity_str = f"{fmt(humidity)}%" if humidity else "***%"
+    co2_str      = f"{co2:.0f} ppm"   if co2      else "*** ppm"
 
     print(f"{temp_str}  {humidity_str}  {co2_str}")
     msg1 = f" {temp_str} {humidity_str} {co2_str} "
@@ -274,7 +274,7 @@ def loop():
 
     # Message 2 — orientation data
     # Use *** for any unavailable readings
-    if heading is not None:
+    if heading:
         cp          = compass_point(heading)
         heading_str = f"H{fmt(heading)}\u00b0 {cp}"
         pitch_str   = f"P{fmt(pitch)}\u00b0"

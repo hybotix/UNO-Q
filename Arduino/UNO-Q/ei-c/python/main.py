@@ -109,7 +109,7 @@ def loop():
     if initialized:
         pass
     else:
-        if csv_file is None:
+        if not csv_file:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
                 print(f"Frames: {frame_target}")
