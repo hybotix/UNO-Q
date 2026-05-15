@@ -39,7 +39,6 @@ def loop():
     if not started:
         time.sleep(5)
         started = True
-
     accel_data = Bridge.call("get_lis3dh_data")
     click_data = Bridge.call("get_lis3dh_click")
     freefall   = Bridge.call("get_lis3dh_freefall")
@@ -62,7 +61,6 @@ def loop():
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
-
         return
 
     # Tap detection
@@ -73,7 +71,6 @@ def loop():
         else:
             print("Single tap!")
             msg = " Tap! "
-
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))

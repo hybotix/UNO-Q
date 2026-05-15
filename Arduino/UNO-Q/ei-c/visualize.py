@@ -9,27 +9,22 @@ perspective (columns flipped for display only — raw data never touched).
 
   - Empty label   → prompt for label
   - Existing label → show it, ask to keep (Enter) or type a new one
-
 Writes a NEW output file every run — input file is NEVER modified.
 Output: <input_basename>_labeled_<TIMESTAMP>.csv
 
 Usage:
     python3 visualize.py <csv_file>
-
 Controls:
     Type label + Enter    — apply label and advance to next frame
     Enter (no input)      — keep existing label and advance
     S + Enter             — skip this frame (written as-is to output)
     Q + Enter             — quit and save all progress to output file
-
 Valid labels (max 10 characters):
     UP, DOWN, LEFT, RIGHT, CENTER
     (or any custom label up to 10 characters)
-
 Display:
     Columns are flipped (np.fliplr) so you see the sensor's forward view.
     Raw distance data written to output is NEVER modified.
-
 Dependencies:
     pip3 install matplotlib numpy pandas
 """
@@ -52,7 +47,6 @@ VMAX          = 4000   # mm
 if len(sys.argv) < 2:
     print("Usage: python3 visualize.py <csv_file>")
     sys.exit(1)
-
 input_path = sys.argv[1]
 
 if not os.path.exists(input_path):
@@ -77,10 +71,8 @@ missing   = [c for c in dist_cols if c not in df.columns]
 if missing:
     print(f"ERROR: Missing columns: {missing[:5]}...")
     sys.exit(1)
-
 if "label" not in df.columns:
     df["label"] = ""
-
 n_frames      = len(df)
 already_labeled = df["label"].apply(lambda x: str(x).strip() not in ("", "nan")).sum()
 
@@ -109,7 +101,6 @@ changed_count = 0
 skipped_count = 0
 written_count = 0
 
-
 def draw_frame(idx, current_label):
     """
     Display frame with columns flipped (Y axis) for sensor forward view.
@@ -125,7 +116,6 @@ def draw_frame(idx, current_label):
 
     ax.imshow(frame_display, cmap="RdYlGn_r", vmin=VMIN, vmax=VMAX,
               interpolation="nearest")
-
     ax.set_title(
         f"Frame {idx + 1} / {n_frames}    {label_str}\n"
         f"Labeled: {labeled_count}  Changed: {changed_count}  "
@@ -146,10 +136,8 @@ def draw_frame(idx, current_label):
             color = "white" if val > VMAX * 0.6 else "black"
             ax.text(c, r, str(val), ha="center", va="center",
                     fontsize=8, color=color)
-
     fig.canvas.draw()
     fig.canvas.flush_events()
-
 
 def write_row(idx, label):
     """Write raw distance data + label to output CSV. Raw data never modified."""
@@ -158,7 +146,6 @@ def write_row(idx, label):
     out_writer.writerow(raw_vals + [label])
     out_file.flush()
     written_count += 1
-
 
 def finish(reason="complete"):
     out_file.close()
@@ -171,14 +158,12 @@ def finish(reason="complete"):
     print(f"  Skipped:        {skipped_count}")
     print(f"  Output file:    {output_path}")
 
-
 # ── Main labeling loop ─────────────────────────────────────────────────────────
 for idx in range(n_frames):
     current_label = str(df.at[idx, "label"]).strip()
     has_label     = current_label not in ("", "nan")
     if not has_label:
         current_label = ""
-
     draw_frame(idx, current_label)
 
     if has_label:
@@ -187,7 +172,6 @@ for idx in range(n_frames):
     else:
         prompt = (f"Frame {idx + 1}/{n_frames} "
                   f"[unlabeled] — Label, S=skip, Q=quit: ")
-
     while True:
         try:
             response = input(prompt).strip().upper()
@@ -195,18 +179,15 @@ for idx in range(n_frames):
             print("\nInterrupted — saving progress.")
             finish("interrupted")
             sys.exit(0)
-
         if response == "Q":
             finish("saved")
             sys.exit(0)
-
         elif response == "S":
             # Write row as-is with its existing label (may be empty)
             write_row(idx, current_label)
             skipped_count += 1
             print(f"  Skipped frame {idx + 1} — written as-is.")
             break
-
         elif response == "":
             if has_label:
                 write_row(idx, current_label)
@@ -214,10 +195,8 @@ for idx in range(n_frames):
                 break
             else:
                 print("  No existing label — enter a label, S to skip, Q to quit.")
-
         elif len(response) > MAX_LABEL_LEN:
             print(f"  Label too long ({len(response)} chars, max {MAX_LABEL_LEN}). Try again.")
-
         else:
             # Apply new label — raw distance data is NEVER modified
             write_row(idx, response)

@@ -25,14 +25,11 @@ initialized  = False
 test_index   = 0
 results      = []
 
-
 def parse_matrix(data: str) -> list[list]:
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
 
-
 def parse_status(data: str) -> list[list]:
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
-
 
 def collect_frames(n: int) -> list[list[list]]:
     """Collect n distance frames, skipping invalid reads."""
@@ -53,7 +50,6 @@ def collect_frames(n: int) -> list[list[list]]:
             time.sleep(0.2)
     return frames
 
-
 def validate_distance(target_mm: int, frames: list) -> dict:
     """
     Evaluate all valid zones across all frames against target distance.
@@ -69,7 +65,6 @@ def validate_distance(target_mm: int, frames: list) -> dict:
                     if key not in zone_values:
                         zone_values[key] = []
                     zone_values[key].append(d_matrix[row][col])
-
     zone_results = {}
     passing_zones = 0
     total_zones   = 0
@@ -91,7 +86,6 @@ def validate_distance(target_mm: int, frames: list) -> dict:
         total_zones += 1
         if passed:
             passing_zones += 1
-
     overall_pass = total_zones > 0 and passing_zones == total_zones
 
     return {
@@ -101,7 +95,6 @@ def validate_distance(target_mm: int, frames: list) -> dict:
         "overall_pass":  overall_pass,
         "zones":         zone_results,
     }
-
 
 def print_result(result: dict):
     target = result["target_mm"]
@@ -136,7 +129,6 @@ def print_result(result: dict):
         print(f"  Max error:    {max(all_errors, key=abs):+.1f}mm")
         if len(all_errors) > 1:
             print(f"  Stddev:       {statistics.stdev(all_errors):.1f}mm")
-
 
 def loop():
     global initialized, test_index, results
@@ -174,7 +166,6 @@ def loop():
         print(f"  Overall: {'PASS ✓' if all_passed else 'FAIL ✗'}")
         print(f"{'='*56}\n")
         raise SystemExit(0)
-
     target = TEST_DISTANCES_MM[test_index]
 
     # Prompt user
@@ -191,6 +182,5 @@ def loop():
 
     test_index += 1
     time.sleep(0.5)
-
 
 App.run(user_loop=loop)

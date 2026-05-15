@@ -10,23 +10,18 @@ Usage:
     start ei-c 200      -- collect 200 frames
     start ei-c 1000     -- collect 1000 frames
     mon
-
 Use ei-space.py to estimate disk space before collecting:
     python3 ~/Arduino/UNO-Q/ei-c/ei-space.py 500
-
 Output:
     ~/data/ei-c/ei-c_<TIMESTAMP>.csv
-
 CSV format:
     d00,d01,...,d77,label
     <distance values>,
     ...
-
 Notes:
     - The label column is always empty — labeling happens on the Mac
     - Raw distance data is never modified
     - Progress is printed every 50 frames
-
 Orientation (raw data — never modified):
     Row 0 = top of FOV,    Row 7 = bottom of FOV
     Col 0 = robot left,    Col 7 = robot right
@@ -73,10 +68,8 @@ csv_writer  = None
 frame_count = 0
 done        = False
 
-
 def parse_int_matrix(data: str) -> list:
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
-
 
 def format_error(status: str) -> str:
     parts = status.split(":")
@@ -84,7 +77,6 @@ def format_error(status: str) -> str:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
     return status
-
 
 def open_csv() -> tuple:
     """Create output directory and open CSV file for writing."""
@@ -98,7 +90,6 @@ def open_csv() -> tuple:
     f.flush()
     return path, f, writer
 
-
 def loop():
     global initialized, csv_path, csv_file, csv_writer, frame_count, done
 
@@ -108,7 +99,6 @@ def loop():
 
     # ── One-time setup ─────────────────────────────────────────────────────────
     if not initialized:
-
         if csv_file is None:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
@@ -119,7 +109,6 @@ def loop():
                 print(f"ERROR: Could not open output file: {e}")
                 time.sleep(5.0)
                 return
-
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
@@ -149,14 +138,11 @@ def loop():
     except Exception as e:
         print(f"ERROR: sensor read failed: {e}")
         return
-
     if not dist_raw or dist_raw == "0":
         return
-
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return
-
     try:
         dist = parse_int_matrix(dist_raw)
     except Exception as e:
@@ -174,7 +160,6 @@ def loop():
             remaining = frame_target - frame_count
             print(f"  {frame_count}/{frame_target} frames collected "
                   f"({remaining} remaining)")
-
     except Exception as e:
         print(f"ERROR: could not write frame: {e}")
         return
@@ -189,6 +174,5 @@ def loop():
         print()
         print(f"Copy to Mac with:")
         print(f"  scp arduino@uno-q.local:{csv_path} ./")
-
 
 App.run(user_loop=loop)

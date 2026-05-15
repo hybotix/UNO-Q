@@ -11,7 +11,6 @@ Usage:
     python3 ei-space.py [frames]
 
     frames — number of frames to estimate (optional, prompts if not given)
-
 Examples:
     python3 ei-space.py
     python3 ei-space.py 500
@@ -27,7 +26,6 @@ BYTES_PER_FRAME = 332    # 64 values x ~5 chars + comma + 10 char label + newlin
 BYTES_HEADER    = 215    # header row
 OUTPUT_DIR      = os.path.expanduser("~/data/ei-c")
 
-
 def format_size(n_bytes: int) -> str:
     if n_bytes < 1024:
         return f"{n_bytes} bytes"
@@ -35,7 +33,6 @@ def format_size(n_bytes: int) -> str:
         return f"{n_bytes / 1024:.1f} KB"
     else:
         return f"{n_bytes / (1024 * 1024):.2f} MB"
-
 
 def estimate(n_frames: int):
     estimated = BYTES_HEADER + (n_frames * BYTES_PER_FRAME)
@@ -50,7 +47,6 @@ def estimate(n_frames: int):
     except Exception:
         free     = None
         fits     = None
-
     print()
     print(f"  Frames requested : {n_frames:,}")
     print(f"  Estimated size   : {format_size(estimated)}")
@@ -87,7 +83,6 @@ def estimate(n_frames: int):
                 print(f"    ... and {len(files) - 5} more")
             print()
 
-
 # ── Main ───────────────────────────────────────────────────────────────────────
 print("=== ei-space — Edge Impulse Disk Space Calculator ===")
 
@@ -117,7 +112,6 @@ else:
         except (EOFError, KeyboardInterrupt):
             print()
             sys.exit(0)
-
         if response == "":
             n = 500
         else:

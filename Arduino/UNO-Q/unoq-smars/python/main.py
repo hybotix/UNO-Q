@@ -31,14 +31,11 @@ ERROR_STEPS = {
 
 initialized = False
 
-
 def parse_int_matrix(data: str) -> list:
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
 
-
 def parse_bool_matrix(data: str) -> list:
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
-
 
 def confidence(status: bool, signal: int, sigma: int) -> float:
     if not status:
@@ -48,13 +45,11 @@ def confidence(status: bool, signal: int, sigma: int) -> float:
     sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
     return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
 
-
 def print_distance(dist):
     print("── Distance (mm) ──")
     for row in dist:
         print("  " + "  ".join(f"{v:5d}" for v in row))
     print()
-
 
 def print_confidence(dist, stat, signal, sigma):
     print("── Confidence (%) ──")
@@ -67,14 +62,12 @@ def print_confidence(dist, stat, signal, sigma):
         print("  " + "  ".join(vals))
     print()
 
-
 def format_error(status: str) -> str:
     parts = status.split(":")
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
     return status
-
 
 def loop():
     global initialized
@@ -98,7 +91,6 @@ def loop():
             print("ERROR: " + str(e))
             time.sleep(2.0)
         return
-
     time.sleep(0.1)
 
     try:
@@ -109,13 +101,11 @@ def loop():
     except Exception as e:
         print(f"ERROR: {e}")
         return
-
     if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
         return
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return
-
     try:
         dist   = parse_int_matrix(dist_raw)
         stat   = parse_bool_matrix(stat_raw)
@@ -125,6 +115,5 @@ def loop():
         print_confidence(dist, stat, signal, sigma)
     except Exception as e:
         print(f"ERROR parsing: {e}")
-
 
 App.run(user_loop=loop)

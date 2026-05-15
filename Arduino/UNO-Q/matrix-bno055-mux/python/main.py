@@ -23,7 +23,6 @@ def scroll_duration(msg):
     """Calculate how long the message takes to scroll once in seconds."""
     return len(msg) * PIXELS_PER_CHAR * MS_PER_PIXEL / 1000
 
-
 def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
     if round(value, decimals) == int(value):
@@ -39,14 +38,12 @@ def calibrate():
     if os.path.exists(CALIBRATION_FILE):
         print("SCD30: calibration file found — skipping calibration")
         return
-
     print("SCD30: calibrating temperature offset using SHT45 reference...")
     cal_msg = " Calibrating SCD-30... "
 
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", cal_msg)
         time.sleep(scroll_duration(cal_msg))
-
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
@@ -69,12 +66,10 @@ def parse_as7343(data):
     """
     if not data or data == "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
         return None
-
     values = [int(v) for v in data.split(",")]
 
     if len(values) != 14:
         return None
-
     return {
         "F1_405nm":   values[0],
         "F2_425nm":   values[1],
@@ -134,12 +129,10 @@ def parse_apds9999(data):
     """
     if not data or data == "0,0,0,0,0,0":
         return None
-
     values = data.split(",")
 
     if len(values) != 6:
         return None
-
     return {
         "proximity": int(values[0]),
         "lux":       float(values[1]),
@@ -156,7 +149,6 @@ def scroll_apds9999(apds):
     """
     if apds is None:
         return
-
     proximity = apds["proximity"]
     lux       = apds["lux"]
     r         = apds["r"]
@@ -179,12 +171,10 @@ def parse_sgp41(data):
     """
     if not data or data == "0,0":
         return None
-
     values = data.split(",")
 
     if len(values) != 2:
         return None
-
     return {
         "voc_raw": int(values[0]),
         "nox_raw": int(values[1]),
@@ -197,7 +187,6 @@ def scroll_sgp41(sgp):
     """
     if sgp is None:
         return
-
     voc = sgp["voc_raw"]
     nox = sgp["nox_raw"]
     print(f"VOC:{voc} NOx:{nox}")
@@ -219,11 +208,8 @@ def loop():
 
             if scd_check and scd_check != "0,0,0":
                 break
-
             time.sleep(1)
-
         started = True
-
     scd_data  = Bridge.call("get_scd30_data")
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno055_data")
@@ -243,12 +229,10 @@ def loop():
 
     if scd_data and scd_data != "0,0,0":
         co2 = round(float(scd_data.split(",")[0]))
-
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
         temp_c   = float(parts[0])
         humidity = float(parts[1])
-
     if bno_data:
         values  = bno_data.split(",")
         heading = float(values[0])

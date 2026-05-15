@@ -11,7 +11,6 @@ Procedure:
   4. Validates center 2x2 zones against expected distance ± TOLERANCE_PCT%
   5. Reports pass/fail with statistics
   6. Repeat for additional distances or quit
-
 Usage: Place a flat target (e.g. book, board) perpendicular to the
 sensor at the prompted distance. Hold steady during sampling.
 """
@@ -31,7 +30,6 @@ def confidence(status: bool, signal: int, sigma: int) -> float:
     sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
     return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
 
-
 # ── Config ────────────────────────────────────────────────────────────────────
 SAMPLE_COUNT  = 20       # frames to collect per validation
 TOLERANCE_PCT = 10.0     # acceptable error ±%
@@ -46,14 +44,11 @@ samples      = []
 expected_mm  = None
 results      = []
 
-
 def parse_matrix(data: str) -> list:
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
 
-
 def parse_status(data: str) -> list:
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
-
 
 def center_values(dist: list, stat: list) -> list:
     """Return valid center zone distances."""
@@ -62,7 +57,6 @@ def center_values(dist: list, stat: list) -> list:
         if stat[r][c]:
             vals.append(dist[r][c])
     return vals
-
 
 def validate(expected: int, vals: list) -> dict:
     if not vals:
@@ -84,7 +78,6 @@ def validate(expected: int, vals: list) -> dict:
         "n":        len(vals),
     }
 
-
 def print_result(r: dict):
     status = "PASS ✓" if r["pass"] else "FAIL ✗"
     print(f"\n  {status}")
@@ -95,7 +88,6 @@ def print_result(r: dict):
     print(f"  Error:     {r['error_mm']:.1f} mm ({r['error_pct']:.1f}%)")
     print(f"  Tolerance: ±{TOLERANCE_PCT:.0f}%")
     print(f"  Samples:   {r['n']} valid zones × {SAMPLE_COUNT} frames")
-
 
 def print_summary():
     print("\n" + "═" * 40)
@@ -109,7 +101,6 @@ def print_summary():
     print("─" * 40)
     print(f"  {passed}/{len(results)} tests passed")
     print("═" * 40)
-
 
 def loop():
     global phase, samples, expected_mm
@@ -166,11 +157,9 @@ def loop():
             print(f"  WARNING: {e}")
             time.sleep(0.5)
             return
-
         if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
             time.sleep(0.1)
             return
-
         dist   = parse_matrix(dist_raw)
         stat   = parse_status(stat_raw)
         signal = parse_matrix(signal_raw)
@@ -184,7 +173,6 @@ def loop():
             print(f"  Frame {len(samples) // len(CENTER_ZONES):2d}/{SAMPLE_COUNT}  "
                   f"center: {[f'{v}mm' for v in vals]}  "
                   f"conf: {mean_conf:.2f}%")
-
         time.sleep(0.1)
 
         if len(samples) >= SAMPLE_COUNT * len(CENTER_ZONES):
@@ -193,6 +181,5 @@ def loop():
             results.append(r)
             phase = "prompt"
         return
-
 
 App.run(user_loop=loop)

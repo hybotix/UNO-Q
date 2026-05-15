@@ -15,7 +15,6 @@ Architecture:
   All navigation logic runs here on the Linux side. The Arduino sketch
   handles hardware access only — sensor polling, motor PWM, IMU reads.
   Python calls Bridge functions to command the hardware and read data.
-
 State machine:
   INIT        -- initialize VL53L5CX then BNO055 sequentially
   FORWARD     -- drive forward, check sensor every loop iteration
@@ -23,11 +22,9 @@ State machine:
   SCANNING    -- rotate CW in SCAN_STEP_DEG increments, check for clear path
   RECOVERING  -- turn to the clear heading found during scan
   FULL_BLOCK  -- no clear path found after full 360° — wait and retry
-
 "Clear path" definition:
   All zones in CENTER_COLS (columns 3 and 4) across FORWARD_ROWS (rows 0-4)
   must have valid target_status AND distance > OBSTACLE_MM.
-
 VL53L5CX zone layout (8x8, physically verified):
   Orientation: SparkFun logo at TOP, lens facing FORWARD.
   Left/right defined from BEHIND the sensor looking forward
@@ -41,7 +38,6 @@ VL53L5CX zone layout (8x8, physically verified):
   col 3-4 = robot CENTER (forward path)
 
   Verified by hand test on SparkFun large VL53L5CX breakout (SEN-18642).
-
 Tunable constants (top of file):
   OBSTACLE_MM    -- distance threshold to trigger obstacle response (mm)
   BACKUP_MS      -- reverse duration on obstacle detect (ms, ~5cm at speed 128)
@@ -49,7 +45,6 @@ Tunable constants (top of file):
   TURN_SETTLE_MS -- wait after each rotate command before reading heading (ms)
   CENTER_COLS    -- sensor columns that define the forward path
   FORWARD_ROWS   -- sensor rows checked for obstacle detection
-
 Future: When encoder odometry is added, replace the time-based backup in
 handle_obstacle() with a distance-based reverse. The state machine and
 all other logic remain unchanged.
@@ -110,7 +105,6 @@ scan_start_hdg = 0.0          # BNO055 heading at the start of a scan
 scan_degrees   = 0.0          # total degrees rotated since scan began
 clear_heading  = None         # heading where a clear path was found
 
-
 # ── Sensor data helpers ───────────────────────────────────────────────────────
 
 def parse_int_matrix(data: str) -> list:
@@ -120,7 +114,6 @@ def parse_int_matrix(data: str) -> list:
     """
     return [[int(v) for v in row.split(",")] for row in data.split(";")]
 
-
 def parse_bool_matrix(data: str) -> list:
     """
     Parse a semicolon-row, comma-column T/F string into a 2D boolean list.
@@ -128,7 +121,6 @@ def parse_bool_matrix(data: str) -> list:
     Example: "T,F;T,T" -> [[True, False], [True, True]]
     """
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
-
 
 def format_error(status: str) -> str:
     """
@@ -140,9 +132,7 @@ def format_error(status: str) -> str:
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
-
     return status
-
 
 def get_sensor_data():
     """
@@ -173,7 +163,6 @@ def get_sensor_data():
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return None
-
     try:
         dist   = parse_int_matrix(dist_raw)
         stat   = parse_bool_matrix(stat_raw)
@@ -184,7 +173,6 @@ def get_sensor_data():
         print(f"ERROR parsing sensor data: {e}")
         return None
 
-
 def is_path_clear(dist: list, stat: list) -> bool:
     """
     Return True if the forward path is clear of obstacles.
@@ -193,7 +181,6 @@ def is_path_clear(dist: list, stat: list) -> bool:
     A zone fails if:
       - stat[row][col] is False (invalid reading), OR
       - dist[row][col] <= OBSTACLE_MM (obstacle within threshold)
-
     Both conditions must pass for all checked zones to return True.
     Floor rows (5-7) are excluded — they naturally read close distances.
     """
@@ -202,13 +189,10 @@ def is_path_clear(dist: list, stat: list) -> bool:
             if not stat[row][col]:
                 # Invalid reading — treat as blocked (fail safe)
                 return False
-
             if dist[row][col] <= OBSTACLE_MM:
                 # Obstacle within threshold distance
                 return False
-
     return True
-
 
 def get_heading() -> float:
     """
@@ -227,7 +211,6 @@ def get_heading() -> float:
         print(f"ERROR: get_heading() failed: {e}")
         return -1.0
 
-
 def heading_diff(target: float, current: float) -> float:
     """
     Compute the shortest signed angular difference: target - current.
@@ -240,9 +223,7 @@ def heading_diff(target: float, current: float) -> float:
 
     if diff > 180.0:
         diff -= 360.0
-
     return diff
-
 
 def drive(command: str):
     """
@@ -256,10 +237,8 @@ def drive(command: str):
 
         if result != "ok":
             print(f"ERROR: drive({command}) returned: {result}")
-
     except Exception as e:
         print(f"ERROR: drive({command}) failed: {e}")
-
 
 # ── State handlers ────────────────────────────────────────────────────────────
 
@@ -286,7 +265,6 @@ def handle_init():
                 print("ERROR: VL53L5CX init failed: " + format_error(result))
                 time.sleep(5.0)
                 return
-
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"VL53L5CX ready. Resolution: {res}")
@@ -295,7 +273,6 @@ def handle_init():
                 print("ERROR: unexpected response: " + result)
                 time.sleep(2.0)
                 return
-
         except Exception as e:
             print(f"ERROR: VL53L5CX init exception: {e}")
             time.sleep(2.0)
@@ -314,7 +291,6 @@ def handle_init():
                 print(f"ERROR: BNO055 init failed: {result}")
                 time.sleep(2.0)
                 return
-
         except Exception as e:
             print(f"ERROR: BNO055 init exception: {e}")
             time.sleep(2.0)
@@ -323,7 +299,6 @@ def handle_init():
     # Both initialized — begin navigation
     print("All systems ready. Starting navigation.")
     state = STATE_FORWARD
-
 
 def handle_forward():
     """
@@ -342,7 +317,6 @@ def handle_forward():
         drive("stop")
         time.sleep(0.05)
         return
-
     dist, stat, signal, sigma = data
 
     if not is_path_clear(dist, stat):
@@ -355,7 +329,6 @@ def handle_forward():
     # Path is clear — keep driving forward
     drive("forward")
     time.sleep(0.05)  # ~20Hz sensor poll rate
-
 
 def handle_obstacle():
     """
@@ -384,13 +357,11 @@ def handle_obstacle():
     if hdg < 0:
         print("WARNING: IMU read failed before scan start — using 0.0 degrees as reference.")
         hdg = 0.0
-
     scan_start_hdg = hdg
     scan_degrees   = 0.0
     clear_heading  = None
     print(f"Starting scan from heading {scan_start_hdg:.1f} degrees")
     state = STATE_SCANNING
-
 
 def handle_scanning():
     """
@@ -403,7 +374,6 @@ def handle_scanning():
       2. Read current BNO055 heading and compute total rotation so far.
       3. Read sensor — if path is clear, record heading and recover.
       4. If 360 degrees scanned with no clear path, enter STATE_FULL_BLOCK.
-
     NOTE: When pan/tilt is added, replace rotate_cw with a pan servo
     increment. scan_start_hdg becomes pan_start_angle. The clear-path
     detection logic below stays unchanged.
@@ -453,7 +423,6 @@ def handle_scanning():
         drive("stop")
         state = STATE_FULL_BLOCK
 
-
 def handle_recovering():
     """
     STATE_RECOVERING — turn to the clear heading found during scanning.
@@ -463,7 +432,6 @@ def handle_recovering():
       2. Compute shortest-path angular difference to clear_heading.
       3. If within 5 degree tolerance — stop, resume forward.
       4. Otherwise rotate CW or CCW toward target heading.
-
     The 5 degree tolerance prevents oscillation around the target heading.
     """
     global state, clear_heading
@@ -481,7 +449,6 @@ def handle_recovering():
     diff = heading_diff(clear_heading, current_hdg)
     print(f"Recovering: target {clear_heading:.1f}, "
           f"current {current_hdg:.1f}, diff {diff:.1f} degrees")
-
     if abs(diff) <= 5.0:
         # Within tolerance — on heading, resume forward navigation
         drive("stop")
@@ -497,11 +464,9 @@ def handle_recovering():
         drive("rotate_cw")
     else:
         drive("rotate_ccw")
-
     time.sleep(TURN_SETTLE_MS / 1000.0)
     drive("stop")
     time.sleep(0.05)  # settle before next heading read
-
 
 def handle_full_block():
     """
@@ -528,7 +493,6 @@ def handle_full_block():
     clear_heading  = None
     state = STATE_SCANNING
 
-
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
 def loop():
@@ -551,6 +515,5 @@ def loop():
         handle_recovering()
     elif state == STATE_FULL_BLOCK:
         handle_full_block()
-
 
 App.run(user_loop=loop)
