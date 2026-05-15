@@ -27,8 +27,7 @@ def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
     if round(value, decimals) == int(value):
         return str(int(value))
-    else:
-        return f"{value:.{decimals}f}"
+    return f"{value:.{decimals}f}"
 
 def calibrate():
     """

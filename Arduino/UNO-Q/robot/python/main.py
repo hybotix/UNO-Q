@@ -198,9 +198,7 @@ def is_path_clear(dist: list, stat: list) -> bool:
     """
     for row in FORWARD_ROWS:
         for col in CENTER_COLS:
-            if stat[row][col] and dist[row][col] > OBSTACLE_MM:
-                pass
-            else:
+            if not (stat[row][col] and dist[row][col] > OBSTACLE_MM):
                 return False
 
     return True
@@ -268,9 +266,7 @@ def handle_init():
     global sensor_ready, imu_ready, state
 
     # Step 1: Initialize VL53L5CX if not already ready
-    if sensor_ready:
-        pass
-    else:
+    if not sensor_ready:
         print("Initializing VL53L5CX...")
         try:
             # begin_sensor() blocks during firmware upload — use long timeout
@@ -295,9 +291,7 @@ def handle_init():
             return
 
     # Step 2: Initialize BNO055 once sensor is ready
-    if imu_ready:
-        pass
-    else:
+    if not imu_ready:
         print("Initializing BNO055...")
         try:
             result = Bridge.call("begin_imu")
