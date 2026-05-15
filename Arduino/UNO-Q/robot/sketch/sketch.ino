@@ -61,16 +61,14 @@ static bool            imuInitDone   = false;
 static bool            imuInitFailed = false;
 
 static uint8_t applyDirection(uint8_t dir, bool invert) {
-    if (!invert) {
-        return dir;
-    }
+    if (invert) {
+        if (dir == FORWARD) {
+            return BACKWARD;
+        }
 
-    if (dir == FORWARD) {
-        return BACKWARD;
-    }
-
-    if (dir == BACKWARD) {
-        return FORWARD;
+        if (dir == BACKWARD) {
+            return FORWARD;
+        }
     }
 
     return dir;

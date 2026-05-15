@@ -94,28 +94,26 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
-    if (!SCROLLING_ENABLED) {
-        return;
-    }
+    if (SCROLLING_ENABLED) {
+        if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
+            return;
+        }
 
-    if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
-        return;
-    }
+        last_scroll_ms = millis();
 
-    last_scroll_ms = millis();
+        matrix.beginDraw();
+        matrix.stroke(0xFFFFFFFF);
+        matrix.textFont(Font_5x7);
+        matrix.beginText(scroll_x, 1, 0xFFFFFF);
+        matrix.print(matrix_msg);
+        matrix.endText();
+        matrix.endDraw();
 
-    matrix.beginDraw();
-    matrix.stroke(0xFFFFFFFF);
-    matrix.textFont(Font_5x7);
-    matrix.beginText(scroll_x, 1, 0xFFFFFF);
-    matrix.print(matrix_msg);
-    matrix.endText();
-    matrix.endDraw();
+        scroll_x--;
 
-    scroll_x--;
-
-    if (scroll_x < -msg_pixel_width) {
-        scroll_x = 12;
+        if (scroll_x < -msg_pixel_width) {
+            scroll_x = 12;
+        }
     }
 }
 
@@ -157,17 +155,15 @@ String get_mux_data() {
     int    i;
 
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
-        if (!mux_channels[i].active) {
-            continue;
+        if (mux_channels[i].active) {
+            result += String(mux_channels[i].name) + ":0";
+
+            if (i < MUX_NUM_CHANNELS - 1) {
+                result += ",";
+            }
+
+            any = true;
         }
-
-        result += String(mux_channels[i].name) + ":0";
-
-        if (i < MUX_NUM_CHANNELS - 1) {
-            result += ",";
-        }
-
-        any = true;
     }
 
     return any ? result : "none";
@@ -227,14 +223,12 @@ void set_mux_channel(String params) {
 }
 
 void set_matrix_msg(String msg) {
-    if (!SCROLLING_ENABLED) {
-        return;
+    if (SCROLLING_ENABLED) {
+        matrix.clear();
+        msg.toCharArray(matrix_msg, sizeof(matrix_msg));
+        update_scroll_metrics();
+        scroll_x = 12;
     }
-
-    matrix.clear();
-    msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    update_scroll_metrics();
-    scroll_x = 12;
 }
 
 String calibrate_scd30() {

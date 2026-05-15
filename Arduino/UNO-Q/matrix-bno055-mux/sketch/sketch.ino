@@ -104,28 +104,26 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
-    if (!SCROLLING_ENABLED) {
-        return;
-    }
+    if (SCROLLING_ENABLED) {
+        if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
+            return;
+        }
 
-    if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
-        return;
-    }
+        last_scroll_ms = millis();
 
-    last_scroll_ms = millis();
+        matrix.beginDraw();
+        matrix.stroke(0xFFFFFFFF);
+        matrix.textFont(Font_5x7);
+        matrix.beginText(scroll_x, 1, 0xFFFFFF);
+        matrix.print(matrix_msg);
+        matrix.endText();
+        matrix.endDraw();
 
-    matrix.beginDraw();
-    matrix.stroke(0xFFFFFFFF);
-    matrix.textFont(Font_5x7);
-    matrix.beginText(scroll_x, 1, 0xFFFFFF);
-    matrix.print(matrix_msg);
-    matrix.endText();
-    matrix.endDraw();
+        scroll_x--;
 
-    scroll_x--;
-
-    if (scroll_x < -msg_pixel_width) {
-        scroll_x = 12;
+        if (scroll_x < -msg_pixel_width) {
+            scroll_x = 12;
+        }
     }
 }
 
@@ -175,18 +173,16 @@ String read_mux_channels(QWIICMUX& mux, MuxChannel* channels, int count) {
     int    i;
 
     for (i = 0; i < count; i++) {
-        if (!channels[i].active) {
-            continue;
+        if (channels[i].active) {
+            mux.setPort(channels[i].channel);
+            result += String(channels[i].name) + ":0";
+
+            if (i < count - 1) {
+                result += ",";
+            }
+
+            any = true;
         }
-
-        mux.setPort(channels[i].channel);
-        result += String(channels[i].name) + ":0";
-
-        if (i < count - 1) {
-            result += ",";
-        }
-
-        any = true;
     }
 
     mux.setPort(255);
@@ -280,14 +276,12 @@ void set_mux2_channel(String params) {
 }
 
 void set_matrix_msg(String msg) {
-    if (!SCROLLING_ENABLED) {
-        return;
+    if (SCROLLING_ENABLED) {
+        matrix.clear();
+        msg.toCharArray(matrix_msg, sizeof(matrix_msg));
+        update_scroll_metrics();
+        scroll_x = 12;
     }
-
-    matrix.clear();
-    msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    update_scroll_metrics();
-    scroll_x = 12;
 }
 
 String calibrate_scd30() {

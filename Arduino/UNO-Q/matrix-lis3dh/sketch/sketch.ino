@@ -44,28 +44,26 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
-    if (!SCROLLING_ENABLED) {
-        return;
-    }
+    if (SCROLLING_ENABLED) {
+        if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
+            return;
+        }
 
-    if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
-        return;
-    }
+        last_scroll_ms = millis();
 
-    last_scroll_ms = millis();
+        matrix.beginDraw();
+        matrix.stroke(0xFFFFFFFF);
+        matrix.textFont(Font_5x7);
+        matrix.beginText(scroll_x, 1, 0xFFFFFF);
+        matrix.print(matrix_msg);
+        matrix.endText();
+        matrix.endDraw();
 
-    matrix.beginDraw();
-    matrix.stroke(0xFFFFFFFF);
-    matrix.textFont(Font_5x7);
-    matrix.beginText(scroll_x, 1, 0xFFFFFF);
-    matrix.print(matrix_msg);
-    matrix.endText();
-    matrix.endDraw();
+        scroll_x--;
 
-    scroll_x--;
-
-    if (scroll_x < -msg_pixel_width) {
-        scroll_x = 12;
+        if (scroll_x < -msg_pixel_width) {
+            scroll_x = 12;
+        }
     }
 }
 
@@ -107,14 +105,12 @@ String get_lis3dh_freefall() {
 }
 
 void set_matrix_msg(String msg) {
-    if (!SCROLLING_ENABLED) {
-        return;
+    if (SCROLLING_ENABLED) {
+        matrix.clear();
+        msg.toCharArray(matrix_msg, sizeof(matrix_msg));
+        update_scroll_metrics();
+        scroll_x = 12;
     }
-
-    matrix.clear();
-    msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-    update_scroll_metrics();
-    scroll_x = 12;
 }
 
 void setup() {
