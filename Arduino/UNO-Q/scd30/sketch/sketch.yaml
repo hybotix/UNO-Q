@@ -9,7 +9,5 @@ profiles:
       - dependency: ArxTypeTraits (0.3.2)
       - dependency: DebugLog (0.8.4)
       - dependency: MsgPack (0.4.2)
-      - Sensirion I2C SCD4x
-      - Adafruit BusIO (1.17.4)
-      - Adafruit Unified Sensor (1.1.15)
+      - Sensirion I2C SCD4x (1.1.0)
 default_profile: default
