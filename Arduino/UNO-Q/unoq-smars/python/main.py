@@ -38,12 +38,12 @@ def parse_bool_matrix(data: str) -> list:
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
 
 def confidence(status: bool, signal: int, sigma: int) -> float:
-    if not status:
-        return 0.0
-    sig_score = min(signal / SIGNAL_MAX, 1.0)
-    sig_score = max(sig_score, 0.0)
-    sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
-    return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+    if status:
+        sig_score = min(signal / SIGNAL_MAX, 1.0)
+        sig_score = max(sig_score, 0.0)
+        sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
+        return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+    return 0.0
 
 def print_distance(dist):
     print("── Distance (mm) ──")
@@ -72,7 +72,9 @@ def format_error(status: str) -> str:
 def loop():
     global initialized
 
-    if not initialized:
+    if initialized:
+        time.sleep(0.1)
+    else:
         try:
             print("Triggering sensor firmware upload...")
             result = Bridge.call("begin_sensor", timeout=120)
@@ -91,7 +93,6 @@ def loop():
             print("ERROR: " + str(e))
             time.sleep(2.0)
         return
-    time.sleep(0.1)
 
     try:
         dist_raw   = Bridge.call("get_distance_data")

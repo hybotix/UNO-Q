@@ -49,7 +49,9 @@ if len(sys.argv) < 2:
     sys.exit(1)
 input_path = sys.argv[1]
 
-if not os.path.exists(input_path):
+if os.path.exists(input_path):
+    pass
+else:
     print(f"ERROR: File not found: {input_path}")
     sys.exit(1)
 
@@ -162,7 +164,9 @@ def finish(reason="complete"):
 for idx in range(n_frames):
     current_label = str(df.at[idx, "label"]).strip()
     has_label     = current_label not in ("", "nan")
-    if not has_label:
+    if has_label:
+        pass
+    else:
         current_label = ""
     draw_frame(idx, current_label)
 

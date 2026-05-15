@@ -14,7 +14,9 @@ def scroll_duration(msg):
 def loop():
     global started
 
-    if not started:
+    if started:
+        pass
+    else:
         time.sleep(5)
         started = True
     scd_data = Bridge.call("get_scd30_data")

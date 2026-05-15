@@ -64,28 +64,27 @@ def parse_as7343(data):
               F6(555nm), F7(590nm), F8(630nm), F9(680nm), F10(910nm),
               F11(940nm), F12(1000nm), CLEAR, NIR
     """
-    if not data or data == "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
-        return None
-    values = [int(v) for v in data.split(",")]
+    if data and data != "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
+        values = [int(v) for v in data.split(",")]
 
-    if len(values) != 14:
-        return None
-    return {
-        "F1_405nm":   values[0],
-        "F2_425nm":   values[1],
-        "F3_450nm":   values[2],
-        "F4_475nm":   values[3],
-        "F5_515nm":   values[4],
-        "F6_555nm":   values[5],
-        "F7_590nm":   values[6],
-        "F8_630nm":   values[7],
-        "F9_680nm":   values[8],
-        "F10_910nm":  values[9],
-        "F11_940nm":  values[10],
-        "F12_1000nm": values[11],
-        "CLEAR":      values[12],
-        "NIR":        values[13],
-    }
+        if len(values) == 14:
+            return {
+                "F1_405nm":   values[0],
+                "F2_425nm":   values[1],
+                "F3_450nm":   values[2],
+                "F4_475nm":   values[3],
+                "F5_515nm":   values[4],
+                "F6_555nm":   values[5],
+                "F7_590nm":   values[6],
+                "F8_630nm":   values[7],
+                "F9_680nm":   values[8],
+                "F10_910nm":  values[9],
+                "F11_940nm":  values[10],
+                "F12_1000nm": values[11],
+                "CLEAR":      values[12],
+                "NIR":        values[13],
+            }
+    return None
 
 def scroll_as7343(spectral):
     """
@@ -127,20 +126,19 @@ def parse_apds9999(data):
     Returns dict or None if data unavailable.
     Fields: proximity, lux, r, g, b, ir
     """
-    if not data or data == "0,0,0,0,0,0":
-        return None
-    values = data.split(",")
+    if data and data != "0,0,0,0,0,0":
+        values = data.split(",")
 
-    if len(values) != 6:
-        return None
-    return {
-        "proximity": int(values[0]),
-        "lux":       float(values[1]),
-        "r":         int(values[2]),
-        "g":         int(values[3]),
-        "b":         int(values[4]),
-        "ir":        int(values[5]),
-    }
+        if len(values) == 6:
+            return {
+                "proximity": int(values[0]),
+                "lux":       float(values[1]),
+                "r":         int(values[2]),
+                "g":         int(values[3]),
+                "b":         int(values[4]),
+                "ir":        int(values[5]),
+            }
+    return None
 
 def scroll_apds9999(apds):
     """
@@ -169,16 +167,15 @@ def parse_sgp41(data):
     Fields: voc_raw, nox_raw
     Use Sensirion VOC/NOx algorithm for index conversion.
     """
-    if not data or data == "0,0":
-        return None
-    values = data.split(",")
+    if data and data != "0,0":
+        values = data.split(",")
 
-    if len(values) != 2:
-        return None
-    return {
-        "voc_raw": int(values[0]),
-        "nox_raw": int(values[1]),
-    }
+        if len(values) == 2:
+            return {
+                "voc_raw": int(values[0]),
+                "nox_raw": int(values[1]),
+            }
+    return None
 
 def scroll_sgp41(sgp):
     """
@@ -199,7 +196,9 @@ def scroll_sgp41(sgp):
 def loop():
     global started
 
-    if not started:
+    if started:
+        pass
+    else:
         time.sleep(5)
         calibrate()
         # Wait for valid SCD30 data before starting scroll

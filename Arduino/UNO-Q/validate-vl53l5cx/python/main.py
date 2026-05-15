@@ -38,7 +38,9 @@ def collect_frames(n: int) -> list[list[list]]:
         try:
             dist = Bridge.call("get_distance_data")
             stat = Bridge.call("get_target_status")
-            if not dist or dist == "0" or not stat or stat == "0":
+            if dist and dist != "0" and stat and stat != "0":
+                pass
+            else:
                 time.sleep(0.1)
                 continue
             d_matrix = parse_matrix(dist)
@@ -134,7 +136,9 @@ def loop():
     global initialized, test_index, results
 
     # ── Step 1: Initialize sensor ──────────────────────────────────────────────
-    if not initialized:
+    if initialized:
+        pass
+    else:
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)

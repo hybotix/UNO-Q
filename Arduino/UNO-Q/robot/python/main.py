@@ -186,11 +186,9 @@ def is_path_clear(dist: list, stat: list) -> bool:
     """
     for row in FORWARD_ROWS:
         for col in CENTER_COLS:
-            if not stat[row][col]:
-                # Invalid reading — treat as blocked (fail safe)
-                return False
-            if dist[row][col] <= OBSTACLE_MM:
-                # Obstacle within threshold distance
+            if stat[row][col] and dist[row][col] > OBSTACLE_MM:
+                pass
+            else:
                 return False
     return True
 
@@ -255,7 +253,9 @@ def handle_init():
     global sensor_ready, imu_ready, state
 
     # Step 1: Initialize VL53L5CX if not already ready
-    if not sensor_ready:
+    if sensor_ready:
+        pass
+    else:
         print("Initializing VL53L5CX...")
         try:
             # begin_sensor() blocks during firmware upload — use long timeout
@@ -279,7 +279,9 @@ def handle_init():
             return
 
     # Step 2: Initialize BNO055 once sensor is ready
-    if not imu_ready:
+    if imu_ready:
+        pass
+    else:
         print("Initializing BNO055...")
         try:
             result = Bridge.call("begin_imu")
@@ -319,16 +321,15 @@ def handle_forward():
         return
     dist, stat, signal, sigma = data
 
-    if not is_path_clear(dist, stat):
+    if is_path_clear(dist, stat):
+        # Path is clear — keep driving forward
+        drive("forward")
+        time.sleep(0.05)  # ~20Hz sensor poll rate
+    else:
         # Obstacle detected — stop immediately before backing up
         print(f"Obstacle detected at <={OBSTACLE_MM}mm. Stopping.")
         drive("stop")
         state = STATE_OBSTACLE
-        return
-
-    # Path is clear — keep driving forward
-    drive("forward")
-    time.sleep(0.05)  # ~20Hz sensor poll rate
 
 def handle_obstacle():
     """

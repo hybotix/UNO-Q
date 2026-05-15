@@ -225,13 +225,13 @@ String get_mux_channel_data_helper(QWIICMUX& mux, MuxChannel* channels, int coun
 
     for (i = 0; i < count; i++) {
         if (channels[i].channel == channel) {
-            if (!channels[i].active) {
-                return "inactive";
+            if (channels[i].active) {
+                mux.setPort(channel);
+                mux.setPort(255);
+                return "0";
             }
 
-            mux.setPort(channel);
-            mux.setPort(255);
-            return "0";
+            return "inactive";
         }
     }
 

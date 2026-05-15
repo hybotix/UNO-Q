@@ -155,19 +155,19 @@ String set_turn_speed(String val) {
 }
 
 String get_sensor_status() {
-    if (!sensorInitDone) {
-        return sensorBeginCalled ? "uploading" : "idle";
+    if (sensorInitDone) {
+        if (sensorInitFailed) {
+            return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
+        }
+
+        if (hybx_last_error_step != 0) {
+            return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
+        }
+
+        return "ready";
     }
 
-    if (sensorInitFailed) {
-        return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
-    }
-
-    if (hybx_last_error_step != 0) {
-        return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
-    }
-
-    return "ready";
+    return sensorBeginCalled ? "uploading" : "idle";
 }
 
 String begin_sensor() {
@@ -177,11 +177,12 @@ String begin_sensor() {
 
     sensorBeginCalled = true;
 
-    if (!sensor.begin()) {
+    if (sensor.begin()) {
+        sensorInitDone = true;
+    } else {
         sensorInitFailed = true;
+        sensorInitDone   = true;
     }
-
-    sensorInitDone = true;
     return get_sensor_status();
 }
 
@@ -211,31 +212,31 @@ String get_distance_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        if (hybx_last_error_step != 0) {
-            return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
-        }
+    if (hybx_sensor_ready) {
+        width = (currentResolution == 16) ? 4 : 8;
 
-        return "0";
-    }
+        for (row = 0; row < width; row++) {
+            for (col = 0; col < width; col++) {
+                result += String(hybx_distance_mm[row][col]);
 
-    width = (currentResolution == 16) ? 4 : 8;
+                if (col < width - 1) {
+                    result += ",";
+                }
+            }
 
-    for (row = 0; row < width; row++) {
-        for (col = 0; col < width; col++) {
-            result += String(hybx_distance_mm[row][col]);
-
-            if (col < width - 1) {
-                result += ",";
+            if (row < width - 1) {
+                result += ";";
             }
         }
 
-        if (row < width - 1) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    if (hybx_last_error_step != 0) {
+        return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
+    }
+
+    return "0";
 }
 
 String get_target_status() {
@@ -245,28 +246,28 @@ String get_target_status() {
     uint8_t st;
     String  result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        width = (currentResolution == 16) ? 4 : 8;
 
-    width = (currentResolution == 16) ? 4 : 8;
+        for (row = 0; row < width; row++) {
+            for (col = 0; col < width; col++) {
+                st = hybx_target_status[row][col];
+                result += (st == 5 || st == 9) ? "T" : "F";
 
-    for (row = 0; row < width; row++) {
-        for (col = 0; col < width; col++) {
-            st = hybx_target_status[row][col];
-            result += (st == 5 || st == 9) ? "T" : "F";
+                if (col < width - 1) {
+                    result += ",";
+                }
+            }
 
-            if (col < width - 1) {
-                result += ",";
+            if (row < width - 1) {
+                result += ";";
             }
         }
 
-        if (row < width - 1) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String get_signal_data() {
@@ -274,25 +275,25 @@ String get_signal_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                result += String(hybx_signal_per_spad[row][col]);
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            result += String(hybx_signal_per_spad[row][col]);
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String get_sigma_data() {
@@ -300,25 +301,25 @@ String get_sigma_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                result += String(hybx_range_sigma_mm[row][col]);
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            result += String(hybx_range_sigma_mm[row][col]);
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String begin_imu() {
@@ -326,31 +327,32 @@ String begin_imu() {
         return imuInitFailed ? "init_failed" : "ready";
     }
 
-    if (!bno.begin()) {
+    if (bno.begin()) {
+        imuInitDone = true;
+    } else {
         imuInitFailed = true;
+        imuInitDone   = true;
     }
-
-    imuInitDone = true;
     return imuInitFailed ? "init_failed" : "ready";
 }
 
 String get_imu_status() {
-    if (!imuInitDone) {
-        return "idle";
+    if (imuInitDone) {
+        return imuInitFailed ? "init_failed" : "ready";
     }
 
-    return imuInitFailed ? "init_failed" : "ready";
+    return "idle";
 }
 
 String get_heading() {
     sensors_event_t event;
 
-    if (!imuInitDone || imuInitFailed) {
-        return "0";
+    if (imuInitDone && !imuInitFailed) {
+        bno.getEvent(&event, Adafruit_BNO055::VECTOR_EULER);
+        return String(event.orientation.x, 2);
     }
 
-    bno.getEvent(&event, Adafruit_BNO055::VECTOR_EULER);
-    return String(event.orientation.x, 2);
+    return "0";
 }
 
 void setup() {

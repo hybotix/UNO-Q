@@ -24,19 +24,19 @@ static bool          initFailed  = false;
 static bool          initDone    = false;
 
 String get_sensor_status() {
-    if (!initDone) {
-        return beginCalled ? "uploading" : "idle";
+    if (initDone) {
+        if (initFailed) {
+            return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
+        }
+
+        if (hybx_last_error_step != 0) {
+            return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
+        }
+
+        return "ready";
     }
 
-    if (initFailed) {
-        return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
-    }
-
-    if (hybx_last_error_step != 0) {
-        return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
-    }
-
-    return "ready";
+    return beginCalled ? "uploading" : "idle";
 }
 
 String begin_sensor() {
@@ -46,11 +46,12 @@ String begin_sensor() {
 
     beginCalled = true;
 
-    if (!sensor.begin()) {
+    if (sensor.begin()) {
+        initDone = true;
+    } else {
         initFailed = true;
+        initDone   = true;
     }
-
-    initDone = true;
     return get_sensor_status();
 }
 
@@ -59,25 +60,25 @@ String get_distance_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                result += String(hybx_distance_mm[row * 8 + col]);
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            result += String(hybx_distance_mm[row * 8 + col]);
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String get_target_status() {
@@ -86,26 +87,26 @@ String get_target_status() {
     uint8_t st;
     String  result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                st = hybx_target_status[row * 8 + col];
+                result += (st == 5 || st == 9) ? "T" : "F";
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            st = hybx_target_status[row * 8 + col];
-            result += (st == 5 || st == 9) ? "T" : "F";
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String get_signal_data() {
@@ -113,25 +114,25 @@ String get_signal_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                result += String(hybx_signal_per_spad[row * 8 + col]);
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            result += String(hybx_signal_per_spad[row * 8 + col]);
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 String get_sigma_data() {
@@ -139,25 +140,25 @@ String get_sigma_data() {
     int    col;
     String result = "";
 
-    if (!hybx_sensor_ready) {
-        return "0";
-    }
+    if (hybx_sensor_ready) {
+        for (row = 0; row < 8; row++) {
+            for (col = 0; col < 8; col++) {
+                result += String(hybx_range_sigma_mm[row * 8 + col]);
 
-    for (row = 0; row < 8; row++) {
-        for (col = 0; col < 8; col++) {
-            result += String(hybx_range_sigma_mm[row * 8 + col]);
+                if (col < 7) {
+                    result += ",";
+                }
+            }
 
-            if (col < 7) {
-                result += ",";
+            if (row < 7) {
+                result += ";";
             }
         }
 
-        if (row < 7) {
-            result += ";";
-        }
+        return result;
     }
 
-    return result;
+    return "0";
 }
 
 void setup() {

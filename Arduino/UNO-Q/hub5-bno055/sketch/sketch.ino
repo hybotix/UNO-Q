@@ -190,11 +190,11 @@ String get_mux_channel_data(String param) {
 
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
         if (mux_channels[i].channel == channel) {
-            if (!mux_channels[i].active) {
-                return "inactive";
+            if (mux_channels[i].active) {
+                return "0";
             }
 
-            return "0";
+            return "inactive";
         }
     }
 

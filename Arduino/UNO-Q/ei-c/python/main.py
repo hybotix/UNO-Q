@@ -98,7 +98,9 @@ def loop():
         return
 
     # ── One-time setup ─────────────────────────────────────────────────────────
-    if not initialized:
+    if initialized:
+        pass
+    else:
         if csv_file is None:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
@@ -138,7 +140,9 @@ def loop():
     except Exception as e:
         print(f"ERROR: sensor read failed: {e}")
         return
-    if not dist_raw or dist_raw == "0":
+    if dist_raw and dist_raw != "0":
+        pass
+    else:
         return
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))

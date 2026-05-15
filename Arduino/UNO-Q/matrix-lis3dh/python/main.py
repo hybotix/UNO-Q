@@ -36,7 +36,9 @@ def tilt_description(x, y, z):
 def loop():
     global started
 
-    if not started:
+    if started:
+        pass
+    else:
         time.sleep(5)
         started = True
     accel_data = Bridge.call("get_lis3dh_data")

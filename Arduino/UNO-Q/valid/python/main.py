@@ -24,11 +24,11 @@ SIGNAL_MAX = 8000.0
 SIGMA_MAX  = 30.0
 
 def confidence(status: bool, signal: int, sigma: int) -> float:
-    if not status:
-        return 0.0
-    sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
-    sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
-    return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+    if status:
+        sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
+        sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
+        return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+    return 0.0
 
 # ── Config ────────────────────────────────────────────────────────────────────
 SAMPLE_COUNT  = 20       # frames to collect per validation
@@ -59,24 +59,24 @@ def center_values(dist: list, stat: list) -> list:
     return vals
 
 def validate(expected: int, vals: list) -> dict:
-    if not vals:
-        return {"pass": False, "reason": "no valid center zones"}
-    mean   = statistics.mean(vals)
-    stdev  = statistics.stdev(vals) if len(vals) > 1 else 0.0
-    error  = abs(mean - expected)
-    pct    = (error / expected) * 100
-    passed = pct <= TOLERANCE_PCT
-    return {
-        "pass":     passed,
-        "expected": expected,
-        "mean":     mean,
-        "stdev":    stdev,
-        "min":      min(vals),
-        "max":      max(vals),
-        "error_mm": error,
-        "error_pct": pct,
-        "n":        len(vals),
-    }
+    if vals:
+        mean   = statistics.mean(vals)
+        stdev  = statistics.stdev(vals) if len(vals) > 1 else 0.0
+        error  = abs(mean - expected)
+        pct    = (error / expected) * 100
+        passed = pct <= TOLERANCE_PCT
+        return {
+            "pass":     passed,
+            "expected": expected,
+            "mean":     mean,
+            "stdev":    stdev,
+            "min":      min(vals),
+            "max":      max(vals),
+            "error_mm": error,
+            "error_pct": pct,
+            "n":        len(vals),
+        }
+    return {"pass": False, "reason": "no valid center zones"}
 
 def print_result(r: dict):
     status = "PASS ✓" if r["pass"] else "FAIL ✗"
