@@ -27,8 +27,8 @@ def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
     if round(value, decimals) == int(value):
         return str(int(value))
-
-    return f"{value:.{decimals}f}"
+    else:
+        return f"{value:.{decimals}f}"
 
 def calibrate():
     """
@@ -69,11 +69,13 @@ def parse_as7343(data):
               F11(940nm), F12(1000nm), CLEAR, NIR
 
     """
+    result = None
+
     if data and data != "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
         values = [int(v) for v in data.split(",")]
 
         if len(values) == 14:
-            return {
+            result = {
                 "F1_405nm":   values[0],
                 "F2_425nm":   values[1],
                 "F3_450nm":   values[2],
@@ -88,10 +90,9 @@ def parse_as7343(data):
                 "F12_1000nm": values[11],
                 "CLEAR":      values[12],
                 "NIR":        values[13],
-
             }
 
-    return None
+    return result
 
 def scroll_as7343(spectral):
     """
@@ -133,11 +134,13 @@ def parse_apds9999(data):
     Returns dict or None if data unavailable.
     Fields: proximity, lux, r, g, b, ir
     """
+    result = None
+
     if data and data != "0,0,0,0,0,0":
         values = data.split(",")
 
         if len(values) == 6:
-            return {
+            result = {
                 "proximity": int(values[0]),
                 "lux":       float(values[1]),
                 "r":         int(values[2]),
@@ -147,28 +150,27 @@ def parse_apds9999(data):
 
             }
 
-    return None
+    return result
 
 def scroll_apds9999(apds):
     """
     Scroll APDS9999 data as one message: proximity, lux, and RGB.
     Call this from loop() when APDS9999 is connected.
     """
-    if apds is None:
-        return
+    if apds:
+        proximity = apds["proximity"]
+        lux       = apds["lux"]
+        r         = apds["r"]
+        g         = apds["g"]
+        b         = apds["b"]
+        ir        = apds["ir"]
 
-    proximity = apds["proximity"]
-    lux       = apds["lux"]
-    r         = apds["r"]
-    g         = apds["g"]
-    b         = apds["b"]
-    ir        = apds["ir"]
-    print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} IR:{ir}")
-    msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
+        print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} IR:{ir}")
+        msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
 
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", msg)
-        time.sleep(scroll_duration(msg))
+        if SCROLLING_ENABLED:
+            Bridge.call("set_matrix_msg", msg)
+            time.sleep(scroll_duration(msg))
 
 def parse_sgp41(data):
     """
@@ -177,41 +179,39 @@ def parse_sgp41(data):
     Fields: voc_raw, nox_raw
     Use Sensirion VOC/NOx algorithm for index conversion.
     """
+
+    result = None
+
     if data and data != "0,0":
         values = data.split(",")
 
         if len(values) == 2:
-            return {
+            result = {
                 "voc_raw": int(values[0]),
                 "nox_raw": int(values[1]),
-
             }
 
-    return None
+    return result
 
 def scroll_sgp41(sgp):
     """
     Scroll SGP41 VOC and NOx raw signal data.
     Call this from loop() when SGP41 is connected.
     """
-    if sgp is None:
-        return
+    if sgp:
+        voc = sgp["voc_raw"]
+        nox = sgp["nox_raw"]
+        print(f"VOC:{voc} NOx:{nox}")
+        msg = f" VOC:{voc} NOx:{nox} "
 
-    voc = sgp["voc_raw"]
-    nox = sgp["nox_raw"]
-    print(f"VOC:{voc} NOx:{nox}")
-    msg = f" VOC:{voc} NOx:{nox} "
-
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", msg)
-        time.sleep(scroll_duration(msg))
+        if SCROLLING_ENABLED:
+            Bridge.call("set_matrix_msg", msg)
+            time.sleep(scroll_duration(msg))
 
 def loop():
     global started
 
-    if started:
-        pass
-    else:
+    if not started:
         time.sleep(5)
         calibrate()
         # Wait for valid SCD30 data before starting scroll
