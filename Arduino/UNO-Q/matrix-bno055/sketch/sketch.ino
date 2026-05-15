@@ -12,7 +12,7 @@
  *   get_bno055_data()             - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()             - Read AS7343: returns 14 spectral channel counts CSV
  *   get_apds9999_data()           - Read APDS9999: returns "proximity,lux,r,g,b,ir"
- *   get_sgp40_data()              - Read SGP40: returns "voc_raw"
+ *   get_sgp41_data()              - Read SGP41: returns "voc_raw,nox_raw"
  *   get_mux_data()                - Read all active mux channels
  *   get_mux_channels()            - List all channels
  *   get_mux_channel_data(ch)      - Read one mux channel
@@ -39,7 +39,7 @@
 #include <Adafruit_SHT4x.h>
 #include <Adafruit_AS7343.h>
 #include <Adafruit_APDS9999.h>
-#include <Adafruit_SGP40.h>
+#include <Adafruit_SGP41.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 
@@ -63,7 +63,7 @@ Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 Adafruit_AS7343    as7343;
 Adafruit_APDS9999  apds9999;
-Adafruit_SGP40     sgp40;
+Adafruit_SGP41     sgp41;
 
 static char          matrix_msg[64]  = " ... ";
 static int           scroll_x        = 12;
@@ -242,9 +242,10 @@ String get_apds9999_data() {
     return String(proximity) + "," + String(lux, 2) + "," + String(r) + "," + String(g) + "," + String(b) + "," + String(ir);
 }
 
-String get_sgp40_data() {
-    uint16_t voc_raw = sgp40.measureRaw();
-    return String(voc_raw);
+String get_sgp41_data() {
+    uint16_t voc_raw, nox_raw;
+    sgp41.measureRawSignals(&voc_raw, &nox_raw);
+    return String(voc_raw) + "," + String(nox_raw);
 }
 
 void setup() {
@@ -266,7 +267,7 @@ void setup() {
     Bridge.provide("get_bno055_data",      get_bno055_data);
     Bridge.provide("get_as7343_data",      get_as7343_data);
     Bridge.provide("get_apds9999_data",    get_apds9999_data);
-    Bridge.provide("get_sgp40_data",       get_sgp40_data);
+    Bridge.provide("get_sgp41_data",       get_sgp41_data);
     Bridge.provide("get_mux_data",         get_mux_data);
     Bridge.provide("get_mux_channels",     get_mux_channels);
     Bridge.provide("get_mux_channel_data", get_mux_channel_data);

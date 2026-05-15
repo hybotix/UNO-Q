@@ -131,31 +131,36 @@ def scroll_apds9999(apds):
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
 
-def parse_sgp40(data):
+def parse_sgp41(data):
     """
-    Parse SGP40 VOC raw signal.
+    Parse SGP41 VOC and NOx raw signals.
     Returns dict or None if data unavailable.
-    Fields: voc_raw
-    Use Sensirion VOC algorithm for index conversion.
+    Fields: voc_raw, nox_raw
+    Use Sensirion VOC/NOx algorithm for index conversion.
     """
     result = None
 
-    if data and data != "0":
-        result = {
-            "voc_raw": int(data),
-        }
+    if data and data != "0,0":
+        values = data.split(",")
+
+        if len(values) == 2:
+            result = {
+                "voc_raw": int(values[0]),
+                "nox_raw": int(values[1]),
+            }
 
     return result
 
-def scroll_sgp40(sgp):
+def scroll_sgp41(sgp):
     """
-    Scroll SGP40 VOC raw signal data.
-    Call this from loop() when SGP40 is connected.
+    Scroll SGP41 VOC and NOx raw signal data.
+    Call this from loop() when SGP41 is connected.
     """
     if sgp:
         voc = sgp["voc_raw"]
-        print(f"VOC:{voc}")
-        msg = f" VOC:{voc} "
+        nox = sgp["nox_raw"]
+        print(f"VOC:{voc} NOx:{nox}")
+        msg = f" VOC:{voc} NOx:{nox} "
 
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
@@ -173,7 +178,7 @@ def loop():
     bno_data  = Bridge.call("get_bno055_data")
     # as7343_data   = Bridge.call("get_as7343_data")    # Uncomment when AS7343 connected
     # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
-    # sgp40_data    = Bridge.call("get_sgp40_data")     # Uncomment when SGP40 connected
+    # sgp41_data    = Bridge.call("get_sgp41_data")     # Uncomment when SGP41 connected
 
     co2      = None
     temp_c   = None
@@ -204,7 +209,7 @@ def loop():
 
     # spectral = parse_as7343(as7343_data)      # Uncomment when AS7343 connected
     # apds     = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
-    # sgp      = parse_sgp40(sgp40_data)        # Uncomment when SGP40 connected
+    # sgp      = parse_sgp41(sgp41_data)        # Uncomment when SGP41 connected
 
     # Message 1 — environmental data
     # Use *** for any unavailable readings — always display something
@@ -249,7 +254,7 @@ def loop():
     # Message 4 — APDS9999 proximity/color data (uncomment when connected)
     # scroll_apds9999(apds)
 
-    # Message 5 — SGP40 VOC data (uncomment when connected)
-    # scroll_sgp40(sgp)
+    # Message 5 — SGP41 VOC/NOx data (uncomment when connected)
+    # scroll_sgp41(sgp)
 
 App.run(user_loop=loop)
