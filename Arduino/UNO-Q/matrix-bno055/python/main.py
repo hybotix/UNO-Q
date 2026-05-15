@@ -260,29 +260,42 @@ def loop():
     # apds     = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
     # sgp      = parse_sgp41(sgp41_data)        # Uncomment when SGP41 connected
 
-    # Skip loop iteration if primary sensor data not ready
-    if temp_c is None or co2 is None:
-        time.sleep(1)
-        return
+    # Message 1 — environmental data
+    # Use *** for any unavailable readings — always display something
+    if temp_c is not None:
+        temp_f     = (temp_c * 9.0 / 5.0) + 32.0
+        temp_str   = f"{fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C)"
+    else:
+        temp_str   = "***\u00b0F(***\u00b0C)"
 
-    # Message 1 — environmental data (always first)
-    temp_f = (temp_c * 9.0 / 5.0) + 32.0
-    print(f"{fmt(temp_f)}\u00b0F ({fmt(temp_c)}\u00b0C)  {fmt(humidity)}%  {co2:.0f} ppm")
-    msg1 = f" {fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C) {fmt(humidity)}% {co2:.0f} ppm "
+    humidity_str = f"{fmt(humidity)}%" if humidity is not None else "***%"
+    co2_str      = f"{co2:.0f} ppm"   if co2      is not None else "*** ppm"
+
+    print(f"{temp_str}  {humidity_str}  {co2_str}")
+    msg1 = f" {temp_str} {humidity_str} {co2_str} "
 
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
 
     # Message 2 — orientation data
+    # Use *** for any unavailable readings
     if heading is not None:
-        cp = compass_point(heading)
-        print(f"H{fmt(heading)}\u00b0 {cp}  P{fmt(pitch)}\u00b0  R{fmt(roll)}\u00b0")
-        msg2 = f" H{fmt(heading)}\u00b0 {cp} P{fmt(pitch)}\u00b0 R{fmt(roll)}\u00b0 "
+        cp          = compass_point(heading)
+        heading_str = f"H{fmt(heading)}\u00b0 {cp}"
+        pitch_str   = f"P{fmt(pitch)}\u00b0"
+        roll_str    = f"R{fmt(roll)}\u00b0"
+    else:
+        heading_str = "H***\u00b0 ***"
+        pitch_str   = "P***\u00b0"
+        roll_str    = "R***\u00b0"
 
-        if SCROLLING_ENABLED:
-            Bridge.call("set_matrix_msg", msg2)
-            time.sleep(scroll_duration(msg2))
+    print(f"{heading_str}  {pitch_str}  {roll_str}")
+    msg2 = f" {heading_str} {pitch_str} {roll_str} "
+
+    if SCROLLING_ENABLED:
+        Bridge.call("set_matrix_msg", msg2)
+        time.sleep(scroll_duration(msg2))
 
     # Message 3 — AS7343 spectral data (uncomment when connected)
     # scroll_as7343(spectral)
