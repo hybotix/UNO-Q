@@ -15,6 +15,7 @@ Architecture:
   All navigation logic runs here on the Linux side. The Arduino sketch
   handles hardware access only — sensor polling, motor PWM, IMU reads.
   Python calls Bridge functions to command the hardware and read data.
+
 State machine:
   INIT        -- initialize VL53L5CX then BNO055 sequentially
   FORWARD     -- drive forward, check sensor every loop iteration
@@ -22,9 +23,11 @@ State machine:
   SCANNING    -- rotate CW in SCAN_STEP_DEG increments, check for clear path
   RECOVERING  -- turn to the clear heading found during scan
   FULL_BLOCK  -- no clear path found after full 360° — wait and retry
+
 "Clear path" definition:
   All zones in CENTER_COLS (columns 3 and 4) across FORWARD_ROWS (rows 0-4)
   must have valid target_status AND distance > OBSTACLE_MM.
+
 VL53L5CX zone layout (8x8, physically verified):
   Orientation: SparkFun logo at TOP, lens facing FORWARD.
   Left/right defined from BEHIND the sensor looking forward
@@ -38,6 +41,7 @@ VL53L5CX zone layout (8x8, physically verified):
   col 3-4 = robot CENTER (forward path)
 
   Verified by hand test on SparkFun large VL53L5CX breakout (SEN-18642).
+
 Tunable constants (top of file):
   OBSTACLE_MM    -- distance threshold to trigger obstacle response (mm)
   BACKUP_MS      -- reverse duration on obstacle detect (ms, ~5cm at speed 128)
@@ -45,6 +49,7 @@ Tunable constants (top of file):
   TURN_SETTLE_MS -- wait after each rotate command before reading heading (ms)
   CENTER_COLS    -- sensor columns that define the forward path
   FORWARD_ROWS   -- sensor rows checked for obstacle detection
+
 Future: When encoder odometry is added, replace the time-based backup in
 handle_obstacle() with a distance-based reverse. The state machine and
 all other logic remain unchanged.
@@ -63,11 +68,14 @@ WIDTH          = 8             # grid width matching RESOLUTION
 OBSTACLE_MM    = 100           # react if any forward center zone <= this (mm)
 BACKUP_MS      = 800           # reverse duration after obstacle detect (ms)
                                # tune so robot moves ~5cm at driveSpeed 128
+
 SCAN_STEP_DEG  = 10            # degrees to rotate per scan increment
 TURN_SETTLE_MS = 300           # ms to pause after rotate before reading heading
                                # increase if heading reads are unstable
+
 CENTER_COLS    = (3, 4)        # sensor columns defining the forward path
                                # columns 3 and 4 = center of 8x8 FOV
+
 FORWARD_ROWS   = range(0, 5)   # rows 0-4: upper half + center of FOV
                                # rows 5-7 (floor proximity) excluded
 
@@ -87,6 +95,7 @@ ERROR_STEPS = {
     "5": "vl53l5cx_stop_ranging",
     "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
+
 }
 
 # ── State constants ───────────────────────────────────────────────────────────
@@ -132,6 +141,7 @@ def format_error(status: str) -> str:
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
+
     return status
 
 def get_sensor_data():
@@ -163,6 +173,7 @@ def get_sensor_data():
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return None
+
     try:
         dist   = parse_int_matrix(dist_raw)
         stat   = parse_bool_matrix(stat_raw)
@@ -181,6 +192,7 @@ def is_path_clear(dist: list, stat: list) -> bool:
     A zone fails if:
       - stat[row][col] is False (invalid reading), OR
       - dist[row][col] <= OBSTACLE_MM (obstacle within threshold)
+
     Both conditions must pass for all checked zones to return True.
     Floor rows (5-7) are excluded — they naturally read close distances.
     """
@@ -190,6 +202,7 @@ def is_path_clear(dist: list, stat: list) -> bool:
                 pass
             else:
                 return False
+
     return True
 
 def get_heading() -> float:
@@ -221,6 +234,7 @@ def heading_diff(target: float, current: float) -> float:
 
     if diff > 180.0:
         diff -= 360.0
+
     return diff
 
 def drive(command: str):
@@ -228,6 +242,7 @@ def drive(command: str):
     Send a drive command to the sketch via Bridge call.
     Valid commands: "forward", "reverse", "left", "right",
                    "rotate_cw", "rotate_ccw", "stop"
+
     Prints an error if the sketch returns anything other than "ok".
     """
     try:
@@ -265,6 +280,7 @@ def handle_init():
                 print("ERROR: VL53L5CX init failed: " + format_error(result))
                 time.sleep(5.0)
                 return
+
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"VL53L5CX ready. Resolution: {res}")
@@ -319,6 +335,7 @@ def handle_forward():
         drive("stop")
         time.sleep(0.05)
         return
+
     dist, stat, signal, sigma = data
 
     if is_path_clear(dist, stat):
@@ -358,6 +375,7 @@ def handle_obstacle():
     if hdg < 0:
         print("WARNING: IMU read failed before scan start — using 0.0 degrees as reference.")
         hdg = 0.0
+
     scan_start_hdg = hdg
     scan_degrees   = 0.0
     clear_heading  = None
@@ -372,9 +390,11 @@ def handle_scanning():
     Each iteration:
       1. Rotate CW briefly, then stop and wait TURN_SETTLE_MS for heading
          to stabilize before reading.
+
       2. Read current BNO055 heading and compute total rotation so far.
       3. Read sensor — if path is clear, record heading and recover.
       4. If 360 degrees scanned with no clear path, enter STATE_FULL_BLOCK.
+
     NOTE: When pan/tilt is added, replace rotate_cw with a pan servo
     increment. scan_start_hdg becomes pan_start_angle. The clear-path
     detection logic below stays unchanged.
@@ -433,6 +453,7 @@ def handle_recovering():
       2. Compute shortest-path angular difference to clear_heading.
       3. If within 5 degree tolerance — stop, resume forward.
       4. Otherwise rotate CW or CCW toward target heading.
+
     The 5 degree tolerance prevents oscillation around the target heading.
     """
     global state, clear_heading
@@ -450,6 +471,7 @@ def handle_recovering():
     diff = heading_diff(clear_heading, current_hdg)
     print(f"Recovering: target {clear_heading:.1f}, "
           f"current {current_hdg:.1f}, diff {diff:.1f} degrees")
+
     if abs(diff) <= 5.0:
         # Within tolerance — on heading, resume forward navigation
         drive("stop")
@@ -465,6 +487,7 @@ def handle_recovering():
         drive("rotate_cw")
     else:
         drive("rotate_ccw")
+
     time.sleep(TURN_SETTLE_MS / 1000.0)
     drive("stop")
     time.sleep(0.05)  # settle before next heading read

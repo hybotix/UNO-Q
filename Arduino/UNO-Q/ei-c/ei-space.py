@@ -11,10 +11,12 @@ Usage:
     python3 ei-space.py [frames]
 
     frames — number of frames to estimate (optional, prompts if not given)
+
 Examples:
     python3 ei-space.py
     python3 ei-space.py 500
     python3 ei-space.py 1000
+
 """
 
 import sys
@@ -47,6 +49,7 @@ def estimate(n_frames: int):
     except Exception:
         free     = None
         fits     = None
+
     print()
     print(f"  Frames requested : {n_frames:,}")
     print(f"  Estimated size   : {format_size(estimated)}")
@@ -62,25 +65,31 @@ def estimate(n_frames: int):
         else:
             print(f"  ✗ WARNING: Not enough space! "
                   f"Need {format_size(estimated)}, have {format_size(free)}.")
+
     print()
 
     # Show existing ei-c files
     if os.path.isdir(OUTPUT_DIR):
         files = sorted([
             f for f in os.listdir(OUTPUT_DIR) if f.endswith(".csv")
+
         ])
         if files:
             total_size = sum(
                 os.path.getsize(os.path.join(OUTPUT_DIR, f)) for f in files
+
             )
             print(f"  Existing files   : {len(files)} CSV files "
                   f"({format_size(total_size)} total)")
+
             for f in files[-5:]:   # show last 5
                 fpath = os.path.join(OUTPUT_DIR, f)
                 fsize = os.path.getsize(fpath)
                 print(f"    {f}  ({format_size(fsize)})")
+
             if len(files) > 5:
                 print(f"    ... and {len(files) - 5} more")
+
             print()
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -92,6 +101,7 @@ if len(sys.argv) > 1:
         if n <= 0:
             print("ERROR: Frame count must be greater than zero.")
             sys.exit(1)
+
         estimate(n)
     except ValueError:
         print(f"ERROR: '{sys.argv[1]}' is not a valid number.")
@@ -104,6 +114,7 @@ else:
     for n in common:
         est = BYTES_HEADER + (n * BYTES_PER_FRAME)
         print(f"    {n:>6,} frames — {format_size(est)}")
+
     print()
 
     while True:
@@ -112,6 +123,7 @@ else:
         except (EOFError, KeyboardInterrupt):
             print()
             sys.exit(0)
+
         if response == "":
             n = 500
         else:
@@ -123,5 +135,6 @@ else:
             except ValueError:
                 print(f"  ERROR: '{response}' is not a valid number.")
                 continue
+
         estimate(n)
         break

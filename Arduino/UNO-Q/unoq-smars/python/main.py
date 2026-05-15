@@ -10,6 +10,7 @@ Confidence formula:
   - signal_score = min(signal_per_spad / SIGNAL_MAX, 1.0)
   - sigma_score  = max(0, 1 - range_sigma_mm / SIGMA_MAX)
   - confidence   = (signal_score * 0.6 + sigma_score * 0.4) * 99.99
+
 """
 
 from arduino.app_utils import *
@@ -27,6 +28,7 @@ ERROR_STEPS = {
     "3": "vl53l5cx_set_ranging_frequency_hz", "4": "vl53l5cx_start_ranging",
     "5": "vl53l5cx_stop_ranging", "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
+
 }
 
 initialized = False
@@ -43,12 +45,14 @@ def confidence(status: bool, signal: int, sigma: int) -> float:
         sig_score = max(sig_score, 0.0)
         sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
         return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+
     return 0.0
 
 def print_distance(dist):
     print("── Distance (mm) ──")
     for row in dist:
         print("  " + "  ".join(f"{v:5d}" for v in row))
+
     print()
 
 def print_confidence(dist, stat, signal, sigma):
@@ -59,7 +63,9 @@ def print_confidence(dist, stat, signal, sigma):
             valid = stat[r][c]
             conf  = confidence(valid, signal[r][c], sigma[r][c])
             vals.append(f"{conf:6.2f}")
+
         print("  " + "  ".join(vals))
+
     print()
 
 def format_error(status: str) -> str:
@@ -67,6 +73,7 @@ def format_error(status: str) -> str:
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
+
     return status
 
 def loop():
@@ -82,6 +89,7 @@ def loop():
                 print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
+
             if result == "ready":
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print("Sensor ready. Resolution: " + res)
@@ -92,6 +100,7 @@ def loop():
         except Exception as e:
             print("ERROR: " + str(e))
             time.sleep(2.0)
+
         return
 
     try:
@@ -102,11 +111,14 @@ def loop():
     except Exception as e:
         print(f"ERROR: {e}")
         return
+
     if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
         return
+
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return
+
     try:
         dist   = parse_int_matrix(dist_raw)
         stat   = parse_bool_matrix(stat_raw)

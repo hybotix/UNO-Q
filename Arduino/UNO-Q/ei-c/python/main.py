@@ -10,21 +10,27 @@ Usage:
     start ei-c 200      -- collect 200 frames
     start ei-c 1000     -- collect 1000 frames
     mon
+
 Use ei-space.py to estimate disk space before collecting:
     python3 ~/Arduino/UNO-Q/ei-c/ei-space.py 500
+
 Output:
     ~/data/ei-c/ei-c_<TIMESTAMP>.csv
+
 CSV format:
     d00,d01,...,d77,label
     <distance values>,
     ...
+
 Notes:
     - The label column is always empty — labeling happens on the Mac
     - Raw distance data is never modified
     - Progress is printed every 50 frames
+
 Orientation (raw data — never modified):
     Row 0 = top of FOV,    Row 7 = bottom of FOV
     Col 0 = robot left,    Col 7 = robot right
+
 """
 
 from arduino.app_utils import *
@@ -45,6 +51,7 @@ ERROR_STEPS = {
     "3": "vl53l5cx_set_ranging_frequency_hz", "4": "vl53l5cx_start_ranging",
     "5": "vl53l5cx_stop_ranging", "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
+
 }
 
 # ── Parse frame count from command line ────────────────────────────────────────
@@ -76,6 +83,7 @@ def format_error(status: str) -> str:
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
+
     return status
 
 def open_csv() -> tuple:
@@ -111,6 +119,7 @@ def loop():
                 print(f"ERROR: Could not open output file: {e}")
                 time.sleep(5.0)
                 return
+
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
@@ -118,6 +127,7 @@ def loop():
                 print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
+
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"Sensor ready. Resolution: {res}")
@@ -130,6 +140,7 @@ def loop():
         except Exception as e:
             print(f"ERROR: sensor init failed: {e}")
             time.sleep(2.0)
+
         return
 
     # ── Collect frame ──────────────────────────────────────────────────────────
@@ -140,13 +151,16 @@ def loop():
     except Exception as e:
         print(f"ERROR: sensor read failed: {e}")
         return
+
     if dist_raw and dist_raw != "0":
         pass
     else:
         return
+
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return
+
     try:
         dist = parse_int_matrix(dist_raw)
     except Exception as e:

@@ -43,6 +43,7 @@ def collect_frames(n: int) -> list[list[list]]:
             else:
                 time.sleep(0.1)
                 continue
+
             d_matrix = parse_matrix(dist)
             s_matrix = parse_status(stat)
             frames.append((d_matrix, s_matrix))
@@ -50,6 +51,7 @@ def collect_frames(n: int) -> list[list[list]]:
         except Exception as e:
             print(f"  WARNING: {e}")
             time.sleep(0.2)
+
     return frames
 
 def validate_distance(target_mm: int, frames: list) -> dict:
@@ -66,7 +68,9 @@ def validate_distance(target_mm: int, frames: list) -> dict:
                     key = (row, col)
                     if key not in zone_values:
                         zone_values[key] = []
+
                     zone_values[key].append(d_matrix[row][col])
+
     zone_results = {}
     passing_zones = 0
     total_zones   = 0
@@ -74,6 +78,7 @@ def validate_distance(target_mm: int, frames: list) -> dict:
     for (row, col), values in zone_values.items():
         if len(values) < FRAMES // 2:
             continue  # skip zones with too few valid readings
+
         mean   = statistics.mean(values)
         stddev = statistics.stdev(values) if len(values) > 1 else 0.0
         error  = mean - target_mm
@@ -84,10 +89,12 @@ def validate_distance(target_mm: int, frames: list) -> dict:
             "error":  error,
             "passed": passed,
             "n":      len(values),
+
         }
         total_zones += 1
         if passed:
             passing_zones += 1
+
     overall_pass = total_zones > 0 and passing_zones == total_zones
 
     return {
@@ -96,6 +103,7 @@ def validate_distance(target_mm: int, frames: list) -> dict:
         "passing_zones": passing_zones,
         "overall_pass":  overall_pass,
         "zones":         zone_results,
+
     }
 
 def print_result(result: dict):
@@ -122,6 +130,7 @@ def print_result(result: dict):
                 row_str += f" {err:+5.0f}{ok}"
             else:
                 row_str += "   ---  "
+
         print("  " + row_str)
 
     # Summary stats across all valid zones
@@ -154,6 +163,7 @@ def loop():
         except Exception as e:
             print(f"ERROR: {e}")
             time.sleep(2.0)
+
         return
 
     # ── Step 2: Run validation tests ───────────────────────────────────────────
@@ -166,15 +176,18 @@ def loop():
         for r in results:
             status = "PASS ✓" if r["overall_pass"] else "FAIL ✗"
             print(f"  {r['target_mm']:4d}mm — {r['passing_zones']}/{r['total_zones']} zones — {status}")
+
         print(f"{'='*56}")
         print(f"  Overall: {'PASS ✓' if all_passed else 'FAIL ✗'}")
         print(f"{'='*56}\n")
         raise SystemExit(0)
+
     target = TEST_DISTANCES_MM[test_index]
 
     # Prompt user
     print(f"\nTest {test_index + 1}/{len(TEST_DISTANCES_MM)}: "
           f"Place flat target at {target}mm from sensor.")
+
     print(f"Press Enter when ready...")
     input()
 

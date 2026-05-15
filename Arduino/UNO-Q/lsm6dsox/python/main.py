@@ -13,6 +13,7 @@ def loop():
         print("Gyro Y: " + gy + " rad/s")
         print("Gyro Z: " + gz + " rad/s")
         print("Temp: " + temp + " C")
+
     time.sleep(2)
 
 App.run(user_loop=loop)

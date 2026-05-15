@@ -7,6 +7,7 @@ def parse_click(click):
         return "Single tap!"
     elif click == "double":
         return "Double tap!"
+
     return None
 
 def loop():
@@ -19,13 +20,16 @@ def loop():
         print(f"Accel X: {float(x):.4f} m/s²")
         print(f"Accel Y: {float(y):.4f} m/s²")
         print(f"Accel Z: {float(z):.4f} m/s²")
+
     if click_data:
         tap = parse_click(click_data)
 
         if tap:
             print(f"Tap: {tap}")
+
     if freefall == "true":
         print("FREE FALL DETECTED!")
+
     time.sleep(0.1)
 
 App.run(user_loop=loop)

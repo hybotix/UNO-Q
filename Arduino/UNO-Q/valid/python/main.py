@@ -11,6 +11,7 @@ Procedure:
   4. Validates center 2x2 zones against expected distance ± TOLERANCE_PCT%
   5. Reports pass/fail with statistics
   6. Repeat for additional distances or quit
+
 Usage: Place a flat target (e.g. book, board) perpendicular to the
 sensor at the prompted distance. Hold steady during sampling.
 """
@@ -28,6 +29,7 @@ def confidence(status: bool, signal: int, sigma: int) -> float:
         sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
         sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
         return min((sig_score * 0.6 + sma_score * 0.4) * 99.99, 99.99)
+
     return 0.0
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -36,6 +38,7 @@ TOLERANCE_PCT = 10.0     # acceptable error ±%
 CENTER_ZONES  = [        # 8x8 zone indices for center 2x2
     (3, 3), (3, 4),
     (4, 3), (4, 4),
+
 ]
 
 # ── State ─────────────────────────────────────────────────────────────────────
@@ -56,6 +59,7 @@ def center_values(dist: list, stat: list) -> list:
     for r, c in CENTER_ZONES:
         if stat[r][c]:
             vals.append(dist[r][c])
+
     return vals
 
 def validate(expected: int, vals: list) -> dict:
@@ -75,7 +79,9 @@ def validate(expected: int, vals: list) -> dict:
             "error_mm": error,
             "error_pct": pct,
             "n":        len(vals),
+
         }
+
     return {"pass": False, "reason": "no valid center zones"}
 
 def print_result(r: dict):
@@ -97,6 +103,7 @@ def print_summary():
         status = "PASS ✓" if r["pass"] else "FAIL ✗"
         print(f"  {r['expected']:5d} mm — {status}  "
               f"(mean {r['mean']:.1f} mm, ±{r['error_pct']:.1f}%)")
+
     passed = sum(1 for r in results if r["pass"])
     print("─" * 40)
     print(f"  {passed}/{len(results)} tests passed")
@@ -115,10 +122,12 @@ def loop():
             print(f"ERROR: {e}")
             time.sleep(2.0)
             return
+
         if result != "ready":
             print(f"ERROR: Sensor init failed — {result}")
             time.sleep(5.0)
             return
+
         print("Sensor ready.\n")
         phase = "prompt"
         return
@@ -128,10 +137,12 @@ def loop():
         print("─" * 40)
         dist_str = input(
             "Enter target distance in mm (or 'done' to finish): "
+
         ).strip()
         if dist_str.lower() in ("done", "q", "quit", ""):
             print_summary()
             raise SystemExit(0)
+
         try:
             expected_mm = int(dist_str)
             if expected_mm <= 0:
@@ -139,6 +150,7 @@ def loop():
         except ValueError:
             print("  Please enter a positive integer distance in mm.")
             return
+
         print(f"\nPlace flat target at {expected_mm} mm, perpendicular to sensor.")
         input("  Press Enter when ready...")
         print(f"  Collecting {SAMPLE_COUNT} frames...")
@@ -157,9 +169,11 @@ def loop():
             print(f"  WARNING: {e}")
             time.sleep(0.5)
             return
+
         if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
             time.sleep(0.1)
             return
+
         dist   = parse_matrix(dist_raw)
         stat   = parse_status(stat_raw)
         signal = parse_matrix(signal_raw)
@@ -167,12 +181,14 @@ def loop():
         vals   = center_values(dist, stat)
         confs  = [confidence(stat[r][c], signal[r][c], sigma[r][c])
                   for r, c in CENTER_ZONES if stat[r][c]]
+
         if vals:
             samples.extend(vals)
             mean_conf = sum(confs) / len(confs) if confs else 0.0
             print(f"  Frame {len(samples) // len(CENTER_ZONES):2d}/{SAMPLE_COUNT}  "
                   f"center: {[f'{v}mm' for v in vals]}  "
                   f"conf: {mean_conf:.2f}%")
+
         time.sleep(0.1)
 
         if len(samples) >= SAMPLE_COUNT * len(CENTER_ZONES):
@@ -180,6 +196,7 @@ def loop():
             print_result(r)
             results.append(r)
             phase = "prompt"
+
         return
 
 App.run(user_loop=loop)

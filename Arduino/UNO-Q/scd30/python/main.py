@@ -9,6 +9,7 @@ def loop():
         print("CO2: " + co2 + " ppm")
         print("Temp: " + temp + " C")
         print("Humidity: " + humidity + " %")
+
     time.sleep(2)
 
 App.run(user_loop=loop)

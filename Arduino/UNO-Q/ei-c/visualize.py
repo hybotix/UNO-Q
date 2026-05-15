@@ -9,24 +9,30 @@ perspective (columns flipped for display only — raw data never touched).
 
   - Empty label   → prompt for label
   - Existing label → show it, ask to keep (Enter) or type a new one
+
 Writes a NEW output file every run — input file is NEVER modified.
 Output: <input_basename>_labeled_<TIMESTAMP>.csv
 
 Usage:
     python3 visualize.py <csv_file>
+
 Controls:
     Type label + Enter    — apply label and advance to next frame
     Enter (no input)      — keep existing label and advance
     S + Enter             — skip this frame (written as-is to output)
     Q + Enter             — quit and save all progress to output file
+
 Valid labels (max 10 characters):
     UP, DOWN, LEFT, RIGHT, CENTER
     (or any custom label up to 10 characters)
+
 Display:
     Columns are flipped (np.fliplr) so you see the sensor's forward view.
     Raw distance data written to output is NEVER modified.
+
 Dependencies:
     pip3 install matplotlib numpy pandas
+
 """
 
 import sys
@@ -47,6 +53,7 @@ VMAX          = 4000   # mm
 if len(sys.argv) < 2:
     print("Usage: python3 visualize.py <csv_file>")
     sys.exit(1)
+
 input_path = sys.argv[1]
 
 if os.path.exists(input_path):
@@ -73,8 +80,10 @@ missing   = [c for c in dist_cols if c not in df.columns]
 if missing:
     print(f"ERROR: Missing columns: {missing[:5]}...")
     sys.exit(1)
+
 if "label" not in df.columns:
     df["label"] = ""
+
 n_frames      = len(df)
 already_labeled = df["label"].apply(lambda x: str(x).strip() not in ("", "nan")).sum()
 
@@ -118,11 +127,13 @@ def draw_frame(idx, current_label):
 
     ax.imshow(frame_display, cmap="RdYlGn_r", vmin=VMIN, vmax=VMAX,
               interpolation="nearest")
+
     ax.set_title(
         f"Frame {idx + 1} / {n_frames}    {label_str}\n"
         f"Labeled: {labeled_count}  Changed: {changed_count}  "
         f"Skipped: {skipped_count}  Written: {written_count}",
         fontsize=11, fontweight="bold"
+
     )
     ax.set_xlabel("← Robot RIGHT          Robot LEFT →  (display flipped)")
     ax.set_ylabel("Row (↓ robot down)")
@@ -138,6 +149,7 @@ def draw_frame(idx, current_label):
             color = "white" if val > VMAX * 0.6 else "black"
             ax.text(c, r, str(val), ha="center", va="center",
                     fontsize=8, color=color)
+
     fig.canvas.draw()
     fig.canvas.flush_events()
 
@@ -168,6 +180,7 @@ for idx in range(n_frames):
         pass
     else:
         current_label = ""
+
     draw_frame(idx, current_label)
 
     if has_label:
@@ -176,6 +189,7 @@ for idx in range(n_frames):
     else:
         prompt = (f"Frame {idx + 1}/{n_frames} "
                   f"[unlabeled] — Label, S=skip, Q=quit: ")
+
     while True:
         try:
             response = input(prompt).strip().upper()
@@ -183,6 +197,7 @@ for idx in range(n_frames):
             print("\nInterrupted — saving progress.")
             finish("interrupted")
             sys.exit(0)
+
         if response == "Q":
             finish("saved")
             sys.exit(0)
@@ -210,6 +225,7 @@ for idx in range(n_frames):
             else:
                 labeled_count += 1
                 print(f"  Labeled [{response}].")
+
             break
 
 # ── All frames processed ───────────────────────────────────────────────────────

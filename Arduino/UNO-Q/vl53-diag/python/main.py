@@ -17,6 +17,7 @@ def loop():
         else:
             result = Bridge.call("get_diag")
             print("VL53L5CX status: " + result)
+
         time.sleep(2.0)
     except Exception as e:
         print("Waiting... (" + str(e) + ")")

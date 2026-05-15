@@ -19,6 +19,7 @@ def loop():
     else:
         time.sleep(5)
         started = True
+
     scd_data = Bridge.call("get_scd30_data")
 
     if scd_data and scd_data != "0,0,0":

@@ -27,6 +27,7 @@ def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
     if round(value, decimals) == int(value):
         return str(int(value))
+
     return f"{value:.{decimals}f}"
 
 def calibrate():
@@ -38,18 +39,21 @@ def calibrate():
     if os.path.exists(CALIBRATION_FILE):
         print("SCD30: calibration file found — skipping calibration")
         return
+
     print("SCD30: calibrating temperature offset using SHT45 reference...")
     cal_msg = " Calibrating SCD-30... "
 
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", cal_msg)
         time.sleep(scroll_duration(cal_msg))
+
     result = Bridge.call("calibrate_scd30")
     print(f"SCD30: calibration result: {result}")
 
     if result and result.startswith("offset:"):
         with open(CALIBRATION_FILE, "w") as f:
             f.write(result)
+
         print(f"SCD30: calibration complete — {result}")
     elif result == "skipped":
         print("SCD30: offset out of bounds — calibration skipped")
@@ -63,6 +67,7 @@ def parse_as7343(data):
     Channels: F1(405nm), F2(425nm), F3(450nm), F4(475nm), F5(515nm),
               F6(555nm), F7(590nm), F8(630nm), F9(680nm), F10(910nm),
               F11(940nm), F12(1000nm), CLEAR, NIR
+
     """
     if data and data != "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
         values = [int(v) for v in data.split(",")]
@@ -83,7 +88,9 @@ def parse_as7343(data):
                 "F12_1000nm": values[11],
                 "CLEAR":      values[12],
                 "NIR":        values[13],
+
             }
+
     return None
 
 def scroll_as7343(spectral):
@@ -137,7 +144,9 @@ def parse_apds9999(data):
                 "g":         int(values[3]),
                 "b":         int(values[4]),
                 "ir":        int(values[5]),
+
             }
+
     return None
 
 def scroll_apds9999(apds):
@@ -147,6 +156,7 @@ def scroll_apds9999(apds):
     """
     if apds is None:
         return
+
     proximity = apds["proximity"]
     lux       = apds["lux"]
     r         = apds["r"]
@@ -174,7 +184,9 @@ def parse_sgp41(data):
             return {
                 "voc_raw": int(values[0]),
                 "nox_raw": int(values[1]),
+
             }
+
     return None
 
 def scroll_sgp41(sgp):
@@ -184,6 +196,7 @@ def scroll_sgp41(sgp):
     """
     if sgp is None:
         return
+
     voc = sgp["voc_raw"]
     nox = sgp["nox_raw"]
     print(f"VOC:{voc} NOx:{nox}")
@@ -207,8 +220,11 @@ def loop():
 
             if scd_check and scd_check != "0,0,0":
                 break
+
             time.sleep(1)
+
         started = True
+
     scd_data  = Bridge.call("get_scd30_data")
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno055_data")
@@ -228,10 +244,12 @@ def loop():
 
     if scd_data and scd_data != "0,0,0":
         co2 = round(float(scd_data.split(",")[0]))
+
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
         temp_c   = float(parts[0])
         humidity = float(parts[1])
+
     if bno_data:
         values  = bno_data.split(",")
         heading = float(values[0])

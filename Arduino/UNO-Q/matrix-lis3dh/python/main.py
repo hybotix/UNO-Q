@@ -17,6 +17,7 @@ def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
     if round(value, decimals) == int(value):
         return str(int(value))
+
     return f"{value:.{decimals}f}"
 
 def tilt_description(x, y, z):
@@ -41,6 +42,7 @@ def loop():
     else:
         time.sleep(5)
         started = True
+
     accel_data = Bridge.call("get_lis3dh_data")
     click_data = Bridge.call("get_lis3dh_click")
     freefall   = Bridge.call("get_lis3dh_freefall")
@@ -63,6 +65,7 @@ def loop():
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
+
         return
 
     # Tap detection
@@ -73,6 +76,7 @@ def loop():
         else:
             print("Single tap!")
             msg = " Tap! "
+
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
