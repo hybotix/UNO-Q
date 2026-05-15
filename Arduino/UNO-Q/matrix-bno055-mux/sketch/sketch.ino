@@ -7,7 +7,7 @@
  * messages, and sends them back to the MCU for display.
  *
  * Bridge functions exposed to Python:
- *   get_scd30_data()              - Read SCD30: returns "co2,temp_c,humidity"
+ *   get_scd41_data()              - Read SCD41: returns "co2,temp_c,humidity"
  *   get_sht45_data()              - Read SHT45: returns "temp_c,humidity"
  *   get_bno055_data()             - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()             - Read AS7343: returns 14 spectral channel counts CSV
@@ -21,7 +21,6 @@
  *   get_mux2_channel_data(ch)     - Read one mux2 channel
  *   set_mux1_channel(ch,active)   - Enable/disable a mux1 channel
  *   set_mux2_channel(ch,active)   - Enable/disable a mux2 channel
- *   calibrate_scd30()             - Calibrate SCD30 temp offset using SHT45
  *   set_matrix_msg(msg)           - Set scroll message
  */
 
@@ -33,7 +32,7 @@
 #define MUX1_CH_VL53L1X_RIGHT 4
 #define MUX1_NUM_CHANNELS     5
 #define MUX2_ADDR             0x71
-#define MUX2_CH_SCD30         0
+#define MUX2_CH_SCD41         0
 #define MUX2_CH_SHT45         1
 #define MUX2_CH_SGP41         2
 #define MUX2_CH_BME688        3
@@ -49,7 +48,7 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
-#include <Adafruit_SCD30.h>
+#include <Adafruit_SCD4x.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 #include <Adafruit_AS7343.h>
@@ -74,7 +73,7 @@ MuxChannel mux1_channels[MUX1_NUM_CHANNELS] = {
 };
 
 MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
-    { MUX2_CH_SCD30,    "SCD30",    false },
+    { MUX2_CH_SCD41,    "SCD41",    false },
     { MUX2_CH_SHT45,    "SHT45",    false },
     { MUX2_CH_SGP41,    "SGP41",    false },
     { MUX2_CH_BME688,   "BME688",   false },
@@ -85,7 +84,7 @@ MuxChannel mux2_channels[MUX2_NUM_CHANNELS] = {
 };
 
 Arduino_LED_Matrix matrix;
-Adafruit_SCD30     scd30;
+Adafruit_SCD4x     scd41;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 Adafruit_AS7343    as7343;
@@ -127,13 +126,16 @@ void scroll_tick() {
     }
 }
 
-String get_scd30_data() {
-    mux2.setPort(MUX2_CH_SCD30);
+String get_scd41_data() {
+    uint16_t co2;
+    float    temperature;
+    float    humidity;
 
-    if (scd30.dataReady()) {
-        scd30.read();
+    mux2.setPort(MUX2_CH_SCD41);
+
+    if (scd41.readMeasurement(co2, temperature, humidity)) {
         mux2.setPort(255);
-        return String(scd30.CO2) + "," + String(scd30.temperature) + "," + String(scd30.relative_humidity);
+        return String(co2) + "," + String(temperature) + "," + String(humidity);
     }
 
     mux2.setPort(255);
@@ -284,48 +286,6 @@ void set_matrix_msg(String msg) {
     }
 }
 
-String calibrate_scd30() {
-    float scd30_temp_sum = 0;
-    float sht45_temp_sum = 0;
-    int   samples        = 0;
-    float scd30_avg;
-    float sht45_avg;
-    float offset;
-
-    while (samples < 5) {
-        mux2.setPort(MUX2_CH_SCD30);
-
-        while (!scd30.dataReady()) {
-            delay(100);
-        }
-
-        scd30.read();
-
-        mux2.setPort(MUX2_CH_SHT45);
-        sensors_event_t humidity_event, temp_event;
-        sht45.getEvent(&humidity_event, &temp_event);
-        mux2.setPort(255);
-
-        scd30_temp_sum += scd30.temperature;
-        sht45_temp_sum += temp_event.temperature;
-        samples++;
-        delay(500);
-    }
-
-    scd30_avg = scd30_temp_sum / samples;
-    sht45_avg = sht45_temp_sum / samples;
-    offset    = scd30_avg - sht45_avg;
-
-    if (offset > 0.5 && offset < 20.0) {
-        mux2.setPort(MUX2_CH_SCD30);
-        scd30.setTemperatureOffset(offset);
-        mux2.setPort(255);
-        return "offset:" + String(offset, 2);
-    }
-
-    return "skipped";
-}
-
 String get_as7343_data() {
     uint16_t readings[14];
     String   result = "";
@@ -373,11 +333,10 @@ void setup() {
     mux1.begin(MUX1_ADDR, Wire1);
     mux2.begin(MUX2_ADDR, Wire1);
 
-    mux2.setPort(MUX2_CH_SCD30);
-
-    while (!scd30.begin(0x61, &Wire1)) {
-        delay(100);
-    }
+    mux2.setPort(MUX2_CH_SCD41);
+    scd41.begin(&Wire1);
+    scd41.startPeriodicMeasurement();
+    mux2.setPort(255);
 
     mux2.setPort(MUX2_CH_BNO055);
 
@@ -391,7 +350,7 @@ void setup() {
     sht45.begin(&Wire1);
     mux2.setPort(255);
 
-    Bridge.provide("get_scd30_data",          get_scd30_data);
+    Bridge.provide("get_scd41_data",          get_scd41_data);
     Bridge.provide("get_sht45_data",          get_sht45_data);
     Bridge.provide("get_bno055_data",         get_bno055_data);
     Bridge.provide("get_as7343_data",         get_as7343_data);
@@ -405,7 +364,6 @@ void setup() {
     Bridge.provide("get_mux2_channel_data",   get_mux2_channel_data);
     Bridge.provide("set_mux1_channel",        set_mux1_channel);
     Bridge.provide("set_mux2_channel",        set_mux2_channel);
-    Bridge.provide("calibrate_scd30",         calibrate_scd30);
     Bridge.provide("set_matrix_msg",          set_matrix_msg);
     update_scroll_metrics();
 }

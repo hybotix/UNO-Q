@@ -1,15 +1,10 @@
 from arduino.app_utils import *
 import time
-import os
 
 # Scroll timing constants — must match sketch
 PIXELS_PER_CHAR   = 6
 MS_PER_PIXEL      = 125
 SCROLLING_ENABLED = True  # Set to False to disable matrix scrolling in production
-
-# Calibration flag file — lives in $HOME on the UNO Q
-# $HOME is bind-mounted into the container by the start command
-CALIBRATION_FILE = os.path.expanduser("~/.scd30-calibrated")
 
 started = False
 
@@ -28,36 +23,6 @@ def fmt(value, decimals=1):
     if round(value, decimals) == int(value):
         return str(int(value))
     return f"{value:.{decimals}f}"
-
-def calibrate():
-    """
-    Calibrate SCD30 temperature offset using SHT45 as reference.
-    Only runs if ~/.scd30-calibrated does not exist.
-    Creates the flag file on success to prevent future recalibration.
-    """
-    if os.path.exists(CALIBRATION_FILE):
-        print("SCD30: calibration file found — skipping calibration")
-        return
-
-    print("SCD30: calibrating temperature offset using SHT45 reference...")
-    cal_msg = " Calibrating SCD-30... "
-
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", cal_msg)
-        time.sleep(scroll_duration(cal_msg))
-
-    result = Bridge.call("calibrate_scd30")
-    print(f"SCD30: calibration result: {result}")
-
-    if result and result.startswith("offset:"):
-        with open(CALIBRATION_FILE, "w") as f:
-            f.write(result)
-
-        print(f"SCD30: calibration complete — {result}")
-    elif result == "skipped":
-        print("SCD30: offset out of bounds — calibration skipped")
-    else:
-        print("SCD30: calibration failed")
 
 def parse_as7343(data):
     """
@@ -210,19 +175,9 @@ def loop():
 
     if not started:
         time.sleep(5)
-        calibrate()
-        # Wait for valid SCD30 data before starting scroll
-        while True:
-            scd_check = Bridge.call("get_scd30_data")
-
-            if scd_check and scd_check != "0,0,0":
-                break
-
-            time.sleep(1)
-
         started = True
 
-    scd_data  = Bridge.call("get_scd30_data")
+    scd_data  = Bridge.call("get_scd41_data")
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno055_data")
     # as7343_data   = Bridge.call("get_as7343_data")    # Uncomment when AS7343 connected
@@ -240,7 +195,10 @@ def loop():
     sgp      = None
 
     if scd_data and scd_data != "0,0,0":
-        co2 = round(float(scd_data.split(",")[0]))
+        parts    = scd_data.split(",")
+        co2      = round(float(parts[0]))
+        temp_c   = float(parts[1])
+        humidity = float(parts[2])
 
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
