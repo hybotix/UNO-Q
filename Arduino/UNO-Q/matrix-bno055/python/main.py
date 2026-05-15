@@ -1,15 +1,10 @@
 from arduino.app_utils import *
 import time
-import os
 
 # Scroll timing constants — must match sketch
 PIXELS_PER_CHAR   = 6
 MS_PER_PIXEL      = 125
-SCROLLING_ENABLED = True  # Set to False to disable matrix scrolling in production
-
-# Calibration flag file — lives in $HOME on the UNO Q
-# $HOME is bind-mounted into the container by the start command
-CALIBRATION_FILE = os.path.expanduser("~/.scd30-calibrated")
+SCROLLING_ENABLED = True
 
 started = False
 
@@ -29,36 +24,6 @@ def fmt(value, decimals=1):
         return str(int(value))
     return f"{value:.{decimals}f}"
 
-def calibrate():
-    """
-    Calibrate SCD30 temperature offset using SHT45 as reference.
-    Only runs if ~/.scd30-calibrated does not exist.
-    Creates the flag file on success to prevent future recalibration.
-    """
-    if os.path.exists(CALIBRATION_FILE):
-        print("SCD30: calibration file found — skipping calibration")
-        return
-
-    print("SCD30: calibrating temperature offset using SHT45 reference...")
-    cal_msg = " Calibrating SCD-30... "
-
-    if SCROLLING_ENABLED:
-        Bridge.call("set_matrix_msg", cal_msg)
-        time.sleep(scroll_duration(cal_msg))
-
-    result = Bridge.call("calibrate_scd30")
-    print(f"SCD30: calibration result: {result}")
-
-    if result and result.startswith("offset:"):
-        with open(CALIBRATION_FILE, "w") as f:
-            f.write(result)
-
-        print(f"SCD30: calibration complete — {result}")
-    elif result == "skipped":
-        print("SCD30: offset out of bounds — calibration skipped")
-    else:
-        print("SCD30: calibration failed")
-
 def parse_as7343(data):
     """
     Parse AS7343 14-channel spectral data.
@@ -66,7 +31,6 @@ def parse_as7343(data):
     Channels: F1(405nm), F2(425nm), F3(450nm), F4(475nm), F5(515nm),
               F6(555nm), F7(590nm), F8(630nm), F9(680nm), F10(910nm),
               F11(940nm), F12(1000nm), CLEAR, NIR
-
     """
     result = None
 
@@ -167,36 +131,31 @@ def scroll_apds9999(apds):
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
 
-def parse_sgp41(data):
+def parse_sgp40(data):
     """
-    Parse SGP41 VOC and NOx raw signals.
+    Parse SGP40 VOC raw signal.
     Returns dict or None if data unavailable.
-    Fields: voc_raw, nox_raw
-    Use Sensirion VOC/NOx algorithm for index conversion.
+    Fields: voc_raw
+    Use Sensirion VOC algorithm for index conversion.
     """
     result = None
 
-    if data and data != "0,0":
-        values = data.split(",")
-
-        if len(values) == 2:
-            result = {
-                "voc_raw": int(values[0]),
-                "nox_raw": int(values[1]),
-            }
+    if data and data != "0":
+        result = {
+            "voc_raw": int(data),
+        }
 
     return result
 
-def scroll_sgp41(sgp):
+def scroll_sgp40(sgp):
     """
-    Scroll SGP41 VOC and NOx raw signal data.
-    Call this from loop() when SGP41 is connected.
+    Scroll SGP40 VOC raw signal data.
+    Call this from loop() when SGP40 is connected.
     """
     if sgp:
         voc = sgp["voc_raw"]
-        nox = sgp["nox_raw"]
-        print(f"VOC:{voc} NOx:{nox}")
-        msg = f" VOC:{voc} NOx:{nox} "
+        print(f"VOC:{voc}")
+        msg = f" VOC:{voc} "
 
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
@@ -207,24 +166,14 @@ def loop():
 
     if not started:
         time.sleep(5)
-        calibrate()
-        # Wait for valid SCD30 data before starting scroll
-        while True:
-            scd_check = Bridge.call("get_scd30_data")
-
-            if scd_check and scd_check != "0,0,0":
-                break
-
-            time.sleep(1)
-
         started = True
 
-    scd_data  = Bridge.call("get_scd30_data")
+    scd_data  = Bridge.call("get_scd41_data")
     sht_data  = Bridge.call("get_sht45_data")
     bno_data  = Bridge.call("get_bno055_data")
     # as7343_data   = Bridge.call("get_as7343_data")    # Uncomment when AS7343 connected
     # apds9999_data = Bridge.call("get_apds9999_data")  # Uncomment when APDS9999 connected
-    # sgp41_data    = Bridge.call("get_sgp41_data")     # Uncomment when SGP41 connected
+    # sgp40_data    = Bridge.call("get_sgp40_data")     # Uncomment when SGP40 connected
 
     co2      = None
     temp_c   = None
@@ -237,7 +186,10 @@ def loop():
     sgp      = None
 
     if scd_data and scd_data != "0,0,0":
-        co2 = round(float(scd_data.split(",")[0]))
+        parts    = scd_data.split(",")
+        co2      = round(float(parts[0]))
+        temp_c   = float(parts[1])
+        humidity = float(parts[2])
 
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
@@ -252,15 +204,15 @@ def loop():
 
     # spectral = parse_as7343(as7343_data)      # Uncomment when AS7343 connected
     # apds     = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected
-    # sgp      = parse_sgp41(sgp41_data)        # Uncomment when SGP41 connected
+    # sgp      = parse_sgp40(sgp40_data)        # Uncomment when SGP40 connected
 
     # Message 1 — environmental data
     # Use *** for any unavailable readings — always display something
     if temp_c:
-        temp_f     = (temp_c * 9.0 / 5.0) + 32.0
-        temp_str   = f"{fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C)"
+        temp_f   = (temp_c * 9.0 / 5.0) + 32.0
+        temp_str = f"{fmt(temp_f)}\u00b0F({fmt(temp_c)}\u00b0C)"
     else:
-        temp_str   = "***\u00b0F(***\u00b0C)"
+        temp_str = "***\u00b0F(***\u00b0C)"
 
     humidity_str = f"{fmt(humidity)}%" if humidity else "***%"
     co2_str      = f"{co2:.0f} ppm"   if co2      else "*** ppm"
@@ -297,7 +249,7 @@ def loop():
     # Message 4 — APDS9999 proximity/color data (uncomment when connected)
     # scroll_apds9999(apds)
 
-    # Message 5 — SGP41 VOC/NOx data (uncomment when connected)
-    # scroll_sgp41(sgp)
+    # Message 5 — SGP40 VOC data (uncomment when connected)
+    # scroll_sgp40(sgp)
 
 App.run(user_loop=loop)

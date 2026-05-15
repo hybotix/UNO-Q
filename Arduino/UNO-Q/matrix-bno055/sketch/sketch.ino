@@ -1,5 +1,5 @@
 /**
- * Matrix BNO Sketch
+ * Matrix BNO055 Sketch
  * Hybrid RobotiX
  *
  * MCU provides sensor data and accepts display content from Python.
@@ -7,17 +7,16 @@
  * messages, and sends them back to the MCU for display.
  *
  * Bridge functions exposed to Python:
- *   get_scd30_data()              - Read SCD30: returns "co2,temp_c,humidity"
+ *   get_scd41_data()              - Read SCD41: returns "co2,temp_c,humidity"
  *   get_sht45_data()              - Read SHT45: returns "temp_c,humidity"
  *   get_bno055_data()             - Read BNO055: returns full 27-field CSV
  *   get_as7343_data()             - Read AS7343: returns 14 spectral channel counts CSV
  *   get_apds9999_data()           - Read APDS9999: returns "proximity,lux,r,g,b,ir"
- *   get_sgp41_data()              - Read SGP41: returns "voc_raw,nox_raw"
+ *   get_sgp40_data()              - Read SGP40: returns "voc_raw"
  *   get_mux_data()                - Read all active mux channels
  *   get_mux_channels()            - List all channels
  *   get_mux_channel_data(ch)      - Read one mux channel
  *   set_mux_channel(ch,active)    - Enable/disable a mux channel
- *   calibrate_scd30()             - Calibrate SCD30 temp offset using SHT45
  *   set_matrix_msg(msg)           - Set scroll message
  */
 
@@ -35,12 +34,12 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoGraphics.h>
-#include <Adafruit_SCD30.h>
+#include <Adafruit_SCD4x.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>
 #include <Adafruit_AS7343.h>
 #include <Adafruit_APDS9999.h>
-#include <Adafruit_SGP41.h>
+#include <Adafruit_SGP40.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
 
@@ -59,12 +58,12 @@ MuxChannel mux_channels[MUX_NUM_CHANNELS] = {
 };
 
 Arduino_LED_Matrix matrix;
-Adafruit_SCD30     scd30;
+Adafruit_SCD4x     scd41;
 Adafruit_BNO055    bno = Adafruit_BNO055(55, 0x28, &Wire1);
 Adafruit_SHT4x     sht45;
 Adafruit_AS7343    as7343;
 Adafruit_APDS9999  apds9999;
-Adafruit_SGP41     sgp41;
+Adafruit_SGP40     sgp40;
 
 static char          matrix_msg[64]  = " ... ";
 static int           scroll_x        = 12;
@@ -99,10 +98,13 @@ void scroll_tick() {
     }
 }
 
-String get_scd30_data() {
-    if (scd30.dataReady()) {
-        scd30.read();
-        return String(scd30.CO2) + "," + String(scd30.temperature) + "," + String(scd30.relative_humidity);
+String get_scd41_data() {
+    uint16_t co2;
+    float    temperature;
+    float    humidity;
+
+    if (scd41.readMeasurement(co2, temperature, humidity)) {
+        return String(co2) + "," + String(temperature) + "," + String(humidity);
     }
 
     return "0,0,0";
@@ -213,42 +215,6 @@ void set_matrix_msg(String msg) {
     }
 }
 
-String calibrate_scd30() {
-    float scd30_temp_sum = 0;
-    float sht45_temp_sum = 0;
-    int   samples        = 0;
-    float scd30_avg;
-    float sht45_avg;
-    float offset;
-
-    while (samples < 5) {
-        while (!scd30.dataReady()) {
-            delay(100);
-        }
-
-        scd30.read();
-
-        sensors_event_t humidity_event, temp_event;
-        sht45.getEvent(&humidity_event, &temp_event);
-
-        scd30_temp_sum += scd30.temperature;
-        sht45_temp_sum += temp_event.temperature;
-        samples++;
-        delay(500);
-    }
-
-    scd30_avg = scd30_temp_sum / samples;
-    sht45_avg = sht45_temp_sum / samples;
-    offset    = scd30_avg - sht45_avg;
-
-    if (offset > 0.5 && offset < 20.0) {
-        scd30.setTemperatureOffset(offset);
-        return "offset:" + String(offset, 2);
-    }
-
-    return "skipped";
-}
-
 String get_as7343_data() {
     uint16_t readings[14];
     String   result = "";
@@ -276,40 +242,39 @@ String get_apds9999_data() {
     return String(proximity) + "," + String(lux, 2) + "," + String(r) + "," + String(g) + "," + String(b) + "," + String(ir);
 }
 
-String get_sgp41_data() {
-    uint16_t voc_raw, nox_raw;
-    sgp41.measureRawSignals(&voc_raw, &nox_raw);
-    return String(voc_raw) + "," + String(nox_raw);
+String get_sgp40_data() {
+    uint16_t voc_raw = sgp40.measureRaw();
+    return String(voc_raw);
 }
 
 void setup() {
     matrix.begin();
     matrix.clear();
-    Bridge.begin();
 
-    while (!scd30.begin(0x61, &Wire1)) {
-        delay(100);
-    }
+    Wire1.begin();
 
-    while (!bno.begin()) {
-        delay(100);
-    }
+    scd41.begin(&Wire1);
+    scd41.startPeriodicMeasurement();
 
+    bno.begin();
     bno.setExtCrystalUse(true);
+
     sht45.begin(&Wire1);
 
-    Bridge.provide("get_scd30_data",         get_scd30_data);
-    Bridge.provide("get_sht45_data",         get_sht45_data);
-    Bridge.provide("get_bno055_data",        get_bno055_data);
-    Bridge.provide("get_as7343_data",        get_as7343_data);
-    Bridge.provide("get_apds9999_data",      get_apds9999_data);
-    Bridge.provide("get_sgp41_data",         get_sgp41_data);
-    Bridge.provide("get_mux_data",           get_mux_data);
-    Bridge.provide("get_mux_channels",       get_mux_channels);
-    Bridge.provide("get_mux_channel_data",   get_mux_channel_data);
-    Bridge.provide("set_mux_channel",        set_mux_channel);
-    Bridge.provide("calibrate_scd30",        calibrate_scd30);
-    Bridge.provide("set_matrix_msg",         set_matrix_msg);
+    Bridge.provide("get_scd41_data",       get_scd41_data);
+    Bridge.provide("get_sht45_data",       get_sht45_data);
+    Bridge.provide("get_bno055_data",      get_bno055_data);
+    Bridge.provide("get_as7343_data",      get_as7343_data);
+    Bridge.provide("get_apds9999_data",    get_apds9999_data);
+    Bridge.provide("get_sgp40_data",       get_sgp40_data);
+    Bridge.provide("get_mux_data",         get_mux_data);
+    Bridge.provide("get_mux_channels",     get_mux_channels);
+    Bridge.provide("get_mux_channel_data", get_mux_channel_data);
+    Bridge.provide("set_mux_channel",      set_mux_channel);
+    Bridge.provide("set_matrix_msg",       set_matrix_msg);
+
+    Bridge.begin();
+
     update_scroll_metrics();
 }
 
