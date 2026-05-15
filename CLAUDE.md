@@ -10,6 +10,7 @@ standards without exception.
 
 ## General Principles
 
+- NEVER make assumption on anything
 - **All sensors are equal.** There is no such thing as a primary sensor.
   Process every sensor independently. Never skip a loop iteration because one
   sensor is unavailable. Display `***` with the correct units for any reading
