@@ -9,6 +9,38 @@ All changes to UNO-Q apps, sketches, Python code, and documentation are recorded
 
 ## Unreleased
 
+### Coding Standards (CLAUDE.md)
+- Added rule: Do NOT make assumptions about ANYTHING
+- Added rule: Make all changes to repos first
+- All standards enforced across all 18 sketches and 19 Python files
+
+### Sensor Migration
+- **SCD30 → SCD41** — all apps migrated to `Sensirion I2C SCD4x` library
+  - `matrix-bno055`, `matrix-bno055-mux`, `hub5-bno055`, `matrix-app`, `scd30`
+  - `calibrate_scd30()` removed from all apps and sketches
+  - `CALIBRATION_FILE` removed from all Python files
+  - Startup calibration wait loop removed from all Python files
+- **SGP41 retained** — was incorrectly replaced with SGP40, restored
+
+### sketch.yaml Audit
+- `bridge-test` — removed `SparkFun VL53L5CX` (not in sketch)
+- `matrix-app` — removed `Adafruit BNO055`, `BusIO`, `Unified Sensor` (not in sketch)
+- `robot` — fixed version numbers: `BNO055 (1.6.3)`, `Unified Sensor (1.1.15)`
+- All apps — removed duplicate `Adafruit SGP41` entries
+- All apps — added version to `Sensirion I2C SCD4x (1.1.0)`
+- `scd30/scd41` — removed `Adafruit BusIO` and `Adafruit Unified Sensor` (not needed by Sensirion lib)
+- `sparkfun-vl53-test` — renamed to `sparkfun-vl53` in repo
+
+### Code Quality
+- Positive conditions first in all if/else blocks
+- No `if x: pass else:` patterns — use negative guard directly
+- No `is not None` / `is None` — use truthiness checks
+- Blank lines after if/for/while blocks
+- All sensors equal — display `***<unit>` for unavailable readings, never skip loop
+- `result = None` single-return pattern in all parse functions
+
+## Previous
+
 ### Documentation
 - Added `CLAUDE.md` — complete coding standards for all sketches and Python app files
   - No single-line if statements
