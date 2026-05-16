@@ -10,15 +10,21 @@ standards without exception.
 
 ## General Principles
 
-- NEVER make assumption on anything
+- Do NOT make assumptions about ANYTHING!
+
+- Make all changes repos first!
+
 - **All sensors are equal.** There is no such thing as a primary sensor.
   Process every sensor independently. Never skip a loop iteration because one
   sensor is unavailable. Display `***` with the correct units for any reading
   that is unavailable.
+
 - **Degrade gracefully.** Always display something meaningful. A missing
   reading is shown as `***<unit>` (e.g. `***°F`, `***%`, `*** ppm`).
+
 - **No silent failures.** Every error condition must be reported — print it,
   log it, or show it on the display. Never silently skip or swallow errors.
+
 - **All identifiers must be `snake_case`.** No `camelCase` anywhere — not in
   variable names, function names, or constants. Constants use `UPPER_SNAKE_CASE`.
 
@@ -36,6 +42,7 @@ def compass_point(heading):
     pass
 
 SCROLLING_ENABLED = True
+CALIBRATION_FILE  = "~/.scd30-calibrated"
 ```
 
 ```cpp
@@ -267,7 +274,7 @@ def fmt(value, decimals=1):
 ```python
 # CORRECT
 def loop():
-    result = Bridge.call("get_scd41_data")
+    result = Bridge.call("get_scd30_data")
 
     if result:
         co2, temp, humidity = result.split(",")
@@ -280,7 +287,7 @@ App.run(user_loop=loop)
 # WRONG
 def loop():
 
-    result = Bridge.call("get_scd41_data")
+    result = Bridge.call("get_scd30_data")
     if result:
 
         co2, temp, humidity = result.split(",")
