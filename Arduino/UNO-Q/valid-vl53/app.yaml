@@ -1,4 +1,4 @@
-name: VL53L5CX Validator
+name: valid-vl53
 icon: 🎯
 description: Validates VL53L5CX distance accuracy at 50, 100, 250, 500mm. All 64 zones evaluated, +/-50mm tolerance, 10 frames per point.
 profiles:
