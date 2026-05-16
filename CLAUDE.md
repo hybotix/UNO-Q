@@ -12,7 +12,7 @@ standards without exception.
 
 - Do NOT make assumptions about ANYTHING!
 
-- Make all changes repos first!
+- Make all changes to repos first!
 
 - **All sensors are equal.** There is no such thing as a primary sensor.
   Process every sensor independently. Never skip a loop iteration because one
