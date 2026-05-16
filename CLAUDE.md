@@ -10,6 +10,8 @@ standards without exception.
 
 ## General Principles
 
+- All changes must be recorded in CHANGELOG.md at the root of the repo
+
 - Do NOT make assumptions about ANYTHING!
 
 - Make all changes to repos first!
