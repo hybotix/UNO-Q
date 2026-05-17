@@ -20,34 +20,36 @@
 #include <Wire.h>
 #include <hybx_vl53l5cx.h>
 
-static String         diagResult  = "idle";
-static bool           beginCalled = false;
+static String         diag_result  = "idle";
+static bool           begin_called = false;
 static hybx_vl53l5cx  sensor;
 
 String get_diag() {
-    return diagResult;
+    return diag_result;
 }
 
 String begin_sensor() {
-    if (beginCalled) {
+
+    // Check if sensor begin has been called
+    if (begin_called) {
         return "already_started";
     }
 
-    beginCalled = true;
-    diagResult  = "uploading";
+    begin_called = true;
+    diag_result  = "uploading";
 
+    // Sensor initialized successfully
     if (sensor.begin()) {
-        diagResult = "pass:firmware_uploaded+ranging_started";
+        diag_result = "pass:firmware_uploaded+ranging_started";
     } else {
-        diagResult = "fail:step=" + String(hybx_last_error_step) + ":code=" + String(hybx_last_error);
+        diag_result = "fail:step=" + String(hybx_last_error_step) + ":code=" + String(hybx_last_error);
     }
 
-    return diagResult;
+    return diag_result;
 }
 
 void setup() {
     Wire1.begin();
-    Bridge.begin();
     Bridge.provide("get_diag",     get_diag);
     Bridge.provide("begin_sensor", begin_sensor);
 }

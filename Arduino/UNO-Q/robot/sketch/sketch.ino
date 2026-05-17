@@ -41,31 +41,36 @@ static const bool INVERT_M2 = false;
 static const bool INVERT_M3 = false;
 static const bool INVERT_M4 = false;
 
-static uint8_t driveSpeed = 128;
-static uint8_t turnSpeed  = 80;
+static uint8_t drive_speed = 128;
+static uint8_t turn_speed  = 80;
 
 static Adafruit_MotorShield shield;
-static Adafruit_DCMotor    *motorFL = nullptr;
-static Adafruit_DCMotor    *motorFR = nullptr;
-static Adafruit_DCMotor    *motorRL = nullptr;
-static Adafruit_DCMotor    *motorRR = nullptr;
+static Adafruit_DCMotor    *motor_fl = nullptr;
+static Adafruit_DCMotor    *motor_fr = nullptr;
+static Adafruit_DCMotor    *motor_rl = nullptr;
+static Adafruit_DCMotor    *motor_rr = nullptr;
 
 static hybx_vl53l5cx sensor;
-static uint8_t       currentResolution = 64;
-static bool          sensorBeginCalled = false;
-static bool          sensorInitFailed  = false;
-static bool          sensorInitDone    = false;
+static uint8_t       current_resolution = 64;
+static bool          sensor_begin_called = false;
+static bool          sensor_init_failed  = false;
+static bool          sensor_init_done    = false;
 
 static Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
-static bool            imuInitDone   = false;
-static bool            imuInitFailed = false;
+static bool            imu_init_done   = false;
+static bool            imu_init_failed = false;
 
 static uint8_t applyDirection(uint8_t dir, bool invert) {
+
+    // Apply motor direction inversion
     if (invert) {
+
+        // Invert direction
         if (dir == FORWARD) {
             return BACKWARD;
         }
 
+        // Invert direction
         if (dir == BACKWARD) {
             return FORWARD;
         }
@@ -79,52 +84,55 @@ static void setMotor(Adafruit_DCMotor *m, uint8_t dir, bool invert, uint8_t spee
     m->run(applyDirection(dir, invert));
 }
 
-static void stopAll() {
-    motorFL->run(RELEASE);
-    motorFR->run(RELEASE);
-    motorRL->run(RELEASE);
-    motorRR->run(RELEASE);
+static void stop_all() {
+    motor_fl->run(RELEASE);
+    motor_fr->run(RELEASE);
+    motor_rl->run(RELEASE);
+    motor_rr->run(RELEASE);
 }
 
 String drive(String command) {
-    if (motorFL == nullptr) {
+
+    // Motors not ready
+    if (motor_fl == nullptr) {
         return "error:motors_not_ready";
     }
 
     command.trim();
 
+    // Check condition
     if (command == "forward") {
-        setMotor(motorFL, FORWARD,  INVERT_M1, driveSpeed);
-        setMotor(motorFR, FORWARD,  INVERT_M2, driveSpeed);
-        setMotor(motorRL, FORWARD,  INVERT_M3, driveSpeed);
-        setMotor(motorRR, FORWARD,  INVERT_M4, driveSpeed);
+        setMotor(motor_fl, FORWARD,  INVERT_M1, drive_speed);
+        setMotor(motor_fr, FORWARD,  INVERT_M2, drive_speed);
+        setMotor(motor_rl, FORWARD,  INVERT_M3, drive_speed);
+        setMotor(motor_rr, FORWARD,  INVERT_M4, drive_speed);
     } else if (command == "reverse") {
-        setMotor(motorFL, BACKWARD, INVERT_M1, driveSpeed);
-        setMotor(motorFR, BACKWARD, INVERT_M2, driveSpeed);
-        setMotor(motorRL, BACKWARD, INVERT_M3, driveSpeed);
-        setMotor(motorRR, BACKWARD, INVERT_M4, driveSpeed);
+        setMotor(motor_fl, BACKWARD, INVERT_M1, drive_speed);
+        setMotor(motor_fr, BACKWARD, INVERT_M2, drive_speed);
+        setMotor(motor_rl, BACKWARD, INVERT_M3, drive_speed);
+        setMotor(motor_rr, BACKWARD, INVERT_M4, drive_speed);
     } else if (command == "left") {
-        setMotor(motorFL, BACKWARD, INVERT_M1, driveSpeed);
-        setMotor(motorFR, FORWARD,  INVERT_M2, driveSpeed);
-        setMotor(motorRL, FORWARD,  INVERT_M3, driveSpeed);
-        setMotor(motorRR, BACKWARD, INVERT_M4, driveSpeed);
+        setMotor(motor_fl, BACKWARD, INVERT_M1, drive_speed);
+        setMotor(motor_fr, FORWARD,  INVERT_M2, drive_speed);
+        setMotor(motor_rl, FORWARD,  INVERT_M3, drive_speed);
+        setMotor(motor_rr, BACKWARD, INVERT_M4, drive_speed);
     } else if (command == "right") {
-        setMotor(motorFL, FORWARD,  INVERT_M1, driveSpeed);
-        setMotor(motorFR, BACKWARD, INVERT_M2, driveSpeed);
-        setMotor(motorRL, BACKWARD, INVERT_M3, driveSpeed);
-        setMotor(motorRR, FORWARD,  INVERT_M4, driveSpeed);
+        setMotor(motor_fl, FORWARD,  INVERT_M1, drive_speed);
+        setMotor(motor_fr, BACKWARD, INVERT_M2, drive_speed);
+        setMotor(motor_rl, BACKWARD, INVERT_M3, drive_speed);
+        setMotor(motor_rr, FORWARD,  INVERT_M4, drive_speed);
     } else if (command == "rotate_cw") {
-        setMotor(motorFL, FORWARD,  INVERT_M1, turnSpeed);
-        setMotor(motorFR, BACKWARD, INVERT_M2, turnSpeed);
-        setMotor(motorRL, FORWARD,  INVERT_M3, turnSpeed);
-        setMotor(motorRR, BACKWARD, INVERT_M4, turnSpeed);
+        setMotor(motor_fl, FORWARD,  INVERT_M1, turn_speed);
+        setMotor(motor_fr, BACKWARD, INVERT_M2, turn_speed);
+        setMotor(motor_rl, FORWARD,  INVERT_M3, turn_speed);
+        setMotor(motor_rr, BACKWARD, INVERT_M4, turn_speed);
     } else if (command == "rotate_ccw") {
-        setMotor(motorFL, BACKWARD, INVERT_M1, turnSpeed);
-        setMotor(motorFR, FORWARD,  INVERT_M2, turnSpeed);
-        setMotor(motorRL, BACKWARD, INVERT_M3, turnSpeed);
-        setMotor(motorRR, FORWARD,  INVERT_M4, turnSpeed);
+        setMotor(motor_fl, BACKWARD, INVERT_M1, turn_speed);
+        setMotor(motor_fr, FORWARD,  INVERT_M2, turn_speed);
+        setMotor(motor_rl, BACKWARD, INVERT_M3, turn_speed);
+        setMotor(motor_rr, FORWARD,  INVERT_M4, turn_speed);
     } else if (command == "stop") {
-        stopAll();
+        stop_all();
     } else {
         return "error:unknown_command:" + command;
     }
@@ -135,31 +143,38 @@ String drive(String command) {
 String set_speed(String val) {
     int v = val.toInt();
 
+    // Validate speed range
     if (v < 0 || v > 255) {
         return "error:out_of_range";
     }
 
-    driveSpeed = (uint8_t)v;
+    drive_speed = (uint8_t)v;
     return "ok";
 }
 
 String set_turn_speed(String val) {
     int v = val.toInt();
 
+    // Validate speed range
     if (v < 0 || v > 255) {
         return "error:out_of_range";
     }
 
-    turnSpeed = (uint8_t)v;
+    turn_speed = (uint8_t)v;
     return "ok";
 }
 
 String get_sensor_status() {
-    if (sensorInitDone) {
-        if (sensorInitFailed) {
+
+    // Sensor initialization complete
+    if (sensor_init_done) {
+
+        // Initialization failed — report error
+        if (sensor_init_failed) {
             return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
         }
 
+        // Check for sensor error
         if (hybx_last_error_step != 0) {
             return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
         }
@@ -167,21 +182,24 @@ String get_sensor_status() {
         return "ready";
     }
 
-    return sensorBeginCalled ? "uploading" : "idle";
+    return sensor_begin_called ? "uploading" : "idle";
 }
 
 String begin_sensor() {
-    if (sensorBeginCalled) {
+
+    // Check if sensor begin has been called
+    if (sensor_begin_called) {
         return "already_started";
     }
 
-    sensorBeginCalled = true;
+    sensor_begin_called = true;
 
+    // Sensor initialized successfully
     if (sensor.begin()) {
-        sensorInitDone = true;
+        sensor_init_done = true;
     } else {
-        sensorInitFailed = true;
-        sensorInitDone   = true;
+        sensor_init_failed = true;
+        sensor_init_done   = true;
     }
     return get_sensor_status();
 }
@@ -189,21 +207,25 @@ String begin_sensor() {
 String set_resolution(String resolution) {
     uint8_t requested;
 
-    if (sensorInitDone && !sensorInitFailed) {
+    // Sensor initialization complete
+    if (sensor_init_done && !sensor_init_failed) {
         requested = (resolution == "4x4") ? 16 : 64;
 
-        if (requested != currentResolution) {
+        // Resolution changed — update sensor
+        if (requested != current_resolution) {
+
+            // Set requested resolution
             if (resolution == "4x4") {
                 sensor.setResolution(16);
-                currentResolution = 16;
+                current_resolution = 16;
             } else if (resolution == "8x8") {
                 sensor.setResolution(64);
-                currentResolution = 64;
+                current_resolution = 64;
             }
         }
     }
 
-    return (currentResolution == 16) ? "4x4" : "8x8";
+    return (current_resolution == 16) ? "4x4" : "8x8";
 }
 
 String get_distance_data() {
@@ -212,18 +234,24 @@ String get_distance_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-        width = (currentResolution == 16) ? 4 : 8;
+        width = (current_resolution == 16) ? 4 : 8;
 
+        // Add separator between values
         for (row = 0; row < width; row++) {
+
+            // Add separator between values
             for (col = 0; col < width; col++) {
                 result += String(hybx_distance_mm[row][col]);
 
+                // Add separator between values
                 if (col < width - 1) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < width - 1) {
                 result += ";";
             }
@@ -232,6 +260,7 @@ String get_distance_data() {
         return result;
     }
 
+    // Check for sensor error
     if (hybx_last_error_step != 0) {
         return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
     }
@@ -246,19 +275,25 @@ String get_target_status() {
     uint8_t st;
     String  result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-        width = (currentResolution == 16) ? 4 : 8;
+        width = (current_resolution == 16) ? 4 : 8;
 
+        // Add separator between values
         for (row = 0; row < width; row++) {
+
+            // Add separator between values
             for (col = 0; col < width; col++) {
                 st = hybx_target_status[row][col];
                 result += (st == 5 || st == 9) ? "T" : "F";
 
+                // Add separator between values
                 if (col < width - 1) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < width - 1) {
                 result += ";";
             }
@@ -275,16 +310,23 @@ String get_signal_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
+
+        // Add separator between values
         for (row = 0; row < 8; row++) {
+
+            // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_signal_per_spad[row][col]);
 
+                // Add separator between values
                 if (col < 7) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < 7) {
                 result += ";";
             }
@@ -301,16 +343,23 @@ String get_sigma_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
+
+        // Add separator between values
         for (row = 0; row < 8; row++) {
+
+            // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_range_sigma_mm[row][col]);
 
+                // Add separator between values
                 if (col < 7) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < 7) {
                 result += ";";
             }
@@ -323,22 +372,27 @@ String get_sigma_data() {
 }
 
 String begin_imu() {
-    if (imuInitDone) {
-        return imuInitFailed ? "init_failed" : "ready";
+
+    // Sensor initialization complete
+    if (imu_init_done) {
+        return imu_init_failed ? "init_failed" : "ready";
     }
 
+    // BNO055 initialized successfully
     if (bno.begin()) {
-        imuInitDone = true;
+        imu_init_done = true;
     } else {
-        imuInitFailed = true;
-        imuInitDone   = true;
+        imu_init_failed = true;
+        imu_init_done   = true;
     }
-    return imuInitFailed ? "init_failed" : "ready";
+    return imu_init_failed ? "init_failed" : "ready";
 }
 
 String get_imu_status() {
-    if (imuInitDone) {
-        return imuInitFailed ? "init_failed" : "ready";
+
+    // Sensor initialization complete
+    if (imu_init_done) {
+        return imu_init_failed ? "init_failed" : "ready";
     }
 
     return "idle";
@@ -347,7 +401,8 @@ String get_imu_status() {
 String get_heading() {
     sensors_event_t event;
 
-    if (imuInitDone && !imuInitFailed) {
+    // Sensor initialization complete
+    if (imu_init_done && !imu_init_failed) {
         bno.getEvent(&event, Adafruit_BNO055::VECTOR_EULER);
         return String(event.orientation.x, 2);
     }
@@ -358,12 +413,11 @@ String get_heading() {
 void setup() {
     Wire1.begin();
     shield.begin();
-    motorFL = shield.getMotor(1);
-    motorFR = shield.getMotor(2);
-    motorRL = shield.getMotor(3);
-    motorRR = shield.getMotor(4);
-    stopAll();
-    Bridge.begin();
+    motor_fl = shield.getMotor(1);
+    motor_fr = shield.getMotor(2);
+    motor_rl = shield.getMotor(3);
+    motor_rr = shield.getMotor(4);
+    stop_all();
     Bridge.provide("begin_sensor",      begin_sensor);
     Bridge.provide("get_sensor_status", get_sensor_status);
     Bridge.provide("set_resolution",    set_resolution);
@@ -380,7 +434,9 @@ void setup() {
 }
 
 void loop() {
-    if (sensorInitDone && !sensorInitFailed) {
+
+    // Sensor initialization complete
+    if (sensor_init_done && !sensor_init_failed) {
         sensor.poll();
     }
 }

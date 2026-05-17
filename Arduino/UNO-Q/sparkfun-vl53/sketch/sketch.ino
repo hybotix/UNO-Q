@@ -12,23 +12,22 @@
 
 SparkFun_VL53L5CX imager;
 
-static String initResult = "initializing";
+static String init_result = "initializing";
 
 String get_status() {
-    return initResult;
+    return init_result;
 }
 
 void setup() {
     Wire1.begin();
     delay(1000);
 
+    // Sensor initialization failed
     if (imager.begin(0x29, Wire1)) {
-        initResult = "sparkfun_init_ok";
+        init_result = "sparkfun_init_ok";
     } else {
-        initResult = "sparkfun_init_failed";
+        init_result = "sparkfun_init_failed";
     }
-
-    Bridge.begin();
     Bridge.provide("get_status", get_status);
 }
 

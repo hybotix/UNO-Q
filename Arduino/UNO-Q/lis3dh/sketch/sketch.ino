@@ -40,14 +40,17 @@ String get_lis3dh_data() {
 String get_lis3dh_click() {
     uint8_t click = lis3dh.getClick();
 
+    // No click event
     if (click == 0) {
         return "none";
     }
 
+    // Check click type
     if (click & 0x20) {
         return "double";
     }
 
+    // Check click type
     if (click & 0x10) {
         return "single";
     }
@@ -61,6 +64,7 @@ String get_lis3dh_freefall() {
     lis3dh.getEvent(&event);
     magnitude = sqrt(event.acceleration.x * event.acceleration.x + event.acceleration.y * event.acceleration.y + event.acceleration.z * event.acceleration.z);
 
+    // Magnitude below threshold — free fall
     if (magnitude < FREEFALL_THRESHOLD) {
         return "true";
     }
@@ -69,7 +73,6 @@ String get_lis3dh_freefall() {
 }
 
 void setup() {
-    Bridge.begin();
 
     while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);

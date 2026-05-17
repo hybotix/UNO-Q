@@ -33,6 +33,8 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
+
+    // Throttle scroll rate to SCROLL_SPEED_MS interval
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
         return;
     }
@@ -49,6 +51,7 @@ void scroll_tick() {
 
     scroll_x--;
 
+    // Message fully scrolled — reset position
     if (scroll_x < -msg_pixel_width) {
         scroll_x = 12;
     }
@@ -63,12 +66,14 @@ String get_scd41_data() {
 
     error = scd41.getDataReadyStatus(data_ready);
 
+    // Check for error or invalid reading
     if (error || !data_ready) {
         return "0,0,0";
     }
 
     error = scd41.readMeasurement(co2, temperature, humidity);
 
+    // Check for error or invalid reading
     if (error || co2 == 0) {
         return "0,0,0";
     }
@@ -86,13 +91,13 @@ void set_matrix_msg(String msg) {
 void setup() {
     matrix.begin();
     matrix.clear();
-    Bridge.begin();
 
     scd41.begin(Wire1, SCD41_I2C_ADDR_62);
     scd41.startPeriodicMeasurement();
 
     Bridge.provide("get_scd41_data", get_scd41_data);
     Bridge.provide("set_matrix_msg", set_matrix_msg);
+    Bridge.begin();Bridge.begin();
     update_scroll_metrics();
 }
 

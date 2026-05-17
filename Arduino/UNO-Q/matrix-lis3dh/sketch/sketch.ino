@@ -44,7 +44,11 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
+
+        // Throttle scroll rate to SCROLL_SPEED_MS interval
         if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
             return;
         }
@@ -61,6 +65,7 @@ void scroll_tick() {
 
         scroll_x--;
 
+        // Message fully scrolled — reset position
         if (scroll_x < -msg_pixel_width) {
             scroll_x = 12;
         }
@@ -76,14 +81,17 @@ String get_lis3dh_data() {
 String get_lis3dh_click() {
     uint8_t click = lis3dh.getClick();
 
+    // No click event
     if (click == 0) {
         return "none";
     }
 
+    // Check click type
     if (click & 0x20) {
         return "double";
     }
 
+    // Check click type
     if (click & 0x10) {
         return "single";
     }
@@ -97,6 +105,7 @@ String get_lis3dh_freefall() {
     lis3dh.getEvent(&event);
     magnitude = sqrt(event.acceleration.x * event.acceleration.x + event.acceleration.y * event.acceleration.y + event.acceleration.z * event.acceleration.z);
 
+    // Magnitude below threshold — free fall
     if (magnitude < 2.0) {
         return "true";
     }
@@ -105,6 +114,8 @@ String get_lis3dh_freefall() {
 }
 
 void set_matrix_msg(String msg) {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
         matrix.clear();
         msg.toCharArray(matrix_msg, sizeof(matrix_msg));
@@ -116,7 +127,6 @@ void set_matrix_msg(String msg) {
 void setup() {
     matrix.begin();
     matrix.clear();
-    Bridge.begin();
 
     while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);
@@ -129,6 +139,7 @@ void setup() {
     Bridge.provide("get_lis3dh_click",    get_lis3dh_click);
     Bridge.provide("get_lis3dh_freefall", get_lis3dh_freefall);
     Bridge.provide("set_matrix_msg",      set_matrix_msg);
+    Bridge.begin();Bridge.begin();
 
     update_scroll_metrics();
 }

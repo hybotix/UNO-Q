@@ -27,17 +27,22 @@
 #include <hybx_vl53l5cx.h>
 
 static hybx_vl53l5cx sensor;
-static uint8_t       currentResolution = 64;
-static bool          beginCalled       = false;
-static bool          initFailed        = false;
-static bool          initDone          = false;
+static uint8_t       current_resolution = 64;
+static bool          begin_called       = false;
+static bool          init_failed        = false;
+static bool          init_done          = false;
 
 String get_sensor_status() {
-    if (initDone) {
-        if (initFailed) {
+
+    // Sensor initialization complete
+    if (init_done) {
+
+        // Initialization failed — report error
+        if (init_failed) {
             return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
         }
 
+        // Check for sensor error
         if (hybx_last_error_step != 0) {
             return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
         }
@@ -45,21 +50,24 @@ String get_sensor_status() {
         return "ready";
     }
 
-    return beginCalled ? "uploading" : "idle";
+    return begin_called ? "uploading" : "idle";
 }
 
 String begin_sensor() {
-    if (beginCalled) {
+
+    // Check if sensor begin has been called
+    if (begin_called) {
         return "already_started";
     }
 
-    beginCalled = true;
+    begin_called = true;
 
+    // Sensor initialized successfully
     if (sensor.begin()) {
-        initDone = true;
+        init_done = true;
     } else {
-        initFailed = true;
-        initDone   = true;
+        init_failed = true;
+        init_done   = true;
     }
     return get_sensor_status();
 }
@@ -67,21 +75,25 @@ String begin_sensor() {
 String set_resolution(String resolution) {
     uint8_t requested;
 
-    if (initDone && !initFailed) {
+    // Sensor initialization complete
+    if (init_done && !init_failed) {
         requested = (resolution == "4x4") ? 16 : 64;
 
-        if (requested != currentResolution) {
+        // Resolution changed — update sensor
+        if (requested != current_resolution) {
+
+            // Set requested resolution
             if (resolution == "4x4") {
                 sensor.setResolution(16);
-                currentResolution = 16;
+                current_resolution = 16;
             } else if (resolution == "8x8") {
                 sensor.setResolution(64);
-                currentResolution = 64;
+                current_resolution = 64;
             }
         }
     }
 
-    return (currentResolution == 16) ? "4x4" : "8x8";
+    return (current_resolution == 16) ? "4x4" : "8x8";
 }
 
 String get_distance_data() {
@@ -90,18 +102,24 @@ String get_distance_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-        width = (currentResolution == 16) ? 4 : 8;
+        width = (current_resolution == 16) ? 4 : 8;
 
+        // Add separator between values
         for (row = 0; row < width; row++) {
+
+            // Add separator between values
             for (col = 0; col < width; col++) {
                 result += String(hybx_distance_mm[row * width + col]);
 
+                // Add separator between values
                 if (col < width - 1) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < width - 1) {
                 result += ";";
             }
@@ -110,6 +128,7 @@ String get_distance_data() {
         return result;
     }
 
+    // Check for sensor error
     if (hybx_last_error_step != 0) {
         return "error:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
     }
@@ -124,19 +143,25 @@ String get_target_status() {
     uint8_t st;
     String  result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-        width = (currentResolution == 16) ? 4 : 8;
+        width = (current_resolution == 16) ? 4 : 8;
 
+        // Add separator between values
         for (row = 0; row < width; row++) {
+
+            // Add separator between values
             for (col = 0; col < width; col++) {
                 st = hybx_target_status[row * width + col];
                 result += (st == 5 || st == 9) ? "T" : "F";
 
+                // Add separator between values
                 if (col < width - 1) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < width - 1) {
                 result += ";";
             }
@@ -153,16 +178,23 @@ String get_signal_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
+
+        // Add separator between values
         for (row = 0; row < 8; row++) {
+
+            // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_signal_per_spad[row * 8 + col]);
 
+                // Add separator between values
                 if (col < 7) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < 7) {
                 result += ";";
             }
@@ -179,16 +211,23 @@ String get_sigma_data() {
     int    col;
     String result = "";
 
+    // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
+
+        // Add separator between values
         for (row = 0; row < 8; row++) {
+
+            // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_range_sigma_mm[row * 8 + col]);
 
+                // Add separator between values
                 if (col < 7) {
                     result += ",";
                 }
             }
 
+            // Add separator between values
             if (row < 7) {
                 result += ";";
             }
@@ -202,7 +241,6 @@ String get_sigma_data() {
 
 void setup() {
     Wire1.begin();
-    Bridge.begin();
     Bridge.provide("begin_sensor",      begin_sensor);
     Bridge.provide("get_sensor_status", get_sensor_status);
     Bridge.provide("set_resolution",    set_resolution);
@@ -213,7 +251,9 @@ void setup() {
 }
 
 void loop() {
-    if (initDone && !initFailed) {
+
+    // Sensor initialization complete
+    if (init_done && !init_failed) {
         sensor.poll();
     }
 }

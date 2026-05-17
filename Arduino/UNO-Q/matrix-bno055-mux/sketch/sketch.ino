@@ -103,7 +103,11 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
+
+        // Throttle scroll rate to SCROLL_SPEED_MS interval
         if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
             return;
         }
@@ -120,6 +124,7 @@ void scroll_tick() {
 
         scroll_x--;
 
+        // Message fully scrolled — reset position
         if (scroll_x < -msg_pixel_width) {
             scroll_x = 12;
         }
@@ -136,6 +141,7 @@ String get_scd41_data() {
     mux2.setPort(MUX2_CH_SCD41);
     error = scd41.getDataReadyStatus(data_ready);
 
+    // Check for error or invalid reading
     if (error || !data_ready) {
         mux2.setPort(255);
         return "0,0,0";
@@ -144,6 +150,7 @@ String get_scd41_data() {
     error = scd41.readMeasurement(co2, temperature, humidity);
     mux2.setPort(255);
 
+    // Check for error or invalid reading
     if (error || co2 == 0) {
         return "0,0,0";
     }
@@ -183,11 +190,15 @@ String read_mux_channels(QWIICMUX& mux, MuxChannel* channels, int count) {
     bool   any    = false;
     int    i;
 
+    // Iterate over channels
     for (i = 0; i < count; i++) {
+
+        // Found matching channel
         if (channels[i].active) {
             mux.setPort(channels[i].channel);
             result += String(channels[i].name) + ":0";
 
+            // Check condition
             if (i < count - 1) {
                 result += ",";
             }
@@ -212,9 +223,11 @@ String get_mux_channels_str(MuxChannel* channels, int count) {
     String result = "";
     int    i;
 
+    // Iterate over channels
     for (i = 0; i < count; i++) {
         result += String(channels[i].channel) + ":" + String(channels[i].name) + ":" + String(channels[i].active ? "true" : "false");
 
+        // Check condition
         if (i < count - 1) {
             result += ",";
         }
@@ -234,8 +247,13 @@ String get_mux2_channels() {
 String get_mux_channel_data_helper(QWIICMUX& mux, MuxChannel* channels, int count, int channel) {
     int i;
 
+    // Iterate over channels
     for (i = 0; i < count; i++) {
+
+        // Found matching channel
         if (channels[i].channel == channel) {
+
+            // Found matching channel
             if (channels[i].active) {
                 mux.setPort(channel);
                 mux.setPort(255);
@@ -263,6 +281,7 @@ void set_mux_channel_helper(MuxChannel* channels, int count, String params) {
     bool active;
     int  i;
 
+    // No comma separator — invalid params
     if (comma < 0) {
         return;
     }
@@ -270,7 +289,10 @@ void set_mux_channel_helper(MuxChannel* channels, int count, String params) {
     channel = params.substring(0, comma).toInt();
     active  = params.substring(comma + 1).equalsIgnoreCase("true");
 
+    // Iterate over channels
     for (i = 0; i < count; i++) {
+
+        // Found matching channel
         if (channels[i].channel == channel) {
             channels[i].active = active;
             return;
@@ -287,6 +309,8 @@ void set_mux2_channel(String params) {
 }
 
 void set_matrix_msg(String msg) {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
         matrix.clear();
         msg.toCharArray(matrix_msg, sizeof(matrix_msg));
@@ -303,9 +327,11 @@ String get_as7343_data() {
     as7343.readAllChannels(readings);
     mux2.setPort(255);
 
+    // Iterate over channels
     for (i = 0; i < 14; i++) {
         result += String(readings[i]);
 
+        // Check condition
         if (i < 13) {
             result += ",";
         }
@@ -337,7 +363,6 @@ String get_sgp41_data() {
 void setup() {
     matrix.begin();
     matrix.clear();
-    Bridge.begin();
 
     mux1.begin(MUX1_ADDR, Wire1);
     mux2.begin(MUX2_ADDR, Wire1);
@@ -374,6 +399,7 @@ void setup() {
     Bridge.provide("set_mux1_channel",        set_mux1_channel);
     Bridge.provide("set_mux2_channel",        set_mux2_channel);
     Bridge.provide("set_matrix_msg",          set_matrix_msg);
+    Bridge.begin();Bridge.begin();
     update_scroll_metrics();
 }
 

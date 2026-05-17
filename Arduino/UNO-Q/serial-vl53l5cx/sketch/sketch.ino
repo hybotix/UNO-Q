@@ -15,11 +15,11 @@
 #include <Wire.h>
 #include <SparkFun_VL53L5CX_Library.h>
 
-SparkFun_VL53L5CX  myImager;
-VL53L5CX_ResultsData measurementData;
+SparkFun_VL53L5CX  my_imager;
+VL53L5CX_ResultsData measurement_data;
 
-int imageResolution = 0;
-int imageWidth      = 0;
+int image_resolution = 0;
+int image_width      = 0;
 
 void setup() {
     Serial.begin(115200);
@@ -30,7 +30,8 @@ void setup() {
 
     Serial.println("Initializing sensor board. This can take up to 10s. Please wait.");
 
-    if (myImager.begin(0x29, Wire1) == false) {
+    // Sensor initialization failed
+    if (my_imager.begin(0x29, Wire1) == false) {
         Serial.println(F("Sensor not found - check your wiring. Freezing"));
 
         while (1) {
@@ -38,24 +39,31 @@ void setup() {
         }
     }
 
-    myImager.setResolution(8 * 8);
+    my_imager.setResolution(8 * 8);
 
-    imageResolution = myImager.getResolution();
-    imageWidth      = sqrt(imageResolution);
+    image_resolution = my_imager.getResolution();
+    image_width      = sqrt(image_resolution);
 
-    myImager.startRanging();
+    my_imager.startRanging();
 }
 
 void loop() {
     int x;
     int y;
 
-    if (myImager.isDataReady() == true) {
-        if (myImager.getRangingData(&measurementData)) {
-            for (y = 0; y <= imageWidth * (imageWidth - 1); y += imageWidth) {
-                for (x = imageWidth - 1; x >= 0; x--) {
+    // New measurement data available
+    if (my_imager.isDataReady() == true) {
+
+        // Ranging data retrieved successfully
+        if (my_imager.getRangingData(&measurement_data)) {
+
+            // Iterate over y axis
+            for (y = 0; y <= image_width * (image_width - 1); y += image_width) {
+
+                // Iterate over x axis
+                for (x = image_width - 1; x >= 0; x--) {
                     Serial.print("\t");
-                    Serial.print(measurementData.distance_mm[x + y]);
+                    Serial.print(measurement_data.distance_mm[x + y]);
                 }
 
                 Serial.println();

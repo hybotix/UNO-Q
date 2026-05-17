@@ -93,7 +93,11 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
+
+        // Throttle scroll rate to SCROLL_SPEED_MS interval
         if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
             return;
         }
@@ -110,6 +114,7 @@ void scroll_tick() {
 
         scroll_x--;
 
+        // Message fully scrolled — reset position
         if (scroll_x < -msg_pixel_width) {
             scroll_x = 12;
         }
@@ -125,12 +130,14 @@ String get_scd41_data() {
 
     error = scd41.getDataReadyStatus(data_ready);
 
+    // Check for error or invalid reading
     if (error || !data_ready) {
         return "0,0,0";
     }
 
     error = scd41.readMeasurement(co2, temperature, humidity);
 
+    // Check for error or invalid reading
     if (error || co2 == 0) {
         return "0,0,0";
     }
@@ -166,10 +173,14 @@ String get_mux_data() {
     bool   any    = false;
     int    i;
 
+    // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
+
+        // Found matching channel
         if (mux_channels[i].active) {
             result += String(mux_channels[i].name) + ":0";
 
+            // Check condition
             if (i < MUX_NUM_CHANNELS - 1) {
                 result += ",";
             }
@@ -185,9 +196,11 @@ String get_mux_channels() {
     String result = "";
     int    i;
 
+    // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
         result += String(mux_channels[i].channel) + ":" + String(mux_channels[i].name) + ":" + String(mux_channels[i].active ? "true" : "false");
 
+        // Check condition
         if (i < MUX_NUM_CHANNELS - 1) {
             result += ",";
         }
@@ -200,8 +213,13 @@ String get_mux_channel_data(String param) {
     int channel = param.toInt();
     int i;
 
+    // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
+
+        // Found matching channel
         if (mux_channels[i].channel == channel) {
+
+            // Found matching channel
             if (mux_channels[i].active) {
                 return "0";
             }
@@ -219,6 +237,7 @@ void set_mux_channel(String params) {
     bool active;
     int  i;
 
+    // No comma separator — invalid params
     if (comma < 0) {
         return;
     }
@@ -226,7 +245,10 @@ void set_mux_channel(String params) {
     channel = params.substring(0, comma).toInt();
     active  = params.substring(comma + 1).equalsIgnoreCase("true");
 
+    // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
+
+        // Found matching channel
         if (mux_channels[i].channel == channel) {
             mux_channels[i].active = active;
             return;
@@ -235,6 +257,8 @@ void set_mux_channel(String params) {
 }
 
 void set_matrix_msg(String msg) {
+
+    // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
         matrix.clear();
         msg.toCharArray(matrix_msg, sizeof(matrix_msg));
@@ -249,9 +273,11 @@ String get_as7343_data() {
     int      i;
     as7343.readAllChannels(readings);
 
+    // Iterate over channels
     for (i = 0; i < 14; i++) {
         result += String(readings[i]);
 
+        // Check condition
         if (i < 13) {
             result += ",";
         }
@@ -279,7 +305,6 @@ String get_sgp41_data() {
 void setup() {
     matrix.begin();
     matrix.clear();
-    Bridge.begin();
 
     scd41.begin(Wire1, SCD41_I2C_ADDR_62);
     scd41.startPeriodicMeasurement();
@@ -302,6 +327,7 @@ void setup() {
     Bridge.provide("get_mux_channel_data",   get_mux_channel_data);
     Bridge.provide("set_mux_channel",        set_mux_channel);
     Bridge.provide("set_matrix_msg",         set_matrix_msg);
+    Bridge.begin();Bridge.begin();
     update_scroll_metrics();
 }
 
