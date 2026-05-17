@@ -47,7 +47,6 @@
 
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
-#include <ArduinoGraphics.h>
 #include <SensirionI2cScd4x.h>
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SHT4x.h>

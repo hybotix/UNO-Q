@@ -15,7 +15,6 @@
 
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
-#include <ArduinoGraphics.h>
 #include <SensirionI2cScd4x.h>
 #include <Wire.h>
 #include <zephyr/kernel.h>
