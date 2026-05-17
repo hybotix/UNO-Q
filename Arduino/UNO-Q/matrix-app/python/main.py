@@ -22,9 +22,9 @@ def loop():
 
     if scd_data and scd_data != "0,0,0":
         co2, temp_c, humidity = scd_data.split(",")
+        co2      = float(co2)
         temp_c   = float(temp_c)
         temp_f   = (temp_c * 9.0 / 5.0) + 32.0
-        co2      = float(co2)
         humidity = float(humidity)
 
         print(f"{temp_f:.1f}\u00b0F ({temp_c:.1f}\u00b0C)  {humidity:.1f}%  {co2:.1f} ppm")

@@ -202,10 +202,10 @@ def loop():
         humidity = float(parts[1])
 
     if bno_data:
-        values  = bno_data.split(",")
-        heading = float(values[0])
-        pitch   = float(values[1])
-        roll    = float(values[2])
+        values   = bno_data.split(",")
+        heading  = float(values[0])
+        pitch    = float(values[1])
+        roll     = float(values[2])
 
     # spectral = parse_as7343(as7343_data)      # Uncomment when AS7343 connected
     # apds     = parse_apds9999(apds9999_data)  # Uncomment when APDS9999 connected

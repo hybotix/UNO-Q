@@ -95,7 +95,6 @@ ERROR_STEPS = {
     "5": "vl53l5cx_stop_ranging",
     "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
-
 }
 
 # ── State constants ───────────────────────────────────────────────────────────
