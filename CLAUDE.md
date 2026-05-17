@@ -9,6 +9,11 @@ standards without exception.
 ---
 
 ## General Principles
+
+- Do NOT make changes unless they are approved.
+
+- Only make CORRECT and PROPER fixes.
+
 - DO NOT GUESS at or MAKE ASSUMPTIONS of what needs to be done.
 
 - All changes must be recorded in CHANGELOG.md at the root of the repo
