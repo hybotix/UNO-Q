@@ -1,6 +1,6 @@
 /**
  * matrix-lis3dh
- * Hybrid RobotiX
+ * Hybrid RobotiX — v2.1
  *
  * MCU provides LIS3DH sensor data and accepts display content from Python.
  * Python is the controller — it reads sensors, formats messages,
