@@ -264,6 +264,7 @@ def fmt(value, decimals=1):
 
 ### Python
 
+- **Blank line before every `if` or `for`** (If not first after `def`)
 - **Blank line before every `def`** (at any indent level)
 - **Blank line after every `if`, `for`, `while`, `try` block** when the next
   statement is at the same or lower indent level
