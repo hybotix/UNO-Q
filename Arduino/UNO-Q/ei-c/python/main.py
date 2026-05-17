@@ -51,7 +51,6 @@ ERROR_STEPS = {
     "3": "vl53l5cx_set_ranging_frequency_hz", "4": "vl53l5cx_start_ranging",
     "5": "vl53l5cx_stop_ranging", "6": "vl53l5cx_check_data_ready",
     "7": "vl53l5cx_get_ranging_data",
-
 }
 
 # ── Parse frame count from command line ────────────────────────────────────────

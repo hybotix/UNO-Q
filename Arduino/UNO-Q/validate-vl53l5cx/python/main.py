@@ -38,9 +38,7 @@ def collect_frames(n: int) -> list[list[list]]:
         try:
             dist = Bridge.call("get_distance_data")
             stat = Bridge.call("get_target_status")
-            if dist and dist != "0" and stat and stat != "0":
-                pass
-            else:
+            if not (dist and dist != "0" and stat and stat != "0"):
                 time.sleep(0.1)
                 continue
 
@@ -89,7 +87,6 @@ def validate_distance(target_mm: int, frames: list) -> dict:
             "error":  error,
             "passed": passed,
             "n":      len(values),
-
         }
         total_zones += 1
         if passed:
@@ -103,7 +100,6 @@ def validate_distance(target_mm: int, frames: list) -> dict:
         "passing_zones": passing_zones,
         "overall_pass":  overall_pass,
         "zones":         zone_results,
-
     }
 
 def print_result(result: dict):
@@ -145,9 +141,7 @@ def loop():
     global initialized, test_index, results
 
     # ── Step 1: Initialize sensor ──────────────────────────────────────────────
-    if initialized:
-        pass
-    else:
+    if not initialized:
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)

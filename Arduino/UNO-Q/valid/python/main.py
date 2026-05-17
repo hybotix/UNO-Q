@@ -38,7 +38,6 @@ TOLERANCE_PCT = 10.0     # acceptable error ±%
 CENTER_ZONES  = [        # 8x8 zone indices for center 2x2
     (3, 3), (3, 4),
     (4, 3), (4, 4),
-
 ]
 
 # ── State ─────────────────────────────────────────────────────────────────────
@@ -79,7 +78,6 @@ def validate(expected: int, vals: list) -> dict:
             "error_mm": error,
             "error_pct": pct,
             "n":        len(vals),
-
         }
 
     return {"pass": False, "reason": "no valid center zones"}

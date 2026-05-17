@@ -109,7 +109,6 @@ def parse_apds9999(data):
                 "g":         int(values[3]),
                 "b":         int(values[4]),
                 "ir":        int(values[5]),
-
             }
 
     return result
