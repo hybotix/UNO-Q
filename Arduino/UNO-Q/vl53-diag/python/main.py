@@ -6,6 +6,8 @@ started = False
 def loop():
     global started
     try:
+
+        # Already initialized — run normal loop
         if started:
             result = Bridge.call("get_diag")
             print("VL53L5CX status: " + result)

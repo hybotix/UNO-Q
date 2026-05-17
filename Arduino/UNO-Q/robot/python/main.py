@@ -137,6 +137,7 @@ def format_error(status: str) -> str:
     """
     parts = status.split(":")
 
+    # Validate expected number of fields
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
@@ -195,8 +196,14 @@ def is_path_clear(dist: list, stat: list) -> bool:
     Both conditions must pass for all checked zones to return True.
     Floor rows (5-7) are excluded — they naturally read close distances.
     """
+
+    # Check each zone in forward rows
     for row in FORWARD_ROWS:
+
+        # Check each zone in center cols
         for col in CENTER_COLS:
+
+            # Zone has valid target status
             if not (stat[row][col] and dist[row][col] > OBSTACLE_MM):
                 return False
 
@@ -229,6 +236,7 @@ def heading_diff(target: float, current: float) -> float:
     """
     diff = (target - current + 360.0) % 360.0
 
+    # Normalize heading difference to shortest path
     if diff > 180.0:
         diff -= 360.0
 
@@ -245,6 +253,7 @@ def drive(command: str):
     try:
         result = Bridge.call("drive", command)
 
+        # Command succeeded
         if result != "ok":
             print(f"ERROR: drive({command}) returned: {result}")
     except Exception as e:
@@ -271,11 +280,13 @@ def handle_init():
             # begin_sensor() blocks during firmware upload — use long timeout
             result = Bridge.call("begin_sensor", timeout=120)
 
+            # Sensor initialization failed
             if result.startswith("init_failed"):
                 print("ERROR: VL53L5CX init failed: " + format_error(result))
                 time.sleep(5.0)
                 return
 
+            # Already initialized — run normal loop
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"VL53L5CX ready. Resolution: {res}")
@@ -295,6 +306,7 @@ def handle_init():
         try:
             result = Bridge.call("begin_imu")
 
+            # Already initialized — run normal loop
             if result in ("ready", "already_started"):
                 print("BNO055 ready.")
                 imu_ready = True
@@ -323,6 +335,7 @@ def handle_forward():
 
     data = get_sensor_data()
 
+    # Sensor data ready — unpack distance, status, signal and sigma
     if data:
         dist, stat, signal, sigma = data
     else:
@@ -331,6 +344,7 @@ def handle_forward():
         time.sleep(0.05)
         return
 
+    # Path is clear — continue forward
     if is_path_clear(dist, stat):
         # Path is clear — keep driving forward
         drive("forward")
@@ -365,6 +379,7 @@ def handle_obstacle():
     # Record heading at scan start — scan measures rotation from this point
     hdg = get_heading()
 
+    # IMU read failed — skip this iteration
     if hdg < 0:
         print("WARNING: IMU read failed before scan start — using 0.0 degrees as reference.")
         hdg = 0.0
@@ -403,6 +418,7 @@ def handle_scanning():
     # Read current heading and compute total rotation from scan start
     current_hdg = get_heading()
 
+    # IMU read failed — skip this iteration
     if current_hdg < 0:
         # Stop motors while IMU is unavailable — do not continue rotating blind
         drive("stop")
@@ -418,9 +434,11 @@ def handle_scanning():
     # Check sensor at this heading for a clear path
     data = get_sensor_data()
 
+    # Sensor data ready — check if path is clear at this heading
     if data:
         dist, stat, signal, sigma = data
 
+        # Path is clear — continue forward
         if is_path_clear(dist, stat):
             # Clear path found — record heading and start recovery turn
             clear_heading = current_hdg
@@ -453,6 +471,7 @@ def handle_recovering():
 
     current_hdg = get_heading()
 
+    # IMU read failed — skip this iteration
     if current_hdg < 0:
         # Stop motors while IMU is unavailable — do not continue turning blind
         drive("stop")
@@ -465,6 +484,7 @@ def handle_recovering():
     print(f"Recovering: target {clear_heading:.1f}, "
           f"current {current_hdg:.1f}, diff {diff:.1f} degrees")
 
+    # Check if heading is within tolerance
     if abs(diff) <= 5.0:
         # Within tolerance — on heading, resume forward navigation
         drive("stop")
@@ -500,6 +520,7 @@ def handle_full_block():
     # Read heading for scan reference — if IMU fails, use 0.0 as fallback
     hdg = get_heading()
 
+    # IMU read failed — skip this iteration
     if hdg < 0:
         print("WARNING: IMU read failed before retry scan — using 0.0 degrees as reference.")
         hdg = 0.0
@@ -520,6 +541,7 @@ def loop():
     """
     global state
 
+    # Dispatch to current state handler
     if state == STATE_INIT:
         handle_init()
     elif state == STATE_FORWARD:

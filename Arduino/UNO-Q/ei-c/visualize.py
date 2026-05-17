@@ -56,6 +56,7 @@ if len(sys.argv) < 2:
 
 input_path = sys.argv[1]
 
+# Verify input file exists
 if os.path.exists(input_path):
     pass
 else:
@@ -77,10 +78,12 @@ df = pd.read_csv(input_path, dtype=str)   # all as str to preserve empty labels
 dist_cols = [f"d{r}{c}" for r in range(8) for c in range(8)]
 missing   = [c for c in dist_cols if c not in df.columns]
 
+# Report missing required columns
 if missing:
     print(f"ERROR: Missing columns: {missing[:5]}...")
     sys.exit(1)
 
+# Ensure label column exists
 if "label" not in df.columns:
     df["label"] = ""
 
@@ -143,7 +146,10 @@ def draw_frame(idx, current_label):
     ax.set_yticks(range(8))
     ax.set_yticklabels([f"R{r}" for r in range(8)], fontsize=8)
 
+    # Iterate over range(8)
     for r in range(8):
+
+        # Iterate over range(8)
         for c in range(8):
             val   = frame_display[r][c]
             color = "white" if val > VMAX * 0.6 else "black"
@@ -176,6 +182,8 @@ def finish(reason="complete"):
 for idx in range(n_frames):
     current_label = str(df.at[idx, "label"]).strip()
     has_label     = current_label not in ("", "nan")
+
+    # Frame already has a label
     if has_label:
         pass
     else:
@@ -183,6 +191,7 @@ for idx in range(n_frames):
 
     draw_frame(idx, current_label)
 
+    # Frame already has a label
     if has_label:
         prompt = (f"Frame {idx + 1}/{n_frames} "
                   f"[{current_label}] — Enter=keep, new label, S=skip, Q=quit: ")
@@ -198,6 +207,7 @@ for idx in range(n_frames):
             finish("interrupted")
             sys.exit(0)
 
+        # User chose to quit
         if response == "Q":
             finish("saved")
             sys.exit(0)
@@ -208,6 +218,8 @@ for idx in range(n_frames):
             print(f"  Skipped frame {idx + 1} — written as-is.")
             break
         elif response == "":
+
+            # Frame already has a label
             if has_label:
                 write_row(idx, current_label)
                 print(f"  Kept [{current_label}].")
@@ -219,6 +231,8 @@ for idx in range(n_frames):
         else:
             # Apply new label — raw distance data is NEVER modified
             write_row(idx, response)
+
+            # Process user response
             if has_label and response != current_label:
                 changed_count += 1
                 print(f"  Relabeled [{current_label}] → [{response}].")

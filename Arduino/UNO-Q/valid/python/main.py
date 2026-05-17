@@ -25,6 +25,8 @@ SIGNAL_MAX = 8000.0
 SIGMA_MAX  = 30.0
 
 def confidence(status: bool, signal: int, sigma: int) -> float:
+
+    # Valid target status — compute confidence
     if status:
         sig_score = min(max(signal / SIGNAL_MAX, 0.0), 1.0)
         sma_score = max(0.0, 1.0 - sigma / SIGMA_MAX)
@@ -55,13 +57,19 @@ def parse_status(data: str) -> list:
 def center_values(dist: list, stat: list) -> list:
     """Return valid center zone distances."""
     vals = []
+
+    # Check each zone in center zones
     for r, c in CENTER_ZONES:
+
+        # Zone has valid target status
         if stat[r][c]:
             vals.append(dist[r][c])
 
     return vals
 
 def validate(expected: int, vals: list) -> dict:
+
+    # Valid readings available — compute statistics
     if vals:
         mean   = statistics.mean(vals)
         stdev  = statistics.stdev(vals) if len(vals) > 1 else 0.0
@@ -97,6 +105,8 @@ def print_summary():
     print("\n" + "═" * 40)
     print("  VALIDATION SUMMARY")
     print("═" * 40)
+
+    # Process each item
     for i, r in enumerate(results):
         status = "PASS ✓" if r["pass"] else "FAIL ✗"
         print(f"  {r['expected']:5d} mm — {status}  "
@@ -121,6 +131,7 @@ def loop():
             time.sleep(2.0)
             return
 
+        # Sensor is ready
         if result != "ready":
             print(f"ERROR: Sensor init failed — {result}")
             time.sleep(5.0)
@@ -137,12 +148,16 @@ def loop():
             "Enter target distance in mm (or 'done' to finish): "
 
         ).strip()
+
+        # Collection complete
         if dist_str.lower() in ("done", "q", "quit", ""):
             print_summary()
             raise SystemExit(0)
 
         try:
             expected_mm = int(dist_str)
+
+            # Validate entered distance
             if expected_mm <= 0:
                 raise ValueError
         except ValueError:
@@ -168,6 +183,7 @@ def loop():
             time.sleep(0.5)
             return
 
+        # Valid data received — parse it
         if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
             time.sleep(0.1)
             return
@@ -180,6 +196,7 @@ def loop():
         confs  = [confidence(stat[r][c], signal[r][c], sigma[r][c])
                   for r, c in CENTER_ZONES if stat[r][c]]
 
+        # Valid readings available — compute statistics
         if vals:
             samples.extend(vals)
             mean_conf = sum(confs) / len(confs) if confs else 0.0
@@ -189,6 +206,7 @@ def loop():
 
         time.sleep(0.1)
 
+        # Enough samples collected — validate
         if len(samples) >= SAMPLE_COUNT * len(CENTER_ZONES):
             r = validate(expected_mm, samples)
             print_result(r)

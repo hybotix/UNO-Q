@@ -39,6 +39,8 @@ def parse_bool_matrix(data: str) -> list:
     return [[v == "T" for v in row.split(",")] for row in data.split(";")]
 
 def confidence(status: bool, signal: int, sigma: int) -> float:
+
+    # Valid target status — compute confidence
     if status:
         sig_score = min(signal / SIGNAL_MAX, 1.0)
         sig_score = max(sig_score, 0.0)
@@ -49,6 +51,8 @@ def confidence(status: bool, signal: int, sigma: int) -> float:
 
 def print_distance(dist):
     print("── Distance (mm) ──")
+
+    # Process each row
     for row in dist:
         print("  " + "  ".join(f"{v:5d}" for v in row))
 
@@ -56,8 +60,12 @@ def print_distance(dist):
 
 def print_confidence(dist, stat, signal, sigma):
     print("── Confidence (%) ──")
+
+    # Iterate over range(8)
     for r in range(8):
         vals = []
+
+        # Iterate over range(8)
         for c in range(8):
             valid = stat[r][c]
             conf  = confidence(valid, signal[r][c], sigma[r][c])
@@ -69,6 +77,8 @@ def print_confidence(dist, stat, signal, sigma):
 
 def format_error(status: str) -> str:
     parts = status.split(":")
+
+    # Validate expected number of fields
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
@@ -78,17 +88,21 @@ def format_error(status: str) -> str:
 def loop():
     global initialized
 
+    # Sensor is ready — read data
     if initialized:
         time.sleep(0.1)
     else:
         try:
             print("Triggering sensor firmware upload...")
             result = Bridge.call("begin_sensor", timeout=120)
+
+            # Sensor initialization failed
             if result.startswith("init_failed"):
                 print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
 
+            # Sensor is ready
             if result == "ready":
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print("Sensor ready. Resolution: " + res)
@@ -111,9 +125,11 @@ def loop():
         print(f"ERROR: {e}")
         return
 
+    # Valid data received — parse it
     if "0" in (dist_raw, stat_raw, signal_raw, sigma_raw):
         return
 
+    # Sensor reported an error
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return

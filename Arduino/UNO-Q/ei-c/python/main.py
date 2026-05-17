@@ -56,9 +56,13 @@ ERROR_STEPS = {
 # ── Parse frame count from command line ────────────────────────────────────────
 frame_target = DEFAULT_FRAMES
 _args = [a for a in sys.argv[1:] if not a.startswith("--")]
+
+# Parse frame count from command line argument
 if _args:
     try:
         frame_target = int(_args[0])
+
+        # Validate frame count
         if frame_target <= 0:
             print(f"ERROR: Frame count must be greater than zero.")
             sys.exit(1)
@@ -79,6 +83,8 @@ def parse_int_matrix(data: str) -> list:
 
 def format_error(status: str) -> str:
     parts = status.split(":")
+
+    # Validate expected number of fields
     if len(parts) >= 3:
         step_name = ERROR_STEPS.get(parts[1], f"step_{parts[1]}")
         return f"{parts[0]}: {step_name} (ULD code {parts[2]})"
@@ -100,6 +106,7 @@ def open_csv() -> tuple:
 def loop():
     global initialized, csv_path, csv_file, csv_writer, frame_count, done
 
+    # Collection complete
     if done:
         time.sleep(1.0)
         return
@@ -108,6 +115,8 @@ def loop():
     if initialized:
         pass
     else:
+
+        # Open output file if not already open
         if not csv_file:
             try:
                 csv_path, csv_file, csv_writer = open_csv()
@@ -122,11 +131,14 @@ def loop():
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
+
+            # Sensor initialization failed
             if result.startswith("init_failed"):
                 print("ERROR: " + format_error(result))
                 time.sleep(5.0)
                 return
 
+            # Already initialized — run normal loop
             if result in ("ready", "already_started"):
                 res = Bridge.call("set_resolution", RESOLUTION)
                 print(f"Sensor ready. Resolution: {res}")
@@ -151,11 +163,13 @@ def loop():
         print(f"ERROR: sensor read failed: {e}")
         return
 
+    # Valid data received — parse it
     if dist_raw and dist_raw != "0":
         pass
     else:
         return
 
+    # Sensor reported an error
     if dist_raw.startswith("error:"):
         print("ERROR: " + format_error(dist_raw))
         return
@@ -173,6 +187,7 @@ def loop():
         csv_file.flush()
         frame_count += 1
 
+        # Print progress update
         if frame_count % PROGRESS_INT == 0:
             remaining = frame_target - frame_count
             print(f"  {frame_count}/{frame_target} frames collected "

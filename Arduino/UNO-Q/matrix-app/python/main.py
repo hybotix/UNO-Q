@@ -14,12 +14,14 @@ def scroll_duration(msg):
 def loop():
     global started
 
+    # First run — wait for sensor to initialize
     if not started:
         time.sleep(5)
         started = True
 
     scd_data = Bridge.call("get_scd41_data")
 
+    # Parse SCD41 temperature, humidity and CO2 data
     if scd_data and scd_data != "0,0,0":
         co2, temp_c, humidity = scd_data.split(",")
         co2      = float(co2)

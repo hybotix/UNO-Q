@@ -38,6 +38,8 @@ def collect_frames(n: int) -> list[list[list]]:
         try:
             dist = Bridge.call("get_distance_data")
             stat = Bridge.call("get_target_status")
+
+            # Zone has valid target status
             if not (dist and dist != "0" and stat and stat != "0"):
                 time.sleep(0.1)
                 continue
@@ -59,11 +61,20 @@ def validate_distance(target_mm: int, frames: list) -> dict:
     """
     zone_values = {}  # (row, col) -> list of valid readings
 
+    # Iterate over frames
     for d_matrix, s_matrix in frames:
+
+        # Iterate over range(8)
         for row in range(8):
+
+            # Iterate over range(8)
             for col in range(8):
+
+                # Process valid zones only
                 if s_matrix[row][col]:
                     key = (row, col)
+
+                    # Initialize zone entry on first reading
                     if key not in zone_values:
                         zone_values[key] = []
 
@@ -73,7 +84,10 @@ def validate_distance(target_mm: int, frames: list) -> dict:
     passing_zones = 0
     total_zones   = 0
 
+    # Process each entry
     for (row, col), values in zone_values.items():
+
+        # Validate expected number of fields
         if len(values) < FRAMES // 2:
             continue  # skip zones with too few valid readings
 
@@ -89,6 +103,8 @@ def validate_distance(target_mm: int, frames: list) -> dict:
             "n":      len(values),
         }
         total_zones += 1
+
+        # Zone passed tolerance check
         if passed:
             passing_zones += 1
 
@@ -116,10 +132,16 @@ def print_result(result: dict):
     # Print 8x8 grid of errors
     print(f"  Error grid (mm, + = too far, - = too close):")
     print(f"  " + "  ".join(f"  C{c}" for c in range(8)))
+
+    # Iterate over range(8)
     for row in range(8):
         row_str = f"R{row} "
+
+        # Iterate over range(8)
         for col in range(8):
             z = result["zones"].get((row, col))
+
+            # Zone data available
             if z:
                 err = z["error"]
                 ok  = "✓" if z["passed"] else "✗"
@@ -131,9 +153,13 @@ def print_result(result: dict):
 
     # Summary stats across all valid zones
     all_errors = [z["error"] for z in result["zones"].values()]
+
+    # Print summary statistics
     if all_errors:
         print(f"\n  Mean error:   {statistics.mean(all_errors):+.1f}mm")
         print(f"  Max error:    {max(all_errors, key=abs):+.1f}mm")
+
+        # Compute standard deviation if enough samples
         if len(all_errors) > 1:
             print(f"  Stddev:       {statistics.stdev(all_errors):.1f}mm")
 
@@ -145,6 +171,8 @@ def loop():
         try:
             print("Initializing VL53L5CX...")
             result = Bridge.call("begin_sensor", timeout=120)
+
+            # Sensor is ready
             if result == "ready":
                 print("Sensor ready.\n")
                 initialized = True
@@ -167,6 +195,8 @@ def loop():
         print("  VALIDATION SUMMARY")
         print(f"{'='*56}")
         all_passed = all(r["overall_pass"] for r in results)
+
+        # Process each item
         for r in results:
             status = "PASS ✓" if r["overall_pass"] else "FAIL ✗"
             print(f"  {r['target_mm']:4d}mm — {r['passing_zones']}/{r['total_zones']} zones — {status}")

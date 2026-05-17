@@ -20,6 +20,8 @@ def scroll_duration(msg):
 
 def fmt(value, decimals=1):
     """Format a float — drop decimal if zero, otherwise show specified decimal places."""
+
+    # Return integer string if value has no decimal part
     if round(value, decimals) == int(value):
         return str(int(value))
     return f"{value:.{decimals}f}"
@@ -34,9 +36,11 @@ def parse_as7343(data):
     """
     result = None
 
+    # Valid data received — parse it
     if data and data != "0,0,0,0,0,0,0,0,0,0,0,0,0,0":
         values = [int(v) for v in data.split(",")]
 
+        # Validate expected number of fields
         if len(values) == 14:
             result = {
                 "F1_405nm":   values[0],
@@ -64,6 +68,8 @@ def scroll_as7343(spectral):
     - NIR:     near-infrared channels
     Call this from loop() when AS7343 is connected.
     """
+
+    # AS7343 spectral data available
     if spectral:
         # Message 3a — visible spectrum highlights
         blue  = spectral["F3_450nm"]
@@ -73,6 +79,7 @@ def scroll_as7343(spectral):
         print(f"Visible: B={blue} G={green} R={red} Clear={clear}")
         msg3a = f" B:{blue} G:{green} R:{red} Clr:{clear} "
 
+        # Scroll the message on the LED matrix
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg3a)
             time.sleep(scroll_duration(msg3a))
@@ -85,6 +92,7 @@ def scroll_as7343(spectral):
         print(f"NIR: 910={nir910} 940={nir940} 1000={nir1000} NIR={nir}")
         msg3b = f" 910:{nir910} 940:{nir940} NIR:{nir} "
 
+        # Scroll the message on the LED matrix
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg3b)
             time.sleep(scroll_duration(msg3b))
@@ -97,9 +105,11 @@ def parse_apds9999(data):
     """
     result = None
 
+    # Valid data received — parse it
     if data and data != "0,0,0,0,0,0":
         values = data.split(",")
 
+        # Validate expected number of fields
         if len(values) == 6:
             result = {
                 "proximity": int(values[0]),
@@ -117,6 +127,8 @@ def scroll_apds9999(apds):
     Scroll APDS9999 data as one message: proximity, lux, and RGB.
     Call this from loop() when APDS9999 is connected.
     """
+
+    # APDS9999 proximity and color data available
     if apds:
         proximity = apds["proximity"]
         lux       = apds["lux"]
@@ -127,6 +139,7 @@ def scroll_apds9999(apds):
         print(f"Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} IR:{ir}")
         msg = f" Prox:{proximity} Lux:{lux:.1f} R:{r} G:{g} B:{b} "
 
+        # Scroll the message on the LED matrix
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
@@ -140,9 +153,11 @@ def parse_sgp41(data):
     """
     result = None
 
+    # Valid data received — parse it
     if data and data != "0,0":
         values = data.split(",")
 
+        # Validate expected number of fields
         if len(values) == 2:
             result = {
                 "voc_raw": int(values[0]),
@@ -156,12 +171,15 @@ def scroll_sgp41(sgp):
     Scroll SGP41 VOC and NOx raw signal data.
     Call this from loop() when SGP41 is connected.
     """
+
+    # SGP41 VOC/NOx data available
     if sgp:
         voc = sgp["voc_raw"]
         nox = sgp["nox_raw"]
         print(f"VOC:{voc} NOx:{nox}")
         msg = f" VOC:{voc} NOx:{nox} "
 
+        # Scroll the message on the LED matrix
         if SCROLLING_ENABLED:
             Bridge.call("set_matrix_msg", msg)
             time.sleep(scroll_duration(msg))
@@ -169,6 +187,7 @@ def scroll_sgp41(sgp):
 def loop():
     global started
 
+    # First run — wait for sensor to initialize
     if not started:
         time.sleep(5)
         started = True
@@ -190,17 +209,20 @@ def loop():
     apds     = None
     sgp      = None
 
+    # Parse SCD41 temperature, humidity and CO2 data
     if scd_data and scd_data != "0,0,0":
         parts    = scd_data.split(",")
         co2      = round(float(parts[0]))
         temp_c   = float(parts[1])
         humidity = float(parts[2])
 
+    # SHT45 overrides temperature and humidity when available
     if sht_data and sht_data != "0,0":
         parts    = sht_data.split(",")
         temp_c   = float(parts[0])
         humidity = float(parts[1])
 
+    # Parse BNO055 orientation data
     if bno_data:
         values   = bno_data.split(",")
         heading  = float(values[0])
@@ -225,6 +247,7 @@ def loop():
     print(f"{temp_str}  {humidity_str}  {co2_str}")
     msg1 = f" {temp_str} {humidity_str} {co2_str} "
 
+    # Scroll the message on the LED matrix
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg1)
         time.sleep(scroll_duration(msg1))
@@ -244,6 +267,7 @@ def loop():
     print(f"{heading_str}  {pitch_str}  {roll_str}")
     msg2 = f" {heading_str} {pitch_str} {roll_str} "
 
+    # Scroll the message on the LED matrix
     if SCROLLING_ENABLED:
         Bridge.call("set_matrix_msg", msg2)
         time.sleep(scroll_duration(msg2))

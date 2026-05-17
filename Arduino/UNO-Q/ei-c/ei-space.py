@@ -29,6 +29,8 @@ BYTES_HEADER    = 215    # header row
 OUTPUT_DIR      = os.path.expanduser("~/data/ei-c")
 
 def format_size(n_bytes: int) -> str:
+
+    # Format byte size as human readable string
     if n_bytes < 1024:
         return f"{n_bytes} bytes"
     elif n_bytes < 1024 * 1024:
@@ -56,10 +58,13 @@ def estimate(n_frames: int):
     print(f"  Output directory : {OUTPUT_DIR}")
     print()
 
+    # Check available disk space
     if free:
         print(f"  Disk free        : {format_size(free)}")
         print(f"  Disk used        : {used_pct:.1f}%")
         print()
+
+        # Data will fit on disk
         if fits:
             print(f"  ✓ Sufficient space available.")
         else:
@@ -74,6 +79,8 @@ def estimate(n_frames: int):
             f for f in os.listdir(OUTPUT_DIR) if f.endswith(".csv")
 
         ])
+
+        # Existing data files found
         if files:
             total_size = sum(
                 os.path.getsize(os.path.join(OUTPUT_DIR, f)) for f in files
@@ -87,6 +94,7 @@ def estimate(n_frames: int):
                 fsize = os.path.getsize(fpath)
                 print(f"    {f}  ({format_size(fsize)})")
 
+            # Show truncated list for long file lists
             if len(files) > 5:
                 print(f"    ... and {len(files) - 5} more")
 
@@ -95,9 +103,12 @@ def estimate(n_frames: int):
 # ── Main ───────────────────────────────────────────────────────────────────────
 print("=== ei-space — Edge Impulse Disk Space Calculator ===")
 
+# Check for command line arguments
 if len(sys.argv) > 1:
     try:
         n = int(sys.argv[1])
+
+        # Validate frame count
         if n <= 0:
             print("ERROR: Frame count must be greater than zero.")
             sys.exit(1)
@@ -111,6 +122,8 @@ else:
     common = [100, 200, 500, 1000, 2000]
     print()
     print("  Common frame counts:")
+
+    # Process each item
     for n in common:
         est = BYTES_HEADER + (n * BYTES_PER_FRAME)
         print(f"    {n:>6,} frames — {format_size(est)}")
@@ -124,11 +137,14 @@ else:
             print()
             sys.exit(0)
 
+        # Empty response — use default
         if response == "":
             n = 500
         else:
             try:
                 n = int(response)
+
+                # Validate frame count
                 if n <= 0:
                     print("  ERROR: Must be greater than zero.")
                     continue
