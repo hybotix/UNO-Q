@@ -73,7 +73,6 @@ String get_lis3dh_freefall() {
 }
 
 void setup() {
-
     while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);
     }

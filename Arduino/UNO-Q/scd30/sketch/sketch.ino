@@ -28,7 +28,6 @@ String get_scd41_data() {
 }
 
 void setup() {
-
     scd41.begin(Wire1, SCD41_I2C_ADDR_62);
     scd41.startPeriodicMeasurement();
 

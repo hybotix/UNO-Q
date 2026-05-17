@@ -29,7 +29,6 @@ String get_diag() {
 }
 
 String begin_sensor() {
-
     // Check if sensor begin has been called
     if (begin_called) {
         return "already_started";

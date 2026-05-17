@@ -10,7 +10,6 @@ String get_lsm6dsox_data() {
 }
 
 void setup() {
-
     while (!imu.begin_I2C(0x6A, &Wire1)) {
         delay(100);
     }

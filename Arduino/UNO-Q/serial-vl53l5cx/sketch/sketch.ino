@@ -53,13 +53,10 @@ void loop() {
 
     // New measurement data available
     if (my_imager.isDataReady() == true) {
-
         // Ranging data retrieved successfully
         if (my_imager.getRangingData(&measurement_data)) {
-
             // Iterate over y axis
             for (y = 0; y <= image_width * (image_width - 1); y += image_width) {
-
                 // Iterate over x axis
                 for (x = image_width - 1; x >= 0; x--) {
                     Serial.print("\t");

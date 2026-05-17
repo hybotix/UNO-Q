@@ -32,7 +32,6 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
-
     // Throttle scroll rate to SCROLL_SPEED_MS interval
     if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
         return;

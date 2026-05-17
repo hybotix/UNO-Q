@@ -61,10 +61,8 @@ static bool            imu_init_done   = false;
 static bool            imu_init_failed = false;
 
 static uint8_t applyDirection(uint8_t dir, bool invert) {
-
     // Apply motor direction inversion
     if (invert) {
-
         // Invert direction
         if (dir == FORWARD) {
             return BACKWARD;
@@ -92,7 +90,6 @@ static void stop_all() {
 }
 
 String drive(String command) {
-
     // Motors not ready
     if (motor_fl == nullptr) {
         return "error:motors_not_ready";
@@ -165,10 +162,8 @@ String set_turn_speed(String val) {
 }
 
 String get_sensor_status() {
-
     // Sensor initialization complete
     if (sensor_init_done) {
-
         // Initialization failed — report error
         if (sensor_init_failed) {
             return "init_failed:" + String(hybx_last_error_step) + ":" + String(hybx_last_error);
@@ -186,7 +181,6 @@ String get_sensor_status() {
 }
 
 String begin_sensor() {
-
     // Check if sensor begin has been called
     if (sensor_begin_called) {
         return "already_started";
@@ -213,7 +207,6 @@ String set_resolution(String resolution) {
 
         // Resolution changed — update sensor
         if (requested != current_resolution) {
-
             // Set requested resolution
             if (resolution == "4x4") {
                 sensor.setResolution(16);
@@ -240,7 +233,6 @@ String get_distance_data() {
 
         // Add separator between values
         for (row = 0; row < width; row++) {
-
             // Add separator between values
             for (col = 0; col < width; col++) {
                 result += String(hybx_distance_mm[row][col]);
@@ -281,7 +273,6 @@ String get_target_status() {
 
         // Add separator between values
         for (row = 0; row < width; row++) {
-
             // Add separator between values
             for (col = 0; col < width; col++) {
                 st = hybx_target_status[row][col];
@@ -312,10 +303,8 @@ String get_signal_data() {
 
     // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-
         // Add separator between values
         for (row = 0; row < 8; row++) {
-
             // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_signal_per_spad[row][col]);
@@ -345,10 +334,8 @@ String get_sigma_data() {
 
     // Sensor has valid data — build result string
     if (hybx_sensor_ready) {
-
         // Add separator between values
         for (row = 0; row < 8; row++) {
-
             // Add separator between values
             for (col = 0; col < 8; col++) {
                 result += String(hybx_range_sigma_mm[row][col]);
@@ -372,7 +359,6 @@ String get_sigma_data() {
 }
 
 String begin_imu() {
-
     // Sensor initialization complete
     if (imu_init_done) {
         return imu_init_failed ? "init_failed" : "ready";
@@ -389,7 +375,6 @@ String begin_imu() {
 }
 
 String get_imu_status() {
-
     // Sensor initialization complete
     if (imu_init_done) {
         return imu_init_failed ? "init_failed" : "ready";
@@ -434,7 +419,6 @@ void setup() {
 }
 
 void loop() {
-
     // Sensor initialization complete
     if (sensor_init_done && !sensor_init_failed) {
         sensor.poll();

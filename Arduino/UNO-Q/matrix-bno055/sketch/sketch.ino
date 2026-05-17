@@ -74,10 +74,8 @@ void update_scroll_metrics() {
 }
 
 void scroll_tick() {
-
     // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
-
         // Throttle scroll rate to SCROLL_SPEED_MS interval
         if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
             return;
@@ -156,7 +154,6 @@ String get_mux_data() {
 
     // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
-
         // Found matching channel
         if (mux_channels[i].active) {
             result += String(mux_channels[i].name) + ":0";
@@ -196,10 +193,8 @@ String get_mux_channel_data(String param) {
 
     // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
-
         // Found matching channel
         if (mux_channels[i].channel == channel) {
-
             // Found matching channel
             if (mux_channels[i].active) {
                 return "0";
@@ -228,7 +223,6 @@ void set_mux_channel(String params) {
 
     // Iterate over channels
     for (i = 0; i < MUX_NUM_CHANNELS; i++) {
-
         // Found matching channel
         if (mux_channels[i].channel == channel) {
             mux_channels[i].active = active;
@@ -238,7 +232,6 @@ void set_mux_channel(String params) {
 }
 
 void set_matrix_msg(String msg) {
-
     // Scroll the LED matrix message
     if (SCROLLING_ENABLED) {
         matrix.clear();
