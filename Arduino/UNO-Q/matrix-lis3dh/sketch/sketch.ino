@@ -50,7 +50,7 @@ static unsigned long last_scroll_ms  = 0;
 /**
  * Recalculate scroll width after message changes.
  */
-void update_scroll_metrics() {
+void updateScrollMetrics() {
     msg_pixel_width = strlen(matrix_msg) * CHAR_WIDTH;
 }
 
@@ -58,30 +58,24 @@ void update_scroll_metrics() {
  * Advance the scroll animation by one pixel if enough time has elapsed.
  * Non-blocking, uses millis(). Has no effect if SCROLLING_ENABLED is false.
  */
-void scroll_tick() {
-    // Scroll the message if scrolling is enabled
-    if (SCROLLING_ENABLED) {
-        // Throttle scroll rate to SCROLL_SPEED_MS interval
-        if (millis() - last_scroll_ms < SCROLL_SPEED_MS) {
-            return;
-        }
+void scrollTick() {
+    if (!SCROLLING_ENABLED) return;
+    if (millis() - last_scroll_ms < SCROLL_SPEED_MS) return;
 
-        last_scroll_ms = millis();
+    last_scroll_ms = millis();
 
-        matrix.beginDraw();
-        matrix.stroke(0xFFFFFFFF);
-        matrix.textFont(Font_5x7);
-        matrix.beginText(scroll_x, 1, 0xFFFFFF);
-        matrix.print(matrix_msg);
-        matrix.endText();
-        matrix.endDraw();
+    matrix.beginDraw();
+    matrix.stroke(0xFFFFFFFF);
+    matrix.textFont(Font_5x7);
+    matrix.beginText(scroll_x, 1, 0xFFFFFF);
+    matrix.print(matrix_msg);
+    matrix.endText();
+    matrix.endDraw();
 
-        scroll_x--;
+    scroll_x--;
 
-        // Message fully scrolled — reset position
-        if (scroll_x < -msg_pixel_width) {
-            scroll_x = 12;
-        }
+    if (scroll_x < -msg_pixel_width) {
+        scroll_x = 12;
     }
 }
 
@@ -106,17 +100,14 @@ String get_lis3dh_data() {
 String get_lis3dh_click() {
     uint8_t click = lis3dh.getClick();
 
-    // No click event
     if (click == 0) {
         return "none";
     }
 
-    // Double tap detected
     if (click & 0x20) {
         return "double";
     }
 
-    // Single tap detected
     if (click & 0x10) {
         return "single";
     }
@@ -151,21 +142,20 @@ String get_lis3dh_freefall() {
  * Has no effect if SCROLLING_ENABLED is false.
  */
 void set_matrix_msg(String msg) {
-    // Only update display if scrolling is enabled
-    if (SCROLLING_ENABLED) {
-        matrix.clear();
-        msg.toCharArray(matrix_msg, sizeof(matrix_msg));
-        update_scroll_metrics();
-        scroll_x = 12;
-    }
+    if (!SCROLLING_ENABLED) return;
+
+    matrix.clear();
+    msg.toCharArray(matrix_msg, sizeof(matrix_msg));
+    updateScrollMetrics();
+    scroll_x = 12;
 }
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 void setup() {
     matrix.begin();
     matrix.clear();
+    Bridge.begin();
 
-    // Wait for LIS3DH to initialize
     while (!lis3dh.begin(LIS3DH_ADDR)) {
         delay(100);
     }
@@ -182,12 +172,11 @@ void setup() {
     Bridge.provide("get_lis3dh_click",    get_lis3dh_click);
     Bridge.provide("get_lis3dh_freefall", get_lis3dh_freefall);
     Bridge.provide("set_matrix_msg",      set_matrix_msg);
-    Bridge.begin();
 
-    update_scroll_metrics();
+    updateScrollMetrics();
 }
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 void loop() {
-    scroll_tick();
+    scrollTick();
 }
