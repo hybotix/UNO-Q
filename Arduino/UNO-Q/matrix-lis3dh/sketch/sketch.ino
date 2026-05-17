@@ -29,6 +29,7 @@
 #define SCROLLING_ENABLED true  // Set to false to disable in production
 
 // ── Includes ──────────────────────────────────────────────────────────────────
+#include <ArduinoGraphics.h>
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
 #include <Adafruit_LIS3DH.h>
