@@ -12,5 +12,4 @@ profiles:
       - Adafruit LIS3DH (1.2.4)
       - Adafruit BusIO (1.17.4)
       - Adafruit Unified Sensor (1.1.15)
-      - ArduinoGraphics (1.1.5)
 default_profile: default
