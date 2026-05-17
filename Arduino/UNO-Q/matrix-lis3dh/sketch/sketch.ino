@@ -24,8 +24,8 @@
 #define SCROLLING_ENABLED  true
 
 #include <Arduino_LED_Matrix.h>
-#include <ArduinoGraphics.h>
 #include <Arduino_RouterBridge.h>
+#include <ArduinoGraphics.h>
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
