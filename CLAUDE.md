@@ -9,7 +9,7 @@ standards without exception.
 ---
 
 ## General Principles
-- DO NOT GUESS at what needs to be done.
+- DO NOT GUESS at or MAKE ASSUMPTIONS of what needs to be done.
 
 - All changes must be recorded in CHANGELOG.md at the root of the repo
 
