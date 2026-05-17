@@ -1,3 +1,0 @@
-name: SCD41 Sensor
-icon: 🌡️
-description: Reads CO2, temperature and humidity from the SCD41 sensor via QWIIC.
