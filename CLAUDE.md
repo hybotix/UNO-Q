@@ -1,4 +1,4 @@
-# Hybrid RobotiX — UNO-Q Coding Standards
+# Hybrid RobotiX — UNO Q Coding Standards
 ## CLAUDE.md
 
 This file defines the coding standards and conventions for all code in the
@@ -9,6 +9,10 @@ standards without exception.
 ---
 
 ## General Principles
+
+- ALWAYS check repos FIRST before asking to run commands on a board.
+
+- NO rm commands without approval. You should NOT be removing stuff.
 
 - Do NOT make changes unless they are approved.
 
@@ -252,10 +256,14 @@ def parse_apds9999(data):
 ```python
 # CORRECT
 def fmt(value, decimals=1):
+    result = None
+    
     if round(value, decimals) == int(value):
-        return str(int(value))
-    return f"{value:.{decimals}f}"
+        result =  str(int(value))
+    else:
+        result = f"{value:.{decimals}f}"
 
+    return result
 # WRONG
 def fmt(value, decimals=1):
     if round(value, decimals) == int(value):
